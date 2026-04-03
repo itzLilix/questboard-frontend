@@ -1,0 +1,31 @@
+@import "tailwindcss";
+@config "../tailwind.config.js";
+
+:root {
+	--bg-base: #0d0b14;
+	--bg-base-tp: rgba(11, 8, 20, 0.8);
+	--bg-surface: #13101e;
+	--bg-elevated: #1c1828;
+	--bg-card: #161222;
+	--text-primary: #f0ebf8;
+	--text-secondary: #8b82a7;
+	--text-muted: #4a4360;
+	--accent: #c1375a;
+	--accent-hover: #e0425f;
+	--accent-soft: #3d1525;
+	--border: #2a2440;
+	--success: #4caf82;
+	--warning: #e8a838;
+	--error: #e04c4c;
+
+	--font-display: "Forum", serif;
+	--font-body: "Manrope", sans-serif;
+}
+
+body {
+	margin: 0;
+	box-sizing: border-box;
+	background-color: var(--bg-base);
+	color: var(--text-primary);
+	font-family: var(--font-body);
+}
