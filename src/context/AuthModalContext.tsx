@@ -5,8 +5,8 @@ type ModalType = "login" | "register" | null;
 const AuthModalContext = createContext({
 	isOpen: false as boolean,
 	modalType: null as ModalType,
-	openModal: (type: "login" | "register") => {},
-	closeModal: () => {},
+	openAuthModal: (type: "login" | "register") => {},
+	closeAuthModal: () => {},
 });
 
 export const AuthModalProvider = ({
@@ -17,19 +17,24 @@ export const AuthModalProvider = ({
 	const [isOpen, setIsOpen] = useState(false);
 	const [modalType, setModalType] = useState<ModalType>(null);
 
-	const openModal = (type: "login" | "register") => {
+	const openAuthModal = (type: "login" | "register") => {
 		setModalType(type);
 		setIsOpen(true);
 	};
 
-	const closeModal = () => {
+	const closeAuthModal = () => {
 		setIsOpen(false);
 		setModalType(null);
 	};
 
 	return (
 		<AuthModalContext.Provider
-			value={{ isOpen, modalType, openModal, closeModal }}
+			value={{
+				isOpen,
+				modalType,
+				openAuthModal,
+				closeAuthModal,
+			}}
 		>
 			{children}
 		</AuthModalContext.Provider>

@@ -5,9 +5,9 @@ import Input from "../ui/Input";
 import Tab from "../ui/Tab";
 import Button from "../ui/Button";
 import { api } from "../../api/axios";
-import { AxiosError } from "axios";
 import useAuth from "../../hooks/useAuth";
 import FieldLabel from "../ui/InputLabel";
+import { mapError } from "../../api/mapError";
 
 const LOGIN_URL = "/auth/login";
 const REGISTER_URL = "/auth/signup";
@@ -17,7 +17,7 @@ const PWD_REGEX =
 	/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%])[A-Za-z0-9!@#$%]{8,24}$/;
 
 export default function AuthModal() {
-	const { isOpen, modalType, openModal, closeModal } = useAuthModal();
+	const { isOpen, modalType, openAuthModal, closeAuthModal } = useAuthModal();
 	const { login } = useAuth();
 
 	const [user, setUser] = useState("");
@@ -82,11 +82,10 @@ export default function AuthModal() {
 			} else {
 				await handleRegister();
 			}
-			closeModal();
+			closeAuthModal();
 		} catch (err) {
-			const axiosErr = err as AxiosError<{ message: string }>;
-			console.log(axiosErr.response);
-			setErrMsg(axiosErr.response?.data?.message || "Ошибка");
+			const error = mapError(err);
+			setErrMsg(error.message);
 		}
 	};
 
@@ -94,9 +93,9 @@ export default function AuthModal() {
 		<>
 			<div
 				className="fixed inset-0 bg-black/20 z-40"
-				onClick={closeModal}
+				onClick={closeAuthModal}
 			></div>
-			<div className="fixed h-[720px] w-[600px] m-auto inset-0 bg-(--bg-base-tp) backdrop-blur-lg flex items-stretch justify-start flex-col rounded-2xl border border-(--border) p-12 gap-6 z-50">
+			<div className="fixed h-180 w-150 m-auto inset-0 bg-(--bg-base-tp) backdrop-blur-lg flex items-stretch justify-start flex-col rounded-2xl border border-(--border) p-12 gap-6 z-50 animate-fade-in">
 				<div className="text-3xl font-display text-(--text-primary) select-none mx-auto mt-6">
 					<span className="text-(--accent)">Quest</span>
 					<span>Board</span>
@@ -105,7 +104,7 @@ export default function AuthModal() {
 					<Tab
 						isActive={modalType === "login"}
 						onClick={() => {
-							openModal("login");
+							openAuthModal("login");
 						}}
 					>
 						Вход
@@ -113,7 +112,7 @@ export default function AuthModal() {
 					<Tab
 						isActive={modalType === "register"}
 						onClick={() => {
-							openModal("register");
+							openAuthModal("register");
 						}}
 					>
 						Регистрация
@@ -167,7 +166,7 @@ export default function AuthModal() {
 						{isLogin && (
 							<Link
 								to="/auth/reset-password"
-								onClick={closeModal}
+								onClick={closeAuthModal}
 								className="text-sm text-(--text-secondary) hover:text-(--accent) self-center mt-2"
 							>
 								Сброс пароля

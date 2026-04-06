@@ -13,7 +13,7 @@ export default {
 				"2xl": "24px",
 				xl: "18px",
 				base: "14px",
-				sm: "11px",
+				sm: "12px",
 			},
 			fontFamily: {
 				body: ["var(--font-body)", "sans-serif"],
@@ -21,6 +21,15 @@ export default {
 			},
 			borderWidth: {
 				DEFAULT: "1px",
+			},
+			animation: {
+				"fade-in": "fadeIn 0.3s ease-out",
+			},
+			keyframes: {
+				fadeIn: {
+					from: { opacity: 0, transform: "translateY(-4px)" },
+					to: { opacity: 1, transform: "translateY(0)" },
+				},
 			},
 		},
 	},

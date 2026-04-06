@@ -35,15 +35,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 	}, []);
 
 	const login = (user: IUser | null) => {
-		if (!user) {
-			console.warn("Login called with invalid user:", user);
-			return;
-		}
+		if (!user) return;
 		setUser(user);
 	};
 
-	const logout = () => {
-		setUser(null);
+	const logout = async () => {
+		if (!user) return;
+		try {
+			await api.post("/auth/logout");
+			setUser(null);
+		} catch (err) {
+			console.error("Logout failed:", err);
+		}
 	};
 
 	return (

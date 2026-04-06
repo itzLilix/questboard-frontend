@@ -5,11 +5,87 @@ import useAuth from "../../hooks/useAuth";
 import NotificationBell from "../ui/NotificationBell";
 import useAuthModal from "../../hooks/useAuthModal";
 import Loading from "../ui/Loading";
-import { useEffect } from "react";
+import AvatarImage from "../ui/AvatarImage";
+import { useEffect, useRef, useState } from "react";
+import Menu, { MenuDivider, MenuItem } from "../ui/Menu";
+import Icon from "../ui/Icon";
+import type { IUser } from "../../types/types";
 
 export default function Header() {
-	const { isLoading, user } = useAuth();
-	const { openModal } = useAuthModal();
+	const { isLoading, user, logout } = useAuth();
+	const { openAuthModal } = useAuthModal();
+	const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+
+	const menuRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		const handleClickOutside = (event: MouseEvent) => {
+			if (
+				menuRef.current &&
+				!menuRef.current.contains(event.target as Node)
+			) {
+				setIsProfileMenuOpen(false);
+			}
+		};
+
+		if (isProfileMenuOpen) {
+			document.addEventListener("mousedown", handleClickOutside);
+			return () =>
+				document.removeEventListener("mousedown", handleClickOutside);
+		}
+	}, [isProfileMenuOpen]);
+
+	function ProfileMenu({ user }: { user: IUser }) {
+		return (
+			<Menu isOpen={isProfileMenuOpen} side="right" className="min-w-48">
+				<div className="flex flex-col items-center gap-2 p-3">
+					<AvatarImage user={user} size="md" />
+					<div className="flex flex-col items-start">
+						<span>{user.displayName}</span>
+						<span className="text-sm text-(--text-secondary)">
+							@{user.username}
+						</span>
+					</div>
+				</div>
+				<MenuDivider />
+				<MenuItem
+					onClick={() => {}}
+					before={
+						<Icon
+							name="account_circle"
+							className="text-lg! text-(--text-secondary)!"
+						/>
+					}
+				>
+					Профиль
+				</MenuItem>
+				<MenuItem
+					onClick={() => {}}
+					before={
+						<Icon
+							name="settings"
+							className="text-lg! text-(--text-secondary)!"
+						/>
+					}
+				>
+					Настройки
+				</MenuItem>
+				<MenuItem
+					onClick={() => {
+						logout();
+					}}
+					before={
+						<Icon
+							name="logout"
+							className="text-lg! text-(--error)!"
+						/>
+					}
+				>
+					Выйти
+				</MenuItem>
+			</Menu>
+		);
+	}
 
 	return (
 		<header className="bg-(--bg-base-tp) h-18 z-10 sticky top-0 w-full border-b border-(--border) backdrop-blur-sm">
@@ -23,13 +99,13 @@ export default function Header() {
 				</Link>
 				<div className="flex items-center space-x-4">
 					<Link
-						to="#"
+						to="/"
 						className="text-(--text-secondary) hover:text-(--accent)"
 					>
 						Сессии
 					</Link>
 					<Link
-						to="#"
+						to="/"
 						className="text-(--text-secondary) hover:text-(--accent)"
 					>
 						Мастера
@@ -44,21 +120,21 @@ export default function Header() {
 				) : user ? (
 					<div className="flex items-center gap-6">
 						<NotificationBell />
-						<div className="flex items-center gap-2">
-							<span className="text-(--text-primary)">
-								{user.username}
-							</span>
-							{user.avatarUrl ? (
-								<img
-									src={user.avatarUrl}
-									alt={user.username}
-									className="w-8 h-8 rounded-full"
-								/>
-							) : (
-								<div className="w-8 h-8 rounded-full bg-(--accent) flex items-center justify-center text-sm">
-									{user.username[0].toUpperCase()}
-								</div>
-							)}
+						<div ref={menuRef}>
+							<button
+								className="flex items-center justify-end gap-2 cursor-pointer"
+								onClick={() =>
+									setIsProfileMenuOpen(!isProfileMenuOpen)
+								}
+							>
+								<span className="text-(--text-primary)">
+									{user.username}
+								</span>
+								<AvatarImage user={user} size="sm" />
+							</button>
+							<div className="relative">
+								<ProfileMenu user={user} />
+							</div>
 						</div>
 					</div>
 				) : (
@@ -66,14 +142,14 @@ export default function Header() {
 						<Button
 							variant="secondary"
 							csize="sm"
-							onClick={() => openModal("login")}
+							onClick={() => openAuthModal("login")}
 						>
 							Вход
 						</Button>
 						<Button
-							variant="secondary"
+							variant="primary"
 							csize="sm"
-							onClick={() => openModal("register")}
+							onClick={() => openAuthModal("register")}
 						>
 							Регистрация
 						</Button>

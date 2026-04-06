@@ -1,4 +1,4 @@
-import { FC } from "react";
+import { type FC } from "react";
 
 type TabProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 	isActive?: boolean;
@@ -15,7 +15,7 @@ const Tab: FC<TabProps> = ({
 	return (
 		<button
 			type="button"
-			className={`bg-transparent font-display ${isActive ? "text-(--accent) border-(--accent) border-b-2" : "text-(--text-primary)"} ${className || ""}`}
+			className={`bg-transparent font-display cursor-pointer ${isActive ? "text-(--accent) border-(--accent) border-b-2" : "text-(--text-primary)"} ${className || ""}`}
 			onClick={onClick}
 			{...props}
 		>

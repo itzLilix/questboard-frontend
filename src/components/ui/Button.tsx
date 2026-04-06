@@ -1,18 +1,18 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import clsx from "clsx";
-import { FC } from "react";
+import { type FC } from "react";
 
 const buttonVariants = cva(
-	`
-        inline-flex items-center justify-center 
-        rounded-lg 
-        font-base 
-        transition-colors duration-200 
-        focus:outline-none 
-        focus-visible:ring-2 focus-visible:ring-(--accent) 
-        focus-visible:ring-offset-2 focus-visible:ring-offset-(--bg-base) 
-        active:scale-95 
-        disabled:opacity-50 disabled:pointer-events-none`,
+	`inline-flex items-center justify-center 
+	rounded-lg 
+	font-base 
+	transition-colors duration-200 
+	cursor-pointer
+	focus:outline-none 
+	focus-visible:ring-2 focus-visible:ring-(--accent) 
+	focus-visible:ring-offset-2 focus-visible:ring-offset-(--bg-base) 
+	active:scale-95 
+	disabled:opacity-50 disabled:pointer-events-none`,
 	{
 		variants: {
 			variant: {
