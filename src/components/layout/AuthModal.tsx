@@ -70,7 +70,7 @@ export default function AuthModal() {
 			username: user,
 			password: pwd,
 		});
-		login(response.data.user);
+		login(response.data);
 	};
 
 	const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
