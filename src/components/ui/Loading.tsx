@@ -1,10 +1,11 @@
+import Icon from "./Icon";
+
 export const Loading = ({ className }: { className?: string }) => {
 	return (
-		<span
-			className={`material-symbols-outlined text-(--accent) animate-spin ${className || ""}`}
-		>
-			progress_activity
-		</span>
+		<Icon
+			name="progress_activity"
+			className={`animate-spin text-(--accent) ${className || ""}`}
+		/>
 	);
 };
 

@@ -6,9 +6,7 @@ export default function Icon({
 	className?: string;
 }) {
 	return (
-		<span
-			className={`material-symbols-outlined text-(--text-primary) ${className || ""}`}
-		>
+		<span className={`material-symbols-outlined ${className || ""}`}>
 			{name}
 		</span>
 	);

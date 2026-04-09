@@ -20,19 +20,20 @@ export default function AuthModal() {
 	const { isOpen, modalType, openAuthModal, closeAuthModal } = useAuthModal();
 	const { login } = useAuth();
 
-	const [user, setUser] = useState("");
-	const [pwd, setPwd] = useState("");
 	const [email, setEmail] = useState("");
+	const [username, setUsername] = useState("");
+	const [displayName, setDisplayName] = useState("");
+	const [pwd, setPwd] = useState("");
 	const [errMsg, setErrMsg] = useState("");
 
 	const isLogin = modalType === "login";
 
 	useEffect(() => {
 		setErrMsg("");
-	}, [user, pwd]);
+	}, [username, pwd]);
 
 	useEffect(() => {
-		setUser("");
+		setUsername("");
 		setPwd("");
 		setEmail("");
 		setErrMsg("");
@@ -41,7 +42,7 @@ export default function AuthModal() {
 	if (!isOpen) return null;
 
 	const validateRegister = () => {
-		if (!USER_REGEX.test(user)) {
+		if (!USER_REGEX.test(username)) {
 			return "Имя пользователя: 3-32 символа, буквы и цифры";
 		}
 		if (!PWD_REGEX.test(pwd)) {
@@ -67,8 +68,9 @@ export default function AuthModal() {
 
 		const response = await api.post(REGISTER_URL, {
 			email: email,
-			username: user,
+			username: username,
 			password: pwd,
+			displayName: displayName === "" ? username : displayName,
 		});
 		login(response.data);
 	};
@@ -147,8 +149,20 @@ export default function AuthModal() {
 								csize="md"
 								className="w-full"
 								name="username"
-								onChange={(e) => setUser(e.target.value)}
+								onChange={(e) => setUsername(e.target.value)}
 								required
+							/>
+						</div>
+					)}
+
+					{!isLogin && (
+						<div className="flex flex-col gap-2">
+							<FieldLabel>Отображаемое имя</FieldLabel>
+							<Input
+								csize="md"
+								className="w-full"
+								name="displayName"
+								onChange={(e) => setDisplayName(e.target.value)}
 							/>
 						</div>
 					)}
