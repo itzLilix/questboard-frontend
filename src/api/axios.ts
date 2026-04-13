@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { type AxiosResponse } from "axios";
 
 const BASE_URL = "http://localhost:3000";
 
@@ -7,16 +7,22 @@ export const api = axios.create({
 	withCredentials: true,
 });
 
+let refreshPromise: Promise<AxiosResponse> | null = null;
+
+export function refreshTokens() {
+	if (!refreshPromise) {
+		refreshPromise = api.get("/auth/refresh").finally(() => {
+			refreshPromise = null;
+		});
+	}
+	return refreshPromise;
+}
+
 api.interceptors.response.use(
 	(response) => response,
 	async (error) => {
 		const originalRequest = error.config;
-		const skipRefresh = [
-			"/auth/me",
-			"/auth/login",
-			"/auth/signup",
-			"/auth/refresh",
-		];
+		const skipRefresh = ["/auth/login", "/auth/signup", "/auth/refresh"];
 
 		if (
 			error.response?.status === 401 &&
@@ -25,7 +31,7 @@ api.interceptors.response.use(
 		) {
 			originalRequest._retry = true;
 			try {
-				await api.get("/auth/refresh");
+				await refreshTokens();
 				return api(originalRequest);
 			} catch {
 				return Promise.reject(error);

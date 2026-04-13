@@ -1,6 +1,6 @@
 import { createContext, useState, type ReactNode, useEffect } from "react";
 import { type IUser } from "../types/types";
-import { api } from "../api/axios";
+import { api, refreshTokens } from "../api/axios";
 import { getCookie } from "../utils/cookie";
 
 const AuthContext = createContext({
@@ -24,14 +24,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 		}
 
 		if (Date.now() / 1000 > Number(exp) - 30) {
-			api.get("/auth/refresh")
-				.then((r) => {
-					setUser(r.data);
-					localStorage.setItem("user", JSON.stringify(r.data));
+			refreshTokens()
+				.then((res) => {
+					setUser(res.data);
+					localStorage.setItem("user", JSON.stringify(res.data));
 				})
 				.catch(() => {
-					setUser(null);
 					localStorage.removeItem("user");
+					setUser(null);
 				})
 				.finally(() => setIsLoading(false));
 		} else {
