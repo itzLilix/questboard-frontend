@@ -1,6 +1,7 @@
 import { createContext, useState, type ReactNode, useEffect } from "react";
 import { type IUser } from "../types/types";
 import { api } from "../api/axios";
+import { getCookie } from "../utils/cookie";
 
 const AuthContext = createContext({
 	isLoading: false as boolean,
@@ -14,29 +15,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 	const [user, setUser] = useState<IUser | null>(null);
 
 	useEffect(() => {
-		api.get("/auth/me")
-			.then((response) => {
-				setUser(response.data);
-			})
-			.catch(async (error) => {
-				if (error.response?.status === 401) {
-					try {
-						await api.get("/auth/refresh");
-						const response = await api.get("/auth/me");
-						setUser(response.data);
-					} catch {
-						setUser(null);
-					}
-				}
-			})
-			.finally(() => {
-				setIsLoading(false);
-			});
+		const stored = localStorage.getItem("user");
+		const exp = getCookie("access_token_exp");
+
+		if (!stored || !exp) {
+			setIsLoading(false);
+			return;
+		}
+
+		if (Date.now() / 1000 > Number(exp) - 30) {
+			api.get("/auth/refresh")
+				.then((r) => {
+					setUser(r.data);
+					localStorage.setItem("user", JSON.stringify(r.data));
+				})
+				.catch(() => {
+					setUser(null);
+					localStorage.removeItem("user");
+				})
+				.finally(() => setIsLoading(false));
+		} else {
+			setUser(JSON.parse(stored));
+			setIsLoading(false);
+		}
 	}, []);
 
 	const login = (user: IUser | null) => {
 		if (!user) return;
 		setUser(user);
+		localStorage.setItem("user", JSON.stringify(user));
 	};
 
 	const logout = async () => {
@@ -44,6 +51,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 		try {
 			await api.post("/auth/logout");
 			setUser(null);
+			localStorage.removeItem("user");
 		} catch (err) {
 			console.error("Logout failed:", err);
 		}
