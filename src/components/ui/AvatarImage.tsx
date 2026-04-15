@@ -1,11 +1,11 @@
-import type { IUser } from "../../types/types";
-
 export default function AvatarImage({
-	user,
+	src,
+	alt,
 	size = "sm",
 }: {
-	user: IUser;
-	size: "sm" | "md" | "lg";
+	src?: string;
+	alt: string;
+	size: "sm" | "md" | "lg" | "xl";
 }) {
 	const sizeClasses = {
 		sm: "w-6 h-6 text-sm",
@@ -16,17 +16,17 @@ export default function AvatarImage({
 
 	return (
 		<>
-			{user.avatarUrl ? (
+			{src ? (
 				<img
-					src={user.avatarUrl}
-					alt={user.username}
+					src={src}
+					alt={alt}
 					className={`${sizeClasses[size]} rounded-full`}
 				/>
 			) : (
 				<div
 					className={`${sizeClasses[size]} rounded-full bg-(--accent) flex items-center justify-center`}
 				>
-					{user.username[0].toUpperCase()}
+					{alt[0].toUpperCase()}
 				</div>
 			)}
 		</>

@@ -1,4 +1,4 @@
-import { FC } from "react";
+import { type FC } from "react";
 
 type InputProps = React.InputHTMLAttributes<HTMLInputElement> & {
 	csize?: "sm" | "md";

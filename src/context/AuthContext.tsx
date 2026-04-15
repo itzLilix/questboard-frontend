@@ -6,7 +6,7 @@ import { getCookie } from "../utils/cookie";
 const AuthContext = createContext({
 	isLoading: false as boolean,
 	user: null as IUser | null,
-	login: (user: IUser) => {},
+	login: (_user: IUser) => {},
 	logout: () => {},
 });
 

@@ -39,7 +39,11 @@ export default function Header() {
 		return (
 			<Menu isOpen={isProfileMenuOpen} side="right" className="min-w-48">
 				<div className="flex flex-col items-center gap-2 p-3">
-					<AvatarImage user={user} size="md" />
+					<AvatarImage
+						src={user.avatarUrl}
+						alt={user.username}
+						size="md"
+					/>
 					<div className="flex flex-col items-start">
 						<span>{user.displayName}</span>
 						<span className="text-sm text-(--text-secondary)">
@@ -130,7 +134,11 @@ export default function Header() {
 								<span className="text-(--text-primary)">
 									{user.username}
 								</span>
-								<AvatarImage user={user} size="sm" />
+								<AvatarImage
+									src={user.avatarUrl}
+									alt={user.username}
+									size="sm"
+								/>
 							</button>
 							<div className="relative">
 								<ProfileMenu user={user} />
