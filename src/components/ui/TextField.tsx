@@ -28,7 +28,7 @@ const TextField: React.FC<TextFieldProps> = ({
 		>
 			{title && (
 				<h2
-					className={`flex items-center gap-2 text-(--text-secondary) font-display text-lg`}
+					className={`flex items-center gap-2 text-(--text-secondary) font-display text-lg select-none`}
 				>
 					{isShrinkable && (
 						<span

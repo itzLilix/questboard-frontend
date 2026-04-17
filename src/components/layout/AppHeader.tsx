@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
 import useAuth from "../../hooks/useAuth";
@@ -9,12 +9,24 @@ import AvatarImage from "../ui/AvatarImage";
 import { useEffect, useRef, useState } from "react";
 import Menu, { MenuDivider, MenuItem } from "../ui/Menu";
 import Icon from "../ui/Icon";
+import { api } from "../../api/axios";
 import type { IUser } from "../../types/types";
 
 export default function Header() {
-	const { isLoading, user, logout } = useAuth();
+	const { isLoading, user, login, logout } = useAuth();
 	const { openAuthModal } = useAuthModal();
+	const navigate = useNavigate();
 	const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+
+	const handleProfileClick = async () => {
+		setIsProfileMenuOpen(false);
+		try {
+			const res = await api.get<IUser>("/users/me");
+			navigate(`/users/${res.data.username}`);
+		} catch (err) {
+			console.error("Failed to fetch current user:", err);
+		}
+	};
 
 	const menuRef = useRef<HTMLDivElement>(null);
 
@@ -53,7 +65,7 @@ export default function Header() {
 				</div>
 				<MenuDivider />
 				<MenuItem
-					onClick={() => {}}
+					onClick={handleProfileClick}
 					before={
 						<Icon
 							name="account_circle"
