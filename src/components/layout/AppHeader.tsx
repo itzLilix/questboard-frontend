@@ -1,20 +1,96 @@
 import { Link, useNavigate } from "react-router-dom";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
-import useAuth from "../../hooks/useAuth";
-import NotificationBell from "../ui/NotificationBell";
-import useAuthModal from "../../hooks/useAuthModal";
+import useAuth from "../../features/auth/useAuth";
+import NotificationBell from "../../features/notifications/NotificationBell";
+import useAuthModal from "../../features/auth/useAuthModal";
 import Loading from "../ui/Loading";
 import AvatarImage from "../ui/AvatarImage";
 import { useEffect, useRef, useState } from "react";
 import Menu, { MenuDivider, MenuItem } from "../ui/Menu";
 import Icon from "../ui/Icon";
-import type { IUser } from "../../types/types";
+import type { IUser } from "../../types/user";
+import { useLogoutMutation } from "../../features/auth/queries";
 
-export default function Header() {
-	const { isLoading, user, logout } = useAuth();
-	const { openAuthModal } = useAuthModal();
+type ProfileMenuProps = {
+	isOpen: boolean;
+	user: IUser;
+	onClose: () => void;
+};
+
+function ProfileMenu({ isOpen, user, onClose }: ProfileMenuProps) {
 	const navigate = useNavigate();
+	const logout = useLogoutMutation();
+
+	const handleProfileClick = () => {
+		onClose();
+		navigate(`/users/${user.username}`);
+	};
+
+	const handleSettingsClick = () => {
+		onClose();
+		navigate("/settings");
+	};
+
+	const handleLogoutClick = async () => {
+		await logout.mutateAsync();
+		onClose();
+	};
+
+	return (
+		<Menu isOpen={isOpen} side="right" className="min-w-48">
+			<div className="flex flex-col items-center gap-2 p-3">
+				<AvatarImage
+					src={user.avatarUrl}
+					alt={user.username}
+					size="md"
+				/>
+				<div className="flex flex-col items-start">
+					<span>{user.displayName}</span>
+					<span className="text-sm text-(--text-secondary)">
+						@{user.username}
+					</span>
+				</div>
+			</div>
+			<MenuDivider />
+			<MenuItem
+				onClick={handleProfileClick}
+				before={
+					<Icon
+						name="account_circle"
+						className="text-lg! text-(--text-secondary)!"
+					/>
+				}
+			>
+				Профиль
+			</MenuItem>
+			<MenuItem
+				onClick={handleSettingsClick}
+				before={
+					<Icon
+						name="settings"
+						className="text-lg! text-(--text-secondary)!"
+					/>
+				}
+			>
+				Настройки
+			</MenuItem>
+			<MenuItem
+				onClick={handleLogoutClick}
+				before={
+					<Icon name="logout" className="text-lg! text-(--error)!" />
+				}
+				disabled={logout.isPending}
+			>
+				Выйти
+			</MenuItem>
+		</Menu>
+	);
+}
+
+export default function AppHeader() {
+	const { isLoading, user } = useAuth();
+	const { openAuthModal } = useAuthModal();
 	const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
 	const menuRef = useRef<HTMLDivElement>(null);
@@ -35,76 +111,6 @@ export default function Header() {
 				document.removeEventListener("mousedown", handleClickOutside);
 		}
 	}, [isProfileMenuOpen]);
-
-	function ProfileMenu({ user }: { user: IUser }) {
-		const handleProfileClick = async () => {
-			setIsProfileMenuOpen(false);
-			try {
-				navigate(`/users/${user?.username}`);
-			} catch (err) {
-				console.error("Failed to fetch current user:", err);
-			}
-		};
-
-		const handleSettingsClick = () => {
-			setIsProfileMenuOpen(false);
-			navigate("/settings");
-		};
-
-		return (
-			<Menu isOpen={isProfileMenuOpen} side="right" className="min-w-48">
-				<div className="flex flex-col items-center gap-2 p-3">
-					<AvatarImage
-						src={user.avatarUrl}
-						alt={user.username}
-						size="md"
-					/>
-					<div className="flex flex-col items-start">
-						<span>{user.displayName}</span>
-						<span className="text-sm text-(--text-secondary)">
-							@{user.username}
-						</span>
-					</div>
-				</div>
-				<MenuDivider />
-				<MenuItem
-					onClick={handleProfileClick}
-					before={
-						<Icon
-							name="account_circle"
-							className="text-lg! text-(--text-secondary)!"
-						/>
-					}
-				>
-					Профиль
-				</MenuItem>
-				<MenuItem
-					onClick={handleSettingsClick}
-					before={
-						<Icon
-							name="settings"
-							className="text-lg! text-(--text-secondary)!"
-						/>
-					}
-				>
-					Настройки
-				</MenuItem>
-				<MenuItem
-					onClick={() => {
-						logout();
-					}}
-					before={
-						<Icon
-							name="logout"
-							className="text-lg! text-(--error)!"
-						/>
-					}
-				>
-					Выйти
-				</MenuItem>
-			</Menu>
-		);
-	}
 
 	return (
 		<header className="bg-(--bg-base-tp) h-18 z-10 sticky top-0 w-full border-b border-(--border) backdrop-blur-sm">
@@ -156,7 +162,11 @@ export default function Header() {
 								/>
 							</button>
 							<div className="relative">
-								<ProfileMenu user={user} />
+								<ProfileMenu
+									isOpen={isProfileMenuOpen}
+									user={user}
+									onClose={() => setIsProfileMenuOpen(false)}
+								/>
 							</div>
 						</div>
 					</div>

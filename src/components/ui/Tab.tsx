@@ -1,17 +1,15 @@
-import { type FC } from "react";
-
 type TabProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 	isActive?: boolean;
 	onClick: () => void;
 };
 
-const Tab: FC<TabProps> = ({
+export default function Tab({
 	isActive = false,
 	onClick,
 	className,
 	children,
 	...props
-}) => {
+}: TabProps) {
 	return (
 		<button
 			type="button"
@@ -22,6 +20,4 @@ const Tab: FC<TabProps> = ({
 			{children}
 		</button>
 	);
-};
-
-export default Tab;
+}

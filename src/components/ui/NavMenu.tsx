@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { type FC, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { NavLink } from "react-router-dom";
 
 type NavMenuProps = {
@@ -7,13 +7,13 @@ type NavMenuProps = {
 	className?: string;
 };
 
-export const NavMenu: FC<NavMenuProps> = ({ children, className }) => {
+export function NavMenu({ children, className }: NavMenuProps) {
 	return (
 		<nav className={clsx("flex flex-col gap-3 w-full", className)}>
 			{children}
 		</nav>
 	);
-};
+}
 
 type NavMenuItemProps = {
 	to: string;
@@ -23,13 +23,13 @@ type NavMenuItemProps = {
 	className?: string;
 };
 
-export const NavMenuItem: FC<NavMenuItemProps> = ({
+export function NavMenuItem({
 	to,
 	children,
 	before,
 	end,
 	className,
-}) => {
+}: NavMenuItemProps) {
 	return (
 		<NavLink
 			to={to}
@@ -50,6 +50,4 @@ export const NavMenuItem: FC<NavMenuItemProps> = ({
 			<span className="grow">{children}</span>
 		</NavLink>
 	);
-};
-
-export default NavMenu;
+}

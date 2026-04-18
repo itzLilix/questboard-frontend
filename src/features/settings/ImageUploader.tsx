@@ -15,13 +15,13 @@ const variantClasses = {
 	banner: "w-128 h-24 rounded-lg",
 };
 
-const ImageUploader: React.FC<ImageUploaderProps> = ({
+export default function ImageUploader({
 	currentUrl,
 	file,
 	onChange,
 	variant,
 	maxSizeMB = 5,
-}) => {
+}: ImageUploaderProps) {
 	const inputRef = useRef<HTMLInputElement>(null);
 	const [isDragging, setIsDragging] = useState(false);
 
@@ -101,6 +101,4 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
 			</div>
 		</div>
 	);
-};
-
-export default ImageUploader;
+}

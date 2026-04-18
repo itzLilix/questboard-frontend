@@ -3,17 +3,18 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.tsx";
 import { BrowserRouter } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext.tsx";
-import { AuthModalProvider } from "./context/AuthModalContext.tsx";
+import { AuthModalProvider } from "./features/auth/AuthModalContext";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "./api/queryClient.ts";
 
 createRoot(document.getElementById("root")!).render(
 	<StrictMode>
 		<BrowserRouter>
-			<AuthProvider>
+			<QueryClientProvider client={queryClient}>
 				<AuthModalProvider>
 					<App />
 				</AuthModalProvider>
-			</AuthProvider>
+			</QueryClientProvider>
 		</BrowserRouter>
 	</StrictMode>,
 );

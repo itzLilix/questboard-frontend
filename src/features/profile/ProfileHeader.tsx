@@ -1,13 +1,12 @@
-import BannerImage from "../ui/BannerImage";
-import { type IProfile } from "../../types/types";
-import AvatarImage from "../ui/AvatarImage";
-import Button from "../ui/Button";
-import Icon from "../ui/Icon";
-import TextField from "../ui/TextField";
+import BannerImage from "./BannerImage";
+import { type IProfile } from "../../types/profile";
+import AvatarImage from "../../components/ui/AvatarImage";
+import Button from "../../components/ui/Button";
+import Icon from "../../components/ui/Icon";
+import TextField from "../../components/ui/TextField";
 import { Link, useNavigate } from "react-router-dom";
-import { api } from "../../api/axios";
-import useAuthModal from "../../hooks/useAuthModal";
-import { useEffect, useState } from "react";
+import useAuthModal from "../auth/useAuthModal";
+import { useFollowMutation, useUnfollowMutation } from "./queries";
 
 type ProfileHeaderProps = {
 	profile: IProfile | null;
@@ -36,40 +35,12 @@ export function ProfileInfo({ profile, isOwner }: ProfileInfoProps) {
 	if (!profile) return null;
 
 	const { openAuthModal } = useAuthModal();
-	const [isFollowed, setIsFollowed] = useState(profile.isFollowed);
 	const navigate = useNavigate();
 
-	useEffect(() => {
-		setIsFollowed(profile.isFollowed);
-	}, [profile.isFollowed]);
+	const follow = useFollowMutation(profile.username);
+	const unfollow = useUnfollowMutation(profile.username);
 
-	const handleFollow = async () => {
-		await api
-			.post(`/users/${profile.username}/follow`)
-			.then(() => {
-				profile.isFollowed = true;
-				setIsFollowed(true);
-			})
-			.catch((err) => {
-				if (err.response?.status === 401) {
-					openAuthModal("login");
-				}
-			});
-	};
-
-	const handleUnfollow = async () => {
-		await api
-			.delete(`/users/${profile.username}/follow`)
-			.then(() => {
-				profile.isFollowed = false;
-				setIsFollowed(false);
-			})
-			.catch((err) => {
-				if (err.response?.status === 401) {
-					openAuthModal("login");
-				}
-			});
-	};
+	const isFollowed = profile.isFollowed;
 
 	return (
 		<div className="w-full flex flex-col items-start gap-4 p-6">
@@ -129,7 +100,7 @@ export function ProfileInfo({ profile, isOwner }: ProfileInfoProps) {
 					<Button
 						variant="secondary"
 						csize="sm"
-						onClick={() => handleUnfollow()}
+						onClick={() => unfollow.mutate()}
 					>
 						Отписаться
 					</Button>
@@ -137,7 +108,13 @@ export function ProfileInfo({ profile, isOwner }: ProfileInfoProps) {
 					<Button
 						variant="primary"
 						csize="sm"
-						onClick={() => handleFollow()}
+						onClick={() =>
+							follow.mutate(undefined, {
+								onError: (e) =>
+									(e as any).status === 401 &&
+									openAuthModal("login"),
+							})
+						}
 					>
 						Отслеживать
 					</Button>

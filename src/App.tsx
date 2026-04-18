@@ -1,13 +1,13 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import AppHeader from "./components/layout/AppHeader";
-import AuthModal from "./components/layout/AuthModal";
-import ProfilePage from "./pages/ProfilePage";
+import AuthModal from "./features/auth/AuthModal";
+import ProfilePage from "./features/profile/ProfilePage";
 import SettingsLayout from "./components/layout/SettingsLayout";
-import RequireAuth from "./components/layout/RequireAuth";
-import NotificationSettings from "./pages/Settings/NotificationSettings";
-import SecuritySettings from "./pages/Settings/SecuritySettings";
-import ProfileSettings from "./pages/Settings/ProfileSettings";
-import GeneralSettings from "./pages/Settings/GeneralSettings";
+import RequireAuth from "./features/auth/RequireAuth";
+import NotificationSettings from "./features/settings/NotificationSettings";
+import SecuritySettings from "./features/settings/SecuritySettings";
+import ProfileSettings from "./features/settings/ProfileSettings";
+import GeneralSettings from "./features/settings/GeneralSettings";
 
 function App() {
 	return (

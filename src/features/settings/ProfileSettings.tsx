@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Button from "../../components/ui/Button";
 import ImageUploader from "./ImageUploader";
-import useAuth from "../../hooks/useAuth";
+import useAuth from "../auth/useAuth";
 import { InputLabel, LabeledInput } from "../../components/ui/InputLabel";
 import Input from "../../components/ui/Input";
 import InputText from "../../components/ui/InputText";

@@ -7,19 +7,19 @@ type TextFieldProps = React.HTMLAttributes<HTMLDivElement> &
 		| { title?: never; isShrinkable?: false }
 	);
 
-const TextField: React.FC<TextFieldProps> = ({
+export default function TextField({
 	title,
 	isShrinkable = false,
 	children,
 	className,
 	...props
-}) => {
+}: TextFieldProps) {
 	const [isExpanded, toggleIsExpanded] = useState(true);
 
 	return (
 		<div
 			className={`bg-(--bg-surface) rounded-xl p-3 w-full border border-(--border) flex flex-col gap-3
-                ${isShrinkable ? "cursor-pointer hover:bg-(--bg-elevated)" : ""} 
+                ${isShrinkable ? "cursor-pointer hover:bg-(--bg-elevated)" : ""}
                 ${className || ""}`}
 			onClick={() =>
 				title && isShrinkable && toggleIsExpanded(!isExpanded)
@@ -45,6 +45,4 @@ const TextField: React.FC<TextFieldProps> = ({
 			{isExpanded && children}
 		</div>
 	);
-};
-
-export default TextField;
+}

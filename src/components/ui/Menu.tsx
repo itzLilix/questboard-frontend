@@ -1,5 +1,5 @@
 import { cva } from "class-variance-authority";
-import type { FC } from "react";
+import type { ButtonHTMLAttributes, HTMLAttributes } from "react";
 import type React from "react";
 
 type MenuProps = React.HtmlHTMLAttributes<HTMLDivElement> & {
@@ -21,11 +21,18 @@ const sideClasses = cva(
 	},
 );
 
-export const MenuItem: FC<{
+type MenuItemProps = {
 	children: React.ReactNode;
 	onClick: () => void;
 	before?: React.ReactNode;
-}> = ({ children, onClick, before, ...props }) => {
+} & ButtonHTMLAttributes<HTMLButtonElement>;
+
+export function MenuItem({
+	children,
+	onClick,
+	before,
+	...props
+}: MenuItemProps) {
 	return (
 		<button
 			className="text-base font-body font-(--text-primary) rounded-xl cursor-pointer hover:bg-(--bg-elevated) px-3 py-2 flex items-center gap-2 w-full text-left"
@@ -38,19 +45,19 @@ export const MenuItem: FC<{
 			<span className="grow">{children}</span>
 		</button>
 	);
-};
+}
 
-export const MenuDivider: FC = () => {
+export function MenuDivider() {
 	return <div className="border-t border-(--border) my-1 w-full" />;
-};
+}
 
-const Menu: FC<MenuProps> = ({
+export default function Menu({
 	isOpen,
 	side,
 	children,
 	className,
 	...props
-}) => {
+}: MenuProps) {
 	if (!isOpen) return null;
 
 	return (
@@ -58,6 +65,4 @@ const Menu: FC<MenuProps> = ({
 			{children}
 		</div>
 	);
-};
-
-export default Menu;
+}

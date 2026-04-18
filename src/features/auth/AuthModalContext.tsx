@@ -2,18 +2,20 @@ import { createContext, useState } from "react";
 
 type ModalType = "login" | "register" | null;
 
-const AuthModalContext = createContext({
-	isOpen: false as boolean,
-	modalType: null as ModalType,
-	openAuthModal: (type: "login" | "register") => {},
-	closeAuthModal: () => {},
-});
+type AuthModalContextValue = {
+	isOpen: boolean;
+	modalType: ModalType;
+	openAuthModal: (type: "login" | "register") => void;
+	closeAuthModal: () => void;
+};
 
-export const AuthModalProvider = ({
+const AuthModalContext = createContext<AuthModalContextValue | null>(null);
+
+export function AuthModalProvider({
 	children,
 }: {
 	children: React.ReactNode;
-}) => {
+}) {
 	const [isOpen, setIsOpen] = useState(false);
 	const [modalType, setModalType] = useState<ModalType>(null);
 
@@ -39,6 +41,6 @@ export const AuthModalProvider = ({
 			{children}
 		</AuthModalContext.Provider>
 	);
-};
+}
 
 export default AuthModalContext;

@@ -1,6 +1,9 @@
 import { useContext } from "react";
-import AuthModalContext from "../context/AuthModalContext";
+import AuthModalContext from "./AuthModalContext";
 
 export default function useAuthModal() {
-	return useContext(AuthModalContext);
+	const ctx = useContext(AuthModalContext);
+	if (!ctx)
+		throw new Error("useAuthModal must be used within AuthModalProvider");
+	return ctx;
 }

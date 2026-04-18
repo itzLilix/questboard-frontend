@@ -1,6 +1,5 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import clsx from "clsx";
-import { type FC } from "react";
 
 const buttonVariants = cva(
 	`inline-flex items-center justify-center 
@@ -39,7 +38,7 @@ const buttonVariants = cva(
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> &
 	VariantProps<typeof buttonVariants>;
 
-const Button: FC<ButtonProps> = ({
+export default function Button({
 	className,
 	variant,
 	csize,
@@ -47,7 +46,7 @@ const Button: FC<ButtonProps> = ({
 	disabled,
 	children,
 	...props
-}) => {
+}: ButtonProps) {
 	return (
 		<button
 			type="button"
@@ -61,6 +60,4 @@ const Button: FC<ButtonProps> = ({
 			{children}
 		</button>
 	);
-};
-
-export default Button;
+}

@@ -1,21 +1,15 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import useAuth from "../hooks/useAuth";
-import ProfileHeader from "../components/layout/ProfileHeader";
-import { api } from "../api/axios";
-import type { IProfile } from "../types/types";
+import useAuth from "../auth/useAuth";
+import ProfileHeader from "./ProfileHeader";
+import { api } from "../../api/axios";
+import type { IProfile } from "../../types/profile";
+import { useProfileQuery } from "./queries";
 
 export default function ProfilePage() {
 	const { username } = useParams<{ username: string }>();
 	const { user } = useAuth();
-	const [profile, setProfile] = useState<IProfile | null>(null);
-
-	useEffect(() => {
-		if (!username) return;
-		api.get<IProfile>(`/users/${username}`)
-			.then((res) => setProfile(res.data))
-			.catch(() => setProfile(null));
-	}, [username]);
+	const { data: profile, isLoading } = useProfileQuery(username);
 
 	const isOwner = user?.id === profile?.id && profile !== null;
 

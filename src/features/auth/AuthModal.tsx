@@ -1,16 +1,12 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import useAuthModal from "../../hooks/useAuthModal";
-import Input from "../ui/Input";
-import Tab from "../ui/Tab";
-import Button from "../ui/Button";
-import { api } from "../../api/axios";
-import useAuth from "../../hooks/useAuth";
-import { LabeledInput } from "../ui/InputLabel";
+import useAuthModal from "./useAuthModal";
+import Input from "../../components/ui/Input";
+import Tab from "../../components/ui/Tab";
+import Button from "../../components/ui/Button";
+import { LabeledInput } from "../../components/ui/InputLabel";
 import { mapError } from "../../api/mapError";
-
-const LOGIN_URL = "/auth/login";
-const REGISTER_URL = "/auth/signup";
+import { useLoginMutation, useSignupMutation } from "./queries";
 
 const USER_REGEX = /^[A-Za-z][A-Za-z0-9-_]{2,32}$/;
 const PWD_REGEX =
@@ -18,7 +14,6 @@ const PWD_REGEX =
 
 export default function AuthModal() {
 	const { isOpen, modalType, openAuthModal, closeAuthModal } = useAuthModal();
-	const { login } = useAuth();
 
 	const [email, setEmail] = useState("");
 	const [username, setUsername] = useState("");
@@ -37,7 +32,10 @@ export default function AuthModal() {
 		setPwd("");
 		setEmail("");
 		setErrMsg("");
-	}, [modalType]);
+	}, [modalType, isOpen]);
+
+	const login = useLoginMutation();
+	const signup = useSignupMutation();
 
 	if (!isOpen) return null;
 
@@ -51,28 +49,18 @@ export default function AuthModal() {
 		return null;
 	};
 
-	const handleLogin = async () => {
-		const response = await api.post(LOGIN_URL, {
-			email: email,
-			password: pwd,
-		});
-		console.log(response);
-		login(response.data);
-	};
-
-	const handleRegister = async () => {
+	const handleSignup = async () => {
 		const validationError = validateRegister();
 		if (validationError) {
 			throw new Error(validationError);
 		}
 
-		const response = await api.post(REGISTER_URL, {
-			email: email,
-			username: username,
+		await signup.mutateAsync({
+			email,
+			username,
 			password: pwd,
-			displayName: displayName === "" ? username : displayName,
+			displayName,
 		});
-		login(response.data);
 	};
 
 	const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
@@ -80,9 +68,9 @@ export default function AuthModal() {
 
 		try {
 			if (modalType === "login") {
-				await handleLogin();
+				await login.mutateAsync({ email, password: pwd });
 			} else {
-				await handleRegister();
+				await handleSignup();
 			}
 			closeAuthModal();
 		} catch (err) {
@@ -189,6 +177,7 @@ export default function AuthModal() {
 						csize="md"
 						type="submit"
 						className="mx-6 mt-6"
+						disabled={login.isPending || signup.isPending}
 					>
 						{isLogin ? "Войти" : "Зарегистрироваться"}
 					</Button>

@@ -1,10 +1,9 @@
-import { useContext } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
-import AuthContext from "../../context/AuthContext";
-import Loading from "../ui/Loading";
+import useAuth from "./useAuth";
+import Loading from "../../components/ui/Loading";
 
-const RequireAuth = () => {
-	const { user, isLoading } = useContext(AuthContext);
+export default function RequireAuth() {
+	const { user, isLoading } = useAuth();
 	const location = useLocation();
 
 	if (isLoading)
@@ -21,6 +20,4 @@ const RequireAuth = () => {
 		);
 
 	return <Outlet />;
-};
-
-export default RequireAuth;
+}

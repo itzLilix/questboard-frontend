@@ -1,17 +1,19 @@
-import { type FC } from "react";
-
-type InputProps = React.InputHTMLAttributes<HTMLTextAreaElement> & {
+type InputTextProps = React.InputHTMLAttributes<HTMLTextAreaElement> & {
 	csize?: "sm" | "md";
 };
 
-const Input: FC<InputProps> = ({ csize = "md", className, ...props }) => {
+export default function InputText({
+	csize = "md",
+	className,
+	...props
+}: InputTextProps) {
 	return (
 		<textarea
 			className={`
                 bg-(--bg-surface)
                 text-(--text-primary)
                 border border-(--border)
-                rounded-xl 
+                rounded-xl
                 w-full ${csize === "sm" ? "max-w-80" : ""}
                 px-3 ${csize === "sm" ? "py-2" : "py-3"}
                 focus:outline-none focus:ring-2 focus:ring-(--accent)
@@ -23,6 +25,4 @@ const Input: FC<InputProps> = ({ csize = "md", className, ...props }) => {
 			{...props}
 		/>
 	);
-};
-
-export default Input;
+}

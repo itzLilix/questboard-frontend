@@ -1,6 +1,6 @@
-import { useContext } from "react";
-import AuthContext from "../context/AuthContext";
+import { useCurrentUser } from "./queries";
 
 export default function useAuth() {
-	return useContext(AuthContext);
+	const { data: user, isLoading } = useCurrentUser();
+	return { user: user ?? null, isLoading };
 }
