@@ -6,7 +6,7 @@ import Tab from "../ui/Tab";
 import Button from "../ui/Button";
 import { api } from "../../api/axios";
 import useAuth from "../../hooks/useAuth";
-import FieldLabel from "../ui/InputLabel";
+import { LabeledInput } from "../ui/InputLabel";
 import { mapError } from "../../api/mapError";
 
 const LOGIN_URL = "/auth/login";
@@ -130,8 +130,7 @@ export default function AuthModal() {
 						{errMsg}
 					</span>
 
-					<div className="flex flex-col gap-2">
-						<FieldLabel>Электронная почта</FieldLabel>
+					<LabeledInput label="Электронная почта">
 						<Input
 							csize="md"
 							className="w-full"
@@ -140,11 +139,10 @@ export default function AuthModal() {
 							onChange={(e) => setEmail(e.target.value)}
 							required
 						/>
-					</div>
+					</LabeledInput>
 
 					{!isLogin && (
-						<div className="flex flex-col gap-2">
-							<FieldLabel>Имя пользователя</FieldLabel>
+						<LabeledInput label="Имя пользователя">
 							<Input
 								csize="md"
 								className="w-full"
@@ -152,23 +150,21 @@ export default function AuthModal() {
 								onChange={(e) => setUsername(e.target.value)}
 								required
 							/>
-						</div>
+						</LabeledInput>
 					)}
 
 					{!isLogin && (
-						<div className="flex flex-col gap-2">
-							<FieldLabel>Отображаемое имя</FieldLabel>
+						<LabeledInput label="Отображаемое имя (необязательно)">
 							<Input
 								csize="md"
 								className="w-full"
 								name="displayName"
 								onChange={(e) => setDisplayName(e.target.value)}
 							/>
-						</div>
+						</LabeledInput>
 					)}
 
-					<div className="flex flex-col gap-2">
-						<FieldLabel>Пароль</FieldLabel>
+					<LabeledInput label="Пароль">
 						<Input
 							type="password"
 							csize="md"
@@ -186,7 +182,7 @@ export default function AuthModal() {
 								Сброс пароля
 							</Link>
 						)}
-					</div>
+					</LabeledInput>
 
 					<Button
 						variant="primary"

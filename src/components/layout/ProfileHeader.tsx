@@ -1,13 +1,16 @@
 import BannerImage from "../ui/BannerImage";
-import { type IUser } from "../../types/types";
+import { type IProfile } from "../../types/types";
 import AvatarImage from "../ui/AvatarImage";
 import Button from "../ui/Button";
 import Icon from "../ui/Icon";
 import TextField from "../ui/TextField";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { api } from "../../api/axios";
+import useAuthModal from "../../hooks/useAuthModal";
+import { useEffect, useState } from "react";
 
 type ProfileHeaderProps = {
-	profile: IUser | null;
+	profile: IProfile | null;
 	isOwner: boolean;
 };
 
@@ -18,19 +21,56 @@ export default function ProfileHeader({
 	if (!profile) return null;
 	return (
 		<>
-			<BannerImage src={profile.bannerUrl} />
+			<BannerImage src={profile.bannerUrl} size="full" />
 			<ProfileInfo profile={profile} isOwner={isOwner} />
 		</>
 	);
 }
 
 type ProfileInfoProps = {
-	profile: IUser | null;
+	profile: IProfile | null;
 	isOwner: boolean;
 };
 
 export function ProfileInfo({ profile, isOwner }: ProfileInfoProps) {
 	if (!profile) return null;
+
+	const { openAuthModal } = useAuthModal();
+	const [isFollowed, setIsFollowed] = useState(profile.isFollowed);
+	const navigate = useNavigate();
+
+	useEffect(() => {
+		setIsFollowed(profile.isFollowed);
+	}, [profile.isFollowed]);
+
+	const handleFollow = async () => {
+		await api
+			.post(`/users/${profile.username}/follow`)
+			.then(() => {
+				profile.isFollowed = true;
+				setIsFollowed(true);
+			})
+			.catch((err) => {
+				if (err.response?.status === 401) {
+					openAuthModal("login");
+				}
+			});
+	};
+
+	const handleUnfollow = async () => {
+		await api
+			.delete(`/users/${profile.username}/follow`)
+			.then(() => {
+				profile.isFollowed = false;
+				setIsFollowed(false);
+			})
+			.catch((err) => {
+				if (err.response?.status === 401) {
+					openAuthModal("login");
+				}
+			});
+	};
+
 	return (
 		<div className="w-full flex flex-col items-start gap-4 p-6">
 			<div className="w-full gap-3 flex items-center">
@@ -76,11 +116,29 @@ export function ProfileInfo({ profile, isOwner }: ProfileInfoProps) {
 					</p>
 				</div>
 				{isOwner ? (
-					<Button variant="secondary" csize="sm" onClick={() => {}}>
+					<Button
+						variant="secondary"
+						csize="sm"
+						onClick={() => {
+							navigate("/settings/profile");
+						}}
+					>
 						Редактировать
 					</Button>
+				) : isFollowed ? (
+					<Button
+						variant="secondary"
+						csize="sm"
+						onClick={() => handleUnfollow()}
+					>
+						Отписаться
+					</Button>
 				) : (
-					<Button variant="secondary" csize="sm" onClick={() => {}}>
+					<Button
+						variant="primary"
+						csize="sm"
+						onClick={() => handleFollow()}
+					>
 						Отслеживать
 					</Button>
 				)}

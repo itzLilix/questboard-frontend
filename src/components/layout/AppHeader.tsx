@@ -9,24 +9,13 @@ import AvatarImage from "../ui/AvatarImage";
 import { useEffect, useRef, useState } from "react";
 import Menu, { MenuDivider, MenuItem } from "../ui/Menu";
 import Icon from "../ui/Icon";
-import { api } from "../../api/axios";
 import type { IUser } from "../../types/types";
 
 export default function Header() {
-	const { isLoading, user, login, logout } = useAuth();
+	const { isLoading, user, logout } = useAuth();
 	const { openAuthModal } = useAuthModal();
 	const navigate = useNavigate();
 	const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
-
-	const handleProfileClick = async () => {
-		setIsProfileMenuOpen(false);
-		try {
-			const res = await api.get<IUser>("/users/me");
-			navigate(`/users/${res.data.username}`);
-		} catch (err) {
-			console.error("Failed to fetch current user:", err);
-		}
-	};
 
 	const menuRef = useRef<HTMLDivElement>(null);
 
@@ -48,6 +37,20 @@ export default function Header() {
 	}, [isProfileMenuOpen]);
 
 	function ProfileMenu({ user }: { user: IUser }) {
+		const handleProfileClick = async () => {
+			setIsProfileMenuOpen(false);
+			try {
+				navigate(`/users/${user?.username}`);
+			} catch (err) {
+				console.error("Failed to fetch current user:", err);
+			}
+		};
+
+		const handleSettingsClick = () => {
+			setIsProfileMenuOpen(false);
+			navigate("/settings");
+		};
+
 		return (
 			<Menu isOpen={isProfileMenuOpen} side="right" className="min-w-48">
 				<div className="flex flex-col items-center gap-2 p-3">
@@ -76,7 +79,7 @@ export default function Header() {
 					Профиль
 				</MenuItem>
 				<MenuItem
-					onClick={() => {}}
+					onClick={handleSettingsClick}
 					before={
 						<Icon
 							name="settings"

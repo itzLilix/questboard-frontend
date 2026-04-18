@@ -17,14 +17,13 @@ export default function AvatarImage({
 	return (
 		<>
 			{src ? (
-				<img
-					src={src}
-					alt={alt}
-					className={`${sizeClasses[size]} rounded-full`}
-				/>
+				<div
+					className={`${sizeClasses[size]} rounded-full bg-center bg-cover`}
+					style={{ backgroundImage: `url(${src})` }}
+				></div>
 			) : (
 				<div
-					className={`${sizeClasses[size]} rounded-full bg-(--accent) flex items-center justify-center`}
+					className={`${sizeClasses[size]} rounded-full bg-(--accent) flex items-center justify-center select-none`}
 				>
 					{alt[0].toUpperCase()}
 				</div>
