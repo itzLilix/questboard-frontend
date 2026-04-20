@@ -1,16 +1,27 @@
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useForm, type SubmitHandler } from "react-hook-form";
 import Input from "../../components/ui/Input";
 import Tab from "../../components/ui/Tab";
 import Button from "../../components/ui/Button";
 import { LabeledInput } from "../../components/ui/InputLabel";
+import Field from "../../components/ui/Field";
+import ErrorMessage from "../../components/ui/ErrorMessage";
 import { mapError } from "../../api/mapError";
 import { useLoginMutation, useSignupMutation } from "./queries";
 import { useAuthModal } from "./authModalStore";
+import {
+	emailRules,
+	usernameRules,
+	displayNameRules,
+	passwordRules,
+} from "../../utils/formRules";
 
-const USER_REGEX = /^[A-Za-z][A-Za-z0-9-_]{2,32}$/;
-const PWD_REGEX =
-	/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%])[A-Za-z0-9!@#$%]{8,24}$/;
+type FormInput = {
+	email: string;
+	username: string;
+	displayName: string;
+	password: string;
+};
 
 export default function AuthModal() {
 	const isOpen = useAuthModal((s) => s.isOpen);
@@ -18,74 +29,55 @@ export default function AuthModal() {
 	const open = useAuthModal((s) => s.open);
 	const close = useAuthModal((s) => s.close);
 
-	const [email, setEmail] = useState("");
-	const [username, setUsername] = useState("");
-	const [displayName, setDisplayName] = useState("");
-	const [pwd, setPwd] = useState("");
-	const [errMsg, setErrMsg] = useState("");
-
 	const isLogin = modalType === "login";
-
-	const reset = () => {
-		setUsername("");
-		setPwd("");
-		setEmail("");
-		setErrMsg("");
-	};
 
 	const login = useLoginMutation();
 	const signup = useSignupMutation();
 
-	if (!isOpen) return null;
+	const {
+		handleSubmit,
+		control,
+		reset,
+		setError,
+		watch,
+		formState: { errors },
+	} = useForm<FormInput>({
+		mode: "onTouched",
+		defaultValues: {
+			email: "",
+			username: "",
+			displayName: "",
+			password: "",
+		},
+	});
 
-	const validateRegister = () => {
-		if (!USER_REGEX.test(username)) {
-			return "Имя пользователя: 3-32 символа, буквы и цифры";
-		}
-		if (!PWD_REGEX.test(pwd)) {
-			return "Пароль: 8-24 символа, буквы, цифры и !@#$%";
-		}
-		return null;
-	};
-
-	const handleSignup = async () => {
-		const validationError = validateRegister();
-		if (validationError) {
-			throw new Error(validationError);
-		}
-
-		await signup.mutateAsync({
-			email,
-			username,
-			password: pwd,
-			displayName,
-		});
-	};
-
-	const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
-		e.preventDefault();
-
+	const onSubmit: SubmitHandler<FormInput> = async (data) => {
 		try {
-			if (modalType === "login") {
-				await login.mutateAsync({ email, password: pwd });
+			if (isLogin) {
+				await login.mutateAsync(data);
 			} else {
-				await handleSignup();
+				if (data.displayName === "") data.displayName = data.username;
+				await signup.mutateAsync(data);
 			}
 			close();
 		} catch (err) {
 			const error = mapError(err);
-			setErrMsg(error.message);
+			setError("root", { message: error.message });
 		}
 	};
+
+	const handleClose = () => {
+		reset();
+		close();
+	};
+
+	if (!isOpen) return null;
 
 	return (
 		<>
 			<div
 				className="fixed inset-0 bg-black/20 z-40"
-				onClick={() => {
-					close();
-					reset();
-				}}
+				onClick={handleClose}
 			></div>
 			<div className="fixed h-180 w-150 m-auto inset-0 bg-(--bg-base-tp) backdrop-blur-lg flex items-stretch justify-start flex-col rounded-2xl border border-(--border) p-12 gap-6 z-50 animate-fade-in">
 				<div className="text-3xl font-display text-(--text-primary) select-none mx-auto mt-6">
@@ -94,7 +86,7 @@ export default function AuthModal() {
 				</div>
 				<nav className="w-full flex justify-center gap-6 text-3xl">
 					<Tab
-						isActive={modalType === "login"}
+						isActive={isLogin}
 						onClick={() => {
 							reset();
 							open("login");
@@ -103,7 +95,7 @@ export default function AuthModal() {
 						Вход
 					</Tab>
 					<Tab
-						isActive={modalType === "register"}
+						isActive={!isLogin}
 						onClick={() => {
 							reset();
 							open("register");
@@ -115,69 +107,82 @@ export default function AuthModal() {
 
 				<form
 					key={modalType}
-					onSubmit={handleSubmit}
-					className="flex flex-col gap-4"
+					onSubmit={handleSubmit(onSubmit)}
+					className="flex flex-col gap-6 relative"
 				>
-					<span className="h-6 text-sm text-(--error) text-center">
-						{errMsg}
-					</span>
+					<ErrorMessage errMsg={errors.root?.message} />
 
-					<LabeledInput label="Электронная почта">
-						<Input
-							csize="md"
-							className="w-full"
-							type="email"
-							name="email"
-							onChange={(e) => setEmail(e.target.value)}
-							required
-						/>
-					</LabeledInput>
-
-					{!isLogin && (
-						<LabeledInput label="Имя пользователя">
+					<Field
+						name="email"
+						control={control}
+						rules={emailRules}
+						label="Электронная почта"
+					>
+						{(field) => (
 							<Input
+								{...field}
 								csize="md"
 								className="w-full"
-								name="username"
-								onChange={(e) => {
-									setUsername(e.target.value);
-									setErrMsg("");
-								}}
-								required
+								type="email"
 							/>
-						</LabeledInput>
+						)}
+					</Field>
+
+					{!isLogin && (
+						<Field
+							name="username"
+							control={control}
+							rules={usernameRules}
+							label="Имя пользователя"
+						>
+							{(field) => (
+								<Input
+									{...field}
+									csize="md"
+									className="w-full"
+								/>
+							)}
+						</Field>
 					)}
 
 					{!isLogin && (
-						<LabeledInput label="Отображаемое имя (необязательно)">
-							<Input
-								csize="md"
-								className="w-full"
-								name="displayName"
-								onChange={(e) => setDisplayName(e.target.value)}
-							/>
-						</LabeledInput>
+						<Field
+							name="displayName"
+							control={control}
+							rules={displayNameRules}
+							label="Отображаемое имя (необязательно)"
+						>
+							{(field) => (
+								<Input
+									{...field}
+									csize="md"
+									className="w-full"
+									maxLength={100}
+									placeholder={watch("username")}
+								/>
+							)}
+						</Field>
 					)}
 
 					<LabeledInput label="Пароль">
-						<Input
-							type="password"
-							csize="md"
-							className="w-full"
+						<Field
 							name="password"
-							onChange={(e) => {
-								setPwd(e.target.value);
-								setErrMsg("");
-							}}
-							required
-						/>
+							control={control}
+							rules={passwordRules({ strong: !isLogin })}
+						>
+							{(field) => (
+								<Input
+									{...field}
+									type="password"
+									csize="md"
+									className="w-full"
+								/>
+							)}
+						</Field>
 						{isLogin && (
 							<Link
 								to="/auth/reset-password"
-								onClick={() => {
-									close();
-									reset();
-								}}
+								onClick={handleClose}
 								className="text-sm text-(--text-secondary) hover:text-(--accent) self-center mt-2"
 							>
 								Сброс пароля

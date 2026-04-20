@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useForm, type SubmitHandler } from "react-hook-form";
 import Button from "../../components/ui/Button";
 import ImageUploader from "./ImageUploader";
 import useAuth from "../auth/useAuth";
@@ -6,6 +7,18 @@ import { LabeledInput } from "../../components/ui/InputLabel";
 import Input from "../../components/ui/Input";
 import InputText from "../../components/ui/InputText";
 import AddButton from "../../components/ui/AddButton";
+import Field from "../../components/ui/Field";
+import {
+	usernameRules,
+	displayNameRules,
+	bioRules,
+} from "../../utils/formRules";
+
+type FormInput = {
+	displayName: string;
+	username: string;
+	bio: string;
+};
 
 export default function ProfileSettings() {
 	const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -15,6 +28,15 @@ export default function ProfileSettings() {
 	const [bannerRemoved, setBannerRemoved] = useState(false);
 
 	const { user } = useAuth();
+
+	const { handleSubmit, control, reset } = useForm<FormInput>({
+		mode: "onTouched",
+		values: {
+			displayName: user?.displayName ?? "",
+			username: user?.username ?? "",
+			bio: user?.bio ?? "",
+		},
+	});
 
 	const handleAvatarChange = (file: File | null) => {
 		if (file === null) {
@@ -46,17 +68,15 @@ export default function ProfileSettings() {
 		setBannerRemoved(false);
 	};
 
-	const handleSubmit = () => {
-		const form = new FormData();
-
-		form.append("displayName", displayName);
-		form.append("username", username);
-		form.append("email", email);
-		form.append("description", description);
+	const onSubmit: SubmitHandler<FormInput> = (data) => {
+		console.log(data);
 	};
 
 	return (
-		<form className="flex flex-col gap-4">
+		<form
+			onSubmit={handleSubmit(onSubmit)}
+			className="flex flex-col gap-6"
+		>
 			<h2 className="text-2xl font-display mb-4 mx-auto">
 				Настройки профиля
 			</h2>
@@ -74,31 +94,43 @@ export default function ProfileSettings() {
 					variant="banner"
 				/>
 			</div>
-			<LabeledInput label="Отображаемое имя">
-				<Input
-					type="text"
-					className="input"
-					name="displayName"
-					defaultValue={user?.displayName || ""}
-				/>
-			</LabeledInput>
-			<LabeledInput label="Имя пользователя">
-				<Input
-					type="text"
-					className="input"
-					name="username"
-					defaultValue={user?.username || ""}
-				/>
-			</LabeledInput>
-			<LabeledInput label="О себе">
-				<InputText
-					type="text"
-					className="input"
-					name="bio"
-					defaultValue={user?.bio || ""}
-					maxLength={500}
-				/>
-			</LabeledInput>
+
+			<Field
+				name="displayName"
+				control={control}
+				rules={displayNameRules}
+				label="Отображаемое имя"
+			>
+				{(field) => (
+					<Input
+						{...field}
+						type="text"
+						className="w-full"
+						maxLength={100}
+					/>
+				)}
+			</Field>
+
+			<Field
+				name="username"
+				control={control}
+				rules={usernameRules}
+				label="Имя пользователя"
+			>
+				{(field) => <Input {...field} type="text" className="w-full" />}
+			</Field>
+
+			<Field
+				name="bio"
+				control={control}
+				rules={bioRules}
+				label="О себе"
+			>
+				{(field) => (
+					<InputText {...field} className="w-full" maxLength={500} />
+				)}
+			</Field>
+
 			<LabeledInput label="Прикрепить социальную сеть">
 				{user?.links?.map((link) => (
 					<Input
@@ -109,11 +141,13 @@ export default function ProfileSettings() {
 				))}
 				<AddButton onClick={() => {}} className="self-center" />
 			</LabeledInput>
+
 			<nav className="self-end flex gap-3">
 				<Button
 					type="reset"
 					variant="secondary"
 					onClick={() => {
+						reset();
 						handleAvatarReset();
 						handleBannerReset();
 					}}
