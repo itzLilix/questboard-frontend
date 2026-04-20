@@ -46,7 +46,14 @@ export default function ProfileSettings() {
 		setBannerRemoved(false);
 	};
 
-	const form = new FormData();
+	const handleSubmit = () => {
+		const form = new FormData();
+
+		form.append("displayName", displayName);
+		form.append("username", username);
+		form.append("email", email);
+		form.append("description", description);
+	};
 
 	return (
 		<form className="flex flex-col gap-4">
