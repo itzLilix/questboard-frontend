@@ -1,5 +1,5 @@
 import { cva } from "class-variance-authority";
-import type { ButtonHTMLAttributes, HTMLAttributes } from "react";
+import type { ButtonHTMLAttributes } from "react";
 import type React from "react";
 
 type MenuProps = React.HtmlHTMLAttributes<HTMLDivElement> & {

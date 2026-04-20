@@ -3,7 +3,6 @@ import Button from "../ui/Button";
 import Input from "../ui/Input";
 import useAuth from "../../features/auth/useAuth";
 import NotificationBell from "../../features/notifications/NotificationBell";
-import useAuthModal from "../../features/auth/useAuthModal";
 import Loading from "../ui/Loading";
 import AvatarImage from "../ui/AvatarImage";
 import { useEffect, useRef, useState } from "react";
@@ -11,6 +10,7 @@ import Menu, { MenuDivider, MenuItem } from "../ui/Menu";
 import Icon from "../ui/Icon";
 import type { IUser } from "../../types/user";
 import { useLogoutMutation } from "../../features/auth/queries";
+import { useAuthModal } from "../../features/auth/authModalStore";
 
 type ProfileMenuProps = {
 	isOpen: boolean;
@@ -90,7 +90,7 @@ function ProfileMenu({ isOpen, user, onClose }: ProfileMenuProps) {
 
 export default function AppHeader() {
 	const { isLoading, user } = useAuth();
-	const { openAuthModal } = useAuthModal();
+	const openAuthModal = useAuthModal((s) => s.open);
 	const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
 	const menuRef = useRef<HTMLDivElement>(null);

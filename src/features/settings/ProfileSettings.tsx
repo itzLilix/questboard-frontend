@@ -2,7 +2,7 @@ import { useState } from "react";
 import Button from "../../components/ui/Button";
 import ImageUploader from "./ImageUploader";
 import useAuth from "../auth/useAuth";
-import { InputLabel, LabeledInput } from "../../components/ui/InputLabel";
+import { LabeledInput } from "../../components/ui/InputLabel";
 import Input from "../../components/ui/Input";
 import InputText from "../../components/ui/InputText";
 import AddButton from "../../components/ui/AddButton";
@@ -19,20 +19,20 @@ export default function ProfileSettings() {
 	const handleAvatarChange = (file: File | null) => {
 		if (file === null) {
 			setAvatarFile(null);
-			setAvatarRemoved(true); // signal: delete on save
+			setAvatarRemoved(true);
 		} else {
 			setAvatarFile(file);
-			setAvatarRemoved(false); // user picked a new one; cancel removal
+			setAvatarRemoved(false);
 		}
 	};
 
 	const handleBannerChange = (file: File | null) => {
 		if (file === null) {
 			setBannerFile(null);
-			setBannerRemoved(true); // signal: delete on save
+			setBannerRemoved(true);
 		} else {
 			setBannerFile(file);
-			setBannerRemoved(false); // user picked a new one; cancel removal
+			setBannerRemoved(false);
 		}
 	};
 
@@ -45,6 +45,8 @@ export default function ProfileSettings() {
 		setBannerFile(null);
 		setBannerRemoved(false);
 	};
+
+	const form = new FormData();
 
 	return (
 		<form className="flex flex-col gap-4">
@@ -69,6 +71,7 @@ export default function ProfileSettings() {
 				<Input
 					type="text"
 					className="input"
+					name="displayName"
 					defaultValue={user?.displayName || ""}
 				/>
 			</LabeledInput>
@@ -76,6 +79,7 @@ export default function ProfileSettings() {
 				<Input
 					type="text"
 					className="input"
+					name="username"
 					defaultValue={user?.username || ""}
 				/>
 			</LabeledInput>
@@ -83,6 +87,7 @@ export default function ProfileSettings() {
 				<InputText
 					type="text"
 					className="input"
+					name="bio"
 					defaultValue={user?.bio || ""}
 					maxLength={500}
 				/>

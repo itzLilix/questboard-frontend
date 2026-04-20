@@ -1,19 +1,22 @@
 import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
-import useAuthModal from "./useAuthModal";
+import { useState } from "react";
 import Input from "../../components/ui/Input";
 import Tab from "../../components/ui/Tab";
 import Button from "../../components/ui/Button";
 import { LabeledInput } from "../../components/ui/InputLabel";
 import { mapError } from "../../api/mapError";
 import { useLoginMutation, useSignupMutation } from "./queries";
+import { useAuthModal } from "./authModalStore";
 
 const USER_REGEX = /^[A-Za-z][A-Za-z0-9-_]{2,32}$/;
 const PWD_REGEX =
 	/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%])[A-Za-z0-9!@#$%]{8,24}$/;
 
 export default function AuthModal() {
-	const { isOpen, modalType, openAuthModal, closeAuthModal } = useAuthModal();
+	const isOpen = useAuthModal((s) => s.isOpen);
+	const modalType = useAuthModal((s) => s.modalType);
+	const open = useAuthModal((s) => s.open);
+	const close = useAuthModal((s) => s.close);
 
 	const [email, setEmail] = useState("");
 	const [username, setUsername] = useState("");
@@ -23,16 +26,12 @@ export default function AuthModal() {
 
 	const isLogin = modalType === "login";
 
-	useEffect(() => {
-		setErrMsg("");
-	}, [username, pwd]);
-
-	useEffect(() => {
+	const reset = () => {
 		setUsername("");
 		setPwd("");
 		setEmail("");
 		setErrMsg("");
-	}, [modalType, isOpen]);
+	};
 
 	const login = useLoginMutation();
 	const signup = useSignupMutation();
@@ -72,7 +71,7 @@ export default function AuthModal() {
 			} else {
 				await handleSignup();
 			}
-			closeAuthModal();
+			close();
 		} catch (err) {
 			const error = mapError(err);
 			setErrMsg(error.message);
@@ -83,7 +82,10 @@ export default function AuthModal() {
 		<>
 			<div
 				className="fixed inset-0 bg-black/20 z-40"
-				onClick={closeAuthModal}
+				onClick={() => {
+					close();
+					reset();
+				}}
 			></div>
 			<div className="fixed h-180 w-150 m-auto inset-0 bg-(--bg-base-tp) backdrop-blur-lg flex items-stretch justify-start flex-col rounded-2xl border border-(--border) p-12 gap-6 z-50 animate-fade-in">
 				<div className="text-3xl font-display text-(--text-primary) select-none mx-auto mt-6">
@@ -94,7 +96,8 @@ export default function AuthModal() {
 					<Tab
 						isActive={modalType === "login"}
 						onClick={() => {
-							openAuthModal("login");
+							reset();
+							open("login");
 						}}
 					>
 						Вход
@@ -102,7 +105,8 @@ export default function AuthModal() {
 					<Tab
 						isActive={modalType === "register"}
 						onClick={() => {
-							openAuthModal("register");
+							reset();
+							open("register");
 						}}
 					>
 						Регистрация
@@ -135,7 +139,10 @@ export default function AuthModal() {
 								csize="md"
 								className="w-full"
 								name="username"
-								onChange={(e) => setUsername(e.target.value)}
+								onChange={(e) => {
+									setUsername(e.target.value);
+									setErrMsg("");
+								}}
 								required
 							/>
 						</LabeledInput>
@@ -158,13 +165,19 @@ export default function AuthModal() {
 							csize="md"
 							className="w-full"
 							name="password"
-							onChange={(e) => setPwd(e.target.value)}
+							onChange={(e) => {
+								setPwd(e.target.value);
+								setErrMsg("");
+							}}
 							required
 						/>
 						{isLogin && (
 							<Link
 								to="/auth/reset-password"
-								onClick={closeAuthModal}
+								onClick={() => {
+									close();
+									reset();
+								}}
 								className="text-sm text-(--text-secondary) hover:text-(--accent) self-center mt-2"
 							>
 								Сброс пароля

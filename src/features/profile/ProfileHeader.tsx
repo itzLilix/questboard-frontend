@@ -5,8 +5,9 @@ import Button from "../../components/ui/Button";
 import Icon from "../../components/ui/Icon";
 import TextField from "../../components/ui/TextField";
 import { Link, useNavigate } from "react-router-dom";
-import useAuthModal from "../auth/useAuthModal";
 import { useFollowMutation, useUnfollowMutation } from "./queries";
+import { useAuthModal } from "../auth/authModalStore";
+import type { AxiosError } from "axios";
 
 type ProfileHeaderProps = {
 	profile: IProfile | null;
@@ -27,14 +28,12 @@ export default function ProfileHeader({
 }
 
 type ProfileInfoProps = {
-	profile: IProfile | null;
+	profile: IProfile;
 	isOwner: boolean;
 };
 
 export function ProfileInfo({ profile, isOwner }: ProfileInfoProps) {
-	if (!profile) return null;
-
-	const { openAuthModal } = useAuthModal();
+	const openAuthModal = useAuthModal((s) => s.open);
 	const navigate = useNavigate();
 
 	const follow = useFollowMutation(profile.username);
@@ -111,7 +110,7 @@ export function ProfileInfo({ profile, isOwner }: ProfileInfoProps) {
 						onClick={() =>
 							follow.mutate(undefined, {
 								onError: (e) =>
-									(e as any).status === 401 &&
+									(e as AxiosError).status === 401 &&
 									openAuthModal("login"),
 							})
 						}
