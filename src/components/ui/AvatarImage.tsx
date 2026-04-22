@@ -1,3 +1,5 @@
+import Icon from "./Icon";
+
 export default function AvatarImage({
 	src,
 	alt,
@@ -25,7 +27,11 @@ export default function AvatarImage({
 				<div
 					className={`${sizeClasses[size]} rounded-full bg-(--accent) flex items-center justify-center select-none`}
 				>
-					{alt[0].toUpperCase()}
+					{alt !== undefined ? (
+						alt[0].toUpperCase()
+					) : (
+						<Icon name="person"></Icon>
+					)}
 				</div>
 			)}
 		</>

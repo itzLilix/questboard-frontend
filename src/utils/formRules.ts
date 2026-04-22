@@ -1,3 +1,5 @@
+import { detectPlatform } from "../features/socials/platforms";
+
 export const USER_REGEX = /^[A-Za-z0-9-_]{2,32}$/;
 export const PWD_REGEX =
 	/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%])[A-Za-z0-9!@#$%]{8,128}$/;
@@ -30,6 +32,20 @@ export const bioRules = {
 	maxLength: {
 		value: 500,
 		message: "О себе: не более 500 символов",
+	},
+};
+
+export const socialUrlRules = {
+	validate: (value: string) => {
+		try {
+			const u = new URL(value);
+			if (!["http:", "https:"].includes(u.protocol))
+				return "Только http(s)";
+		} catch {
+			return "Некорректный URL";
+		}
+		if (!detectPlatform(value)) return "Неподдерживаемая платформа";
+		return true;
 	},
 };
 

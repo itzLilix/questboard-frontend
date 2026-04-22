@@ -1,5 +1,13 @@
-import { useState } from "react";
-import { useForm, type SubmitHandler } from "react-hook-form";
+import { useEffect } from "react";
+import {
+	Controller,
+	useFieldArray,
+	useForm,
+	useWatch,
+	type Control,
+	type SubmitHandler,
+	type UseFormSetValue,
+} from "react-hook-form";
 import Button from "../../components/ui/Button";
 import ImageUploader from "./ImageUploader";
 import useAuth from "../auth/useAuth";
@@ -8,90 +16,132 @@ import Input from "../../components/ui/Input";
 import InputText from "../../components/ui/InputText";
 import AddButton from "../../components/ui/AddButton";
 import Field from "../../components/ui/Field";
+import Icon from "../../components/ui/Icon";
+import ErrorMessage from "../../components/ui/ErrorMessage";
 import {
 	usernameRules,
 	displayNameRules,
 	bioRules,
+	socialUrlRules,
 } from "../../utils/formRules";
+import { useUpdateProfileMutation, type UpdateProfileInput } from "./queries";
+import { detectPlatform } from "../socials/platforms";
 
-type FormInput = {
-	displayName: string;
-	username: string;
-	bio: string;
+type FormInput = UpdateProfileInput & {
+	avatar: File | null;
+	avatarRemoved: boolean;
+	banner: File | null;
+	bannerRemoved: boolean;
 };
 
+const TEXT_KEYS: (keyof UpdateProfileInput)[] = [
+	"displayName",
+	"username",
+	"bio",
+	"links",
+];
+
 export default function ProfileSettings() {
-	const [avatarFile, setAvatarFile] = useState<File | null>(null);
-	const [avatarRemoved, setAvatarRemoved] = useState(false);
-
-	const [bannerFile, setBannerFile] = useState<File | null>(null);
-	const [bannerRemoved, setBannerRemoved] = useState(false);
-
 	const { user } = useAuth();
+	const updateProfile = useUpdateProfileMutation();
 
-	const { handleSubmit, control, reset } = useForm<FormInput>({
+	const {
+		handleSubmit,
+		control,
+		reset,
+		formState: { dirtyFields },
+		setValue,
+	} = useForm<FormInput>({
 		mode: "onTouched",
 		values: {
 			displayName: user?.displayName ?? "",
 			username: user?.username ?? "",
 			bio: user?.bio ?? "",
+			links: user?.links ?? [],
+			avatar: null,
+			avatarRemoved: false,
+			banner: null,
+			bannerRemoved: false,
 		},
 	});
 
-	const handleAvatarChange = (file: File | null) => {
-		if (file === null) {
-			setAvatarFile(null);
-			setAvatarRemoved(true);
-		} else {
-			setAvatarFile(file);
-			setAvatarRemoved(false);
-		}
-	};
+	const avatarRemoved = useWatch({ control, name: "avatarRemoved" });
+	const bannerRemoved = useWatch({ control, name: "bannerRemoved" });
 
-	const handleBannerChange = (file: File | null) => {
-		if (file === null) {
-			setBannerFile(null);
-			setBannerRemoved(true);
-		} else {
-			setBannerFile(file);
-			setBannerRemoved(false);
-		}
-	};
-
-	const handleAvatarReset = () => {
-		setAvatarFile(null);
-		setAvatarRemoved(false);
-	};
-
-	const handleBannerReset = () => {
-		setBannerFile(null);
-		setBannerRemoved(false);
-	};
+	const { fields, append, remove } = useFieldArray({
+		control,
+		name: "links",
+	});
 
 	const onSubmit: SubmitHandler<FormInput> = (data) => {
-		console.log(data);
+		const patch: Partial<UpdateProfileInput> = Object.fromEntries(
+			TEXT_KEYS.filter((k) => dirtyFields[k]).map((k) => [k, data[k]]),
+		);
+		console.log(patch);
+
+		const avatarIntent: File | null | "unchanged" =
+			data.avatar instanceof File
+				? data.avatar
+				: data.avatarRemoved
+					? null
+					: "unchanged";
+		const bannerIntent: File | null | "unchanged" =
+			data.banner instanceof File
+				? data.banner
+				: data.bannerRemoved
+					? null
+					: "unchanged";
+
+		updateProfile.mutate({
+			patch,
+			avatar: avatarIntent,
+			banner: bannerIntent,
+		});
 	};
 
 	return (
 		<form
 			onSubmit={handleSubmit(onSubmit)}
-			className="flex flex-col gap-6"
+			className="flex flex-col gap-6 relative"
 		>
 			<h2 className="text-2xl font-display mb-4 mx-auto">
 				Настройки профиля
 			</h2>
+
 			<div className="flex justify-around">
-				<ImageUploader
-					currentUrl={avatarRemoved ? null : user?.avatarUrl}
-					file={avatarFile}
-					onChange={handleAvatarChange}
-					variant="avatar"
+				<Controller
+					name="avatar"
+					control={control}
+					render={({ field }) => (
+						<ImageUploader
+							currentUrl={avatarRemoved ? null : user?.avatarUrl}
+							file={field.value}
+							onChange={(f) => {
+								field.onChange(f);
+								setValue("avatarRemoved", f === null, {
+									shouldDirty: true,
+								});
+							}}
+							variant="avatar"
+						/>
+					)}
 				/>
-				<ImageUploader
-					currentUrl={bannerRemoved ? null : user?.bannerUrl}
-					file={bannerFile}
-					onChange={handleBannerChange}
-					variant="banner"
+				<Controller
+					name="banner"
+					control={control}
+					render={({ field }) => (
+						<ImageUploader
+							currentUrl={bannerRemoved ? null : user?.bannerUrl}
+							file={field.value}
+							onChange={(f) => {
+								field.onChange(f);
+								setValue("bannerRemoved", f === null, {
+									shouldDirty: true,
+								});
+							}}
+							variant="banner"
+						/>
+					)}
 				/>
 			</div>
 
@@ -120,44 +170,120 @@ export default function ProfileSettings() {
 				{(field) => <Input {...field} type="text" className="w-full" />}
 			</Field>
 
-			<Field
-				name="bio"
-				control={control}
-				rules={bioRules}
-				label="О себе"
-			>
+			<Field name="bio" control={control} rules={bioRules} label="О себе">
 				{(field) => (
 					<InputText {...field} className="w-full" maxLength={500} />
 				)}
 			</Field>
 
 			<LabeledInput label="Прикрепить социальную сеть">
-				{user?.links?.map((link) => (
-					<Input
-						type="text"
-						className="input"
-						defaultValue={link.url}
+				<div className="flex flex-col gap-6 p-6">
+					{fields.map((f, i) => (
+						<SocialLinkRow
+							key={f.id}
+							control={control}
+							index={i}
+							setValue={setValue}
+							onRemove={() => remove(i)}
+						/>
+					))}
+					<AddButton
+						onClick={() => {
+							append({ type: "", url: "" });
+						}}
+						className="self-center"
 					/>
-				))}
-				<AddButton onClick={() => {}} className="self-center" />
+				</div>
 			</LabeledInput>
 
-			<nav className="self-end flex gap-3">
+			<nav className="flex gap-3 sticky bottom-0 justify-end bg-(--bg-card) pt-4 pb-6 transform translate-y-6 border-t border-(--border)">
 				<Button
 					type="reset"
 					variant="secondary"
-					onClick={() => {
-						reset();
-						handleAvatarReset();
-						handleBannerReset();
-					}}
+					onClick={() => reset()}
+					disabled={updateProfile.isPending}
 				>
 					Сбросить
 				</Button>
-				<Button type="submit" variant="primary">
+				<Button
+					type="submit"
+					variant="primary"
+					disabled={updateProfile.isPending}
+				>
 					Сохранить изменения
 				</Button>
 			</nav>
 		</form>
+	);
+}
+
+type SocialLinkRowProps = {
+	control: Control<FormInput>;
+	index: number;
+	setValue: UseFormSetValue<FormInput>;
+	onRemove: () => void;
+};
+
+function SocialLinkRow({
+	control,
+	index,
+	setValue,
+	onRemove,
+}: SocialLinkRowProps) {
+	const url = useWatch({ control, name: `links.${index}.url` });
+	const currentType = useWatch({ control, name: `links.${index}.type` });
+	const platform = detectPlatform(url ?? "");
+	const detectedName = platform?.name ?? "";
+
+	useEffect(() => {
+		if (currentType !== detectedName) {
+			setValue(`links.${index}.type`, detectedName, {
+				shouldDirty: true,
+			});
+		}
+	}, [currentType, detectedName, index, setValue]);
+
+	return (
+		<div className="flex items-center gap-2">
+			{platform ? (
+				<img
+					src={platform.iconUrl}
+					alt={platform.label}
+					className="w-8 h-8 shrink-0"
+				/>
+			) : (
+				<Icon
+					name="link"
+					className="w-8 h-6 text-center shrink-0 text-(--text-muted)"
+				/>
+			)}
+			<Controller
+				name={`links.${index}.url`}
+				control={control}
+				rules={socialUrlRules}
+				render={({ field, fieldState }) => (
+					<div className="relative grow">
+						<Input
+							{...field}
+							type="url"
+							placeholder="https://..."
+							className="w-full"
+							onBlur={() => {
+								if (url.trim() === "") onRemove();
+							}}
+						/>
+						<ErrorMessage errMsg={fieldState.error?.message} />
+					</div>
+				)}
+			/>
+			<button
+				type="button"
+				onClick={onRemove}
+				className="shrink-0 rounded-full p-1 hover:bg-(--bg-elevated) text-(--text-muted) hover:text-(--text-primary) cursor-pointer"
+				aria-label="Удалить ссылку"
+			>
+				<Icon name="close" />
+			</button>
+		</div>
 	);
 }

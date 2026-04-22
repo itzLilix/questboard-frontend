@@ -1,7 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import AppHeader from "./components/layout/AppHeader";
-import AuthModal from "./features/auth/AuthModal";
-import ProfilePage from "./features/profile/ProfilePage";
+import RootLayout from "./components/layout/RootLayout";
+import ProfileLayout from "./components/layout/ProfileLayout";
 import SettingsLayout from "./components/layout/SettingsLayout";
 import RequireAuth from "./features/auth/RequireAuth";
 import NotificationSettings from "./features/settings/NotificationSettings";
@@ -11,11 +10,9 @@ import GeneralSettings from "./features/settings/GeneralSettings";
 
 function App() {
 	return (
-		<div className="min-h-screen">
-			<AppHeader />
-			<AuthModal />
-			<Routes>
-				<Route path="/users/:username" element={<ProfilePage />} />
+		<Routes>
+			<Route element={<RootLayout />}>
+				<Route path="/users/:username" element={<ProfileLayout />} />
 				<Route element={<RequireAuth />}>
 					<Route path="/settings" element={<SettingsLayout />}>
 						<Route
@@ -31,8 +28,8 @@ function App() {
 						/>
 					</Route>
 				</Route>
-			</Routes>
-		</div>
+			</Route>
+		</Routes>
 	);
 }
 

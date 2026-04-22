@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { fetchMe, login, logout, signup } from "./api";
 
-const authKeys = { me: ["user", "me"] as const };
+export const authKeys = { me: ["user", "me"] as const };
 
 export function useCurrentUser() {
 	return useQuery({

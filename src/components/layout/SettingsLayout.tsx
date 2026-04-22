@@ -3,8 +3,8 @@ import { NavMenu, NavMenuItem } from "../ui/NavMenu";
 
 export default function SettingsLayout() {
 	return (
-		<main className="max-w-960 mx-auto p-4 flex">
-			<aside className="w-1/5 flex flex-col items-start gap-4 p-4 sticky top-18 self-start">
+		<main className="w-960 p-4 flex flex-1 mx-auto overflow-hidden min-h-0">
+			<aside className="w-1/5 flex flex-col items-start gap-4 p-4">
 				<h1 className="text-2xl font-display mb-4 mx-auto">
 					Настройки
 				</h1>
@@ -19,7 +19,7 @@ export default function SettingsLayout() {
 					</NavMenuItem>
 				</NavMenu>
 			</aside>
-			<section className="flex-1 bg-(--bg-card) rounded-2xl p-6 border border-(--border)">
+			<section className="flex-1 bg-(--bg-card) rounded-2xl p-6 border border-(--border) overflow-y-auto">
 				<Outlet />
 			</section>
 		</main>

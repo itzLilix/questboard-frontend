@@ -1,3 +1,7 @@
+import type { Socials } from "../features/socials/types";
+
+export type { Socials };
+
 export interface IUser {
 	id: string;
 	username: string;
@@ -14,8 +18,5 @@ export interface IUser {
 	rating: number;
 	reviewsCount: number;
 	bio?: string;
-	links?: {
-		icon: string;
-		url: string;
-	}[];
+	links?: Socials[];
 }
