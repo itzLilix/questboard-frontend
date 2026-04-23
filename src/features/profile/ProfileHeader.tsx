@@ -8,6 +8,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { useFollowMutation, useUnfollowMutation } from "./queries";
 import { useAuthModal } from "../auth/authModalStore";
 import type { AxiosError } from "axios";
+import genericIcon from "../../assets/socials/generic.png";
+import { getPlatform } from "../socials/platforms";
 
 type ProfileHeaderProps = {
 	profile: IProfile | null;
@@ -50,18 +52,27 @@ export function ProfileInfo({ profile, isOwner }: ProfileInfoProps) {
 					size="xl"
 				/>
 				<div className="flex flex-col items-start gap-2 flex-1">
-					<h1 className="text-(--text-primary) text-3xl font-display">
+					<h1 className="text-(--text-primary) text-3xl font-display flex gap-1">
 						<span>{profile.displayName}</span>
-						{profile.links?.map((link) => (
-							<Link
-								key={link.url}
-								to={link.url}
-								target="_blank"
-								rel="noopener noreferrer"
-							>
-								<img src={link.icon} alt="" />
-							</Link>
-						))}
+						{profile.links?.map((link) => {
+							const platform = getPlatform(link.type);
+							return (
+								<Link
+									key={link.url}
+									to={link.url}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="shrink-0"
+								>
+									<img
+										src={platform?.iconUrl ?? genericIcon}
+										title={platform?.label ?? link.url}
+										alt={platform?.label ?? ""}
+										className="w-8 h-8 cursor-pointer"
+									/>
+								</Link>
+							);
+						})}
 					</h1>
 					<p className="text-base text-(--text-secondary) font-body">
 						@{profile.username}

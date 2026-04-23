@@ -26,6 +26,7 @@ import {
 } from "../../utils/formRules";
 import { useUpdateProfileMutation, type UpdateProfileInput } from "./queries";
 import { detectPlatform } from "../socials/platforms";
+import genericIcon from "../../assets/socials/generic.png";
 
 type FormInput = UpdateProfileInput & {
 	avatar: File | null;
@@ -49,8 +50,10 @@ export default function ProfileSettings() {
 		handleSubmit,
 		control,
 		reset,
-		formState: { dirtyFields },
+		formState: { dirtyFields, isDirty, errors },
 		setValue,
+		setError,
+		clearErrors,
 	} = useForm<FormInput>({
 		mode: "onTouched",
 		values: {
@@ -73,11 +76,24 @@ export default function ProfileSettings() {
 		name: "links",
 	});
 
+	const validateLinks = () => {
+		if (fields.length > 10) {
+			setError("links", {
+				type: "manual",
+				message: "Не более 10 ссылок",
+			});
+			return false;
+		}
+		clearErrors("links");
+		return true;
+	};
+
 	const onSubmit: SubmitHandler<FormInput> = (data) => {
+		if (!validateLinks()) return;
+
 		const patch: Partial<UpdateProfileInput> = Object.fromEntries(
 			TEXT_KEYS.filter((k) => dirtyFields[k]).map((k) => [k, data[k]]),
 		);
-		console.log(patch);
 
 		const avatarIntent: File | null | "unchanged" =
 			data.avatar instanceof File
@@ -107,7 +123,6 @@ export default function ProfileSettings() {
 			<h2 className="text-2xl font-display mb-4 mx-auto">
 				Настройки профиля
 			</h2>
-
 			<div className="flex justify-around">
 				<Controller
 					name="avatar"
@@ -144,7 +159,6 @@ export default function ProfileSettings() {
 					)}
 				/>
 			</div>
-
 			<Field
 				name="displayName"
 				control={control}
@@ -160,7 +174,6 @@ export default function ProfileSettings() {
 					/>
 				)}
 			</Field>
-
 			<Field
 				name="username"
 				control={control}
@@ -169,33 +182,36 @@ export default function ProfileSettings() {
 			>
 				{(field) => <Input {...field} type="text" className="w-full" />}
 			</Field>
-
 			<Field name="bio" control={control} rules={bioRules} label="О себе">
 				{(field) => (
 					<InputText {...field} className="w-full" maxLength={500} />
 				)}
 			</Field>
-
 			<LabeledInput label="Прикрепить социальную сеть">
-				<div className="flex flex-col gap-6 p-6">
+				<div className="flex flex-col gap-6 p-6 relative">
 					{fields.map((f, i) => (
 						<SocialLinkRow
 							key={f.id}
 							control={control}
 							index={i}
 							setValue={setValue}
-							onRemove={() => remove(i)}
+							onRemove={() => {
+								remove(i);
+								validateLinks();
+							}}
 						/>
 					))}
+					<ErrorMessage errMsg={errors.links?.message} />
 					<AddButton
 						onClick={() => {
+							validateLinks();
 							append({ type: "", url: "" });
 						}}
+						disabled={errors.links !== undefined}
 						className="self-center"
 					/>
 				</div>
 			</LabeledInput>
-
 			<nav className="flex gap-3 sticky bottom-0 justify-end bg-(--bg-card) pt-4 pb-6 transform translate-y-6 border-t border-(--border)">
 				<Button
 					type="reset"
@@ -208,7 +224,7 @@ export default function ProfileSettings() {
 				<Button
 					type="submit"
 					variant="primary"
-					disabled={updateProfile.isPending}
+					disabled={updateProfile.isPending || !isDirty}
 				>
 					Сохранить изменения
 				</Button>
@@ -245,18 +261,11 @@ function SocialLinkRow({
 
 	return (
 		<div className="flex items-center gap-2">
-			{platform ? (
-				<img
-					src={platform.iconUrl}
-					alt={platform.label}
-					className="w-8 h-8 shrink-0"
-				/>
-			) : (
-				<Icon
-					name="link"
-					className="w-8 h-6 text-center shrink-0 text-(--text-muted)"
-				/>
-			)}
+			<img
+				src={platform?.iconUrl ?? genericIcon}
+				alt={platform?.label}
+				className="w-8 h-8 shrink-0"
+			/>
 			<Controller
 				name={`links.${index}.url`}
 				control={control}
@@ -279,8 +288,9 @@ function SocialLinkRow({
 			<button
 				type="button"
 				onClick={onRemove}
-				className="shrink-0 rounded-full p-1 hover:bg-(--bg-elevated) text-(--text-muted) hover:text-(--text-primary) cursor-pointer"
+				className="p-1 flex items-center justify-center rounded-full hover:bg-(--bg-elevated) text-(--text-muted) hover:text-(--text-primary) cursor-pointer "
 				aria-label="Удалить ссылку"
+				name="Удалить ссылку"
 			>
 				<Icon name="close" />
 			</button>

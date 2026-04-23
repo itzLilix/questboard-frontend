@@ -1,3 +1,5 @@
+import type { Socials } from "../features/socials/types";
+
 export interface IProfile {
 	id: string;
 	username: string;
@@ -9,9 +11,6 @@ export interface IProfile {
 	rating: number;
 	reviewsCount: number;
 	bio?: string;
-	links?: {
-		icon: string;
-		url: string;
-	}[];
+	links?: Socials[];
 	isFollowed?: boolean;
 }

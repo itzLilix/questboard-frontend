@@ -3,6 +3,7 @@ export default function Icon({
 	className,
 }: {
 	name: string;
+	size?: number;
 	className?: string;
 }) {
 	return (

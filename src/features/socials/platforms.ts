@@ -138,3 +138,9 @@ export function detectPlatform(url: string): Platform | null {
 		return null;
 	}
 }
+
+const byName = new Map(platforms.map((p) => [p.name, p]));
+
+export function getPlatform(name: string): Platform | null {
+	return byName.get(name) ?? null;
+}

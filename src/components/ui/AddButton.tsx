@@ -1,14 +1,18 @@
 import Icon from "./Icon";
 
+type AddButtonProps = {
+	onClick: () => void;
+	className?: string;
+} & React.ButtonHTMLAttributes<HTMLButtonElement>;
+
 export default function AddButton({
 	onClick,
 	className,
-}: {
-	onClick: () => void;
-	className?: string;
-}) {
+	disabled,
+}: AddButtonProps) {
 	return (
 		<button
+			disabled={disabled}
 			onClick={onClick}
 			className={`rounded-full 
                 w-12 h-12 
@@ -22,7 +26,8 @@ export default function AddButton({
                 focus-visible:ring-2 focus-visible:ring-(--accent) 
                 focus-visible:ring-offset-2 focus-visible:ring-offset-(--bg-base) 
                 active:scale-95 
-                ${className || ""}`}
+                ${className || ""}
+                disabled:opacity-50 disabled:pointer-events-none`}
 		>
 			<Icon name="add" className="text-lg text-(--accent)" />
 		</button>

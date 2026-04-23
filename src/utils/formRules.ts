@@ -1,4 +1,6 @@
 import { detectPlatform } from "../features/socials/platforms";
+import type { Socials } from "../features/socials/types";
+import { normalizeUrl } from "./url";
 
 export const USER_REGEX = /^[A-Za-z0-9-_]{2,32}$/;
 export const PWD_REGEX =
@@ -36,16 +38,25 @@ export const bioRules = {
 };
 
 export const socialUrlRules = {
-	validate: (value: string) => {
-		try {
-			const u = new URL(value);
-			if (!["http:", "https:"].includes(u.protocol))
-				return "Только http(s)";
-		} catch {
-			return "Некорректный URL";
-		}
-		if (!detectPlatform(value)) return "Неподдерживаемая платформа";
-		return true;
+	validate: {
+		format: (value: string) => {
+			try {
+				const u = new URL(value);
+				if (!["http:", "https:"].includes(u.protocol))
+					return "Только http(s)";
+			} catch {
+				return "Некорректный URL";
+			}
+			if (!detectPlatform(value)) return "Неподдерживаемая платформа";
+			return true;
+		},
+		unique: (value: string, formValues: { links: Socials[] }) => {
+			const key = normalizeUrl(value);
+			const count = formValues.links.filter(
+				(l) => normalizeUrl(l.url) === key,
+			).length;
+			return count <= 1 || "Такая ссылка уже добавлена";
+		},
 	},
 };
 
