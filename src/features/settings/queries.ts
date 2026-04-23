@@ -7,6 +7,7 @@ import {
 	deleteBanner,
 } from "./api";
 import { authKeys } from "../auth/queries";
+import { profileKeys } from "../profile/queries";
 import type { Socials } from "../socials/types";
 import type { IUser } from "../../types/user";
 
@@ -42,6 +43,7 @@ export function useUpdateProfileMutation() {
 		},
 		onSettled: () => {
 			qc.invalidateQueries({ queryKey: authKeys.me });
+			qc.invalidateQueries({ queryKey: profileKeys.all });
 		},
 	});
 }
