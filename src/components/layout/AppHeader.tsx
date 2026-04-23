@@ -27,6 +27,10 @@ function ProfileMenu({ isOpen, user, onClose }: ProfileMenuProps) {
 		navigate(`/users/${user.username}`);
 	};
 
+	const handleFollowingClick = () => {
+		onClose();
+	};
+
 	const handleSettingsClick = () => {
 		onClose();
 		navigate("/settings");
@@ -63,6 +67,17 @@ function ProfileMenu({ isOpen, user, onClose }: ProfileMenuProps) {
 				}
 			>
 				Профиль
+			</MenuItem>
+			<MenuItem
+				onClick={handleFollowingClick}
+				before={
+					<Icon
+						name="group"
+						className="text-lg! text-(--text-secondary)!"
+					/>
+				}
+			>
+				Подписки
 			</MenuItem>
 			<MenuItem
 				onClick={handleSettingsClick}
@@ -113,7 +128,7 @@ export default function AppHeader() {
 	}, [isProfileMenuOpen]);
 
 	return (
-		<header className="bg-(--bg-base-tp) h-18 z-10 sticky top-0 w-full border-b border-(--border) backdrop-blur-sm">
+		<header className="bg-(--bg-base-tp) h-(--header-h) z-10 fixed top-0 w-full border-b border-(--border) backdrop-blur-sm">
 			<div className="p-4 flex items-center justify-between h-full max-w-1600 mx-auto">
 				<Link
 					to="/"

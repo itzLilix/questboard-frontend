@@ -4,10 +4,10 @@ import AuthModal from "../../features/auth/AuthModal";
 
 export default function RootLayout() {
 	return (
-		<div className="h-dvh flex flex-col">
+		<div className="min-h-dvh relative">
 			<AppHeader />
 			<AuthModal />
-			<div className="flex-1 flex flex-col min-h-0">
+			<div className="pt-(--header-h)">
 				<Outlet />
 			</div>
 		</div>

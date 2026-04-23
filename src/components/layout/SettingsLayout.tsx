@@ -3,7 +3,7 @@ import { NavMenu, NavMenuItem } from "../ui/NavMenu";
 
 export default function SettingsLayout() {
 	return (
-		<main className="w-960 p-4 flex flex-1 mx-auto overflow-hidden min-h-0">
+		<main className="w-960 h-[calc(100dvh-var(--header-h))] p-4 flex flex-1 mx-auto overflow-hidden min-h-0">
 			<aside className="w-1/5 flex flex-col items-start gap-4 p-4">
 				<h1 className="text-2xl font-display mb-4 mx-auto">
 					Настройки

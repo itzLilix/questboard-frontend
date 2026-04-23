@@ -2,7 +2,6 @@ import BannerImage from "./BannerImage";
 import { type IProfile } from "../../types/profile";
 import AvatarImage from "../../components/ui/AvatarImage";
 import Button from "../../components/ui/Button";
-import Icon from "../../components/ui/Icon";
 import TextField from "../../components/ui/TextField";
 import { Link, useNavigate } from "react-router-dom";
 import { useFollowMutation, useUnfollowMutation } from "./queries";
@@ -10,6 +9,8 @@ import { useAuthModal } from "../auth/authModalStore";
 import type { AxiosError } from "axios";
 import genericIcon from "../../assets/socials/generic.png";
 import { getPlatform } from "../socials/platforms";
+import Rating from "../../components/ui/UserRating";
+import TextSeparator from "../../components/ui/TextSeparator";
 
 type ProfileHeaderProps = {
 	profile: IProfile | null;
@@ -79,21 +80,13 @@ export function ProfileInfo({ profile, isOwner }: ProfileInfoProps) {
 					</p>
 					<p className="text-base text-(--text-secondary) font-body flex items-center gap-1">
 						<span>{profile.sessionsPlayed} сыграно</span>
-						<span className="text-(--text-muted)">/</span>
+						<TextSeparator />
 						<span>{profile.sessionsHosted} проведено</span>
-						<span className="text-(--text-muted)">/</span>
-						{profile.rating === 0 ? (
-							<span>Нет рейтинга</span>
-						) : (
-							<span className="flex items-center gap-1">
-								<Icon
-									name="star"
-									className="text-base! text-(--accent)!"
-								/>
-								{profile.rating.toFixed(1)} (
-								{profile.reviewsCount})
-							</span>
-						)}
+						<TextSeparator />
+						<Rating
+							rating={profile.rating}
+							reviewsCount={profile.reviewsCount}
+						/>
 					</p>
 				</div>
 				{isOwner ? (
