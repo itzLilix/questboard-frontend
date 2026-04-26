@@ -1,11 +1,11 @@
 import { cva } from "class-variance-authority";
-import AvatarImage from "../../components/ui/AvatarImage";
-import type { IProfile } from "../../types/profile";
-import Rating from "../../components/ui/UserRating";
-import TextSeparator from "../../components/ui/TextSeparator";
+import AvatarImage from "./AvatarImage";
+import Rating from "./UserRating";
+import TextSeparator from "./TextSeparator";
+import type { IUserCard } from "../../types/userCard";
 
 type userCardProps = {
-	profileData: IProfile;
+	profileData: IUserCard;
 	view: "card" | "table";
 };
 
