@@ -2,21 +2,23 @@ import type { ISession, SessionFormat, SessionType } from "./session";
 
 export type IUserCard = ProfileCardData & Omit<SessionCardData, "userId">;
 
-interface ProfileCardData {
+export interface ProfileCardData {
 	id: string;
 	username: string;
 	displayName: string;
 	avatarUrl?: string;
 	bannerUrl?: string;
-	sessionsPlayed: number;
-	sessionsHosted: number;
 	rating: number;
 	reviewsCount: number;
+	sessionsPlayed: number;
+	sessionsHosted: number;
+	preferredFormat?: SessionFormat;
+	preferredType?: SessionType;
+	isFollowed: boolean;
 }
-interface SessionCardData {
+
+export interface SessionCardData {
 	systemStats?: ISystem & { sessionsCount: number }[];
-	preferredFormats?: SessionFormat[];
-	preferredTypes?: SessionType[];
 	nextSession?: INextSession;
 }
 
