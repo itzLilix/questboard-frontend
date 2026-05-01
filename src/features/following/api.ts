@@ -10,11 +10,18 @@ export type UsersQuery = {
 	minRating?: number;
 	followedBy?: string;
 	onlyGMs?: boolean;
-	sort?: string;
+	sort?: SortBy;
 	order?: "asc" | "desc";
 	cursor?: string;
 	limit?: number;
 };
+
+export type SortBy =
+	| "rating"
+	| "recent"
+	| "followedAt"
+	| "reviews"
+	| "sessions";
 
 export type UsersListResponse = {
 	items: ProfileCardData[];

@@ -10,6 +10,7 @@ import UserCard from "../../components/ui/UserCard";
 import type { SessionFormat, SessionType } from "../../types/session";
 import type { IUserCard } from "../../types/userCard";
 import { useFollowingQuery } from "./queries";
+import type { SortBy } from "./api";
 
 const FORMAT_OPTIONS = [
 	{ value: "online", label: "Онлайн" },
@@ -24,9 +25,9 @@ const TYPE_OPTIONS = [
 const SORT_OPTIONS = [
 	{ value: "rating", label: "Рейтинг" },
 	{ value: "followedAt", label: "Дата подписки" },
-	{ value: "reviewsCount", label: "Отзывы" },
-	{ value: "createdAt", label: "Регистрация" },
-	{ value: "gamesCount", label: "Игры" },
+	{ value: "reviews", label: "Отзывы" },
+	{ value: "recent", label: "Регистрация" },
+	{ value: "sessions", label: "Игры" },
 ];
 
 export default function FollowingPage() {
@@ -35,7 +36,7 @@ export default function FollowingPage() {
 	const [format, setFormat] = useState<SessionFormat | null>(null);
 	const [type, setType] = useState<SessionType | null>(null);
 	const [highRating, setHighRating] = useState(false);
-	const [sort, setSort] = useState("rating");
+	const [sort, setSort] = useState<SortBy | null>("followedAt");
 	const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 	const [view, setView] = useState<"table" | "card">("table");
 
@@ -50,7 +51,7 @@ export default function FollowingPage() {
 		type: type ?? undefined,
 		minRating: highRating ? 4.5 : undefined,
 		followedBy: "me",
-		sort,
+		sort: sort ?? undefined,
 		order: sortOrder,
 	});
 
@@ -114,7 +115,7 @@ export default function FollowingPage() {
 							options={SORT_OPTIONS}
 							value={sort}
 							onChange={(v) => {
-								if (v !== null) setSort(v);
+								if (v !== null) setSort(v as SortBy);
 							}}
 						/>
 						<button
