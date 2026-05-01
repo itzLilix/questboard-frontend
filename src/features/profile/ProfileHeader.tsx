@@ -53,7 +53,7 @@ export function ProfileInfo({ profile, isOwner }: ProfileInfoProps) {
 					size="xl"
 				/>
 				<div className="flex flex-col items-start gap-2 flex-1">
-					<h1 className="text-(--text-primary) text-3xl font-display flex gap-1">
+					<h1 className="text-(--text-primary) text-3xl font-display flex items-center gap-1">
 						<span>{profile.displayName}</span>
 						{profile.links?.map((link) => {
 							const platform = getPlatform(link.type);
@@ -69,7 +69,7 @@ export function ProfileInfo({ profile, isOwner }: ProfileInfoProps) {
 										src={platform?.iconUrl ?? genericIcon}
 										title={platform?.label ?? link.url}
 										alt={platform?.label ?? ""}
-										className="w-8 h-8 cursor-pointer"
+										className="w-6 h-6 cursor-pointer"
 									/>
 								</Link>
 							);
@@ -123,16 +123,14 @@ export function ProfileInfo({ profile, isOwner }: ProfileInfoProps) {
 					</Button>
 				)}
 			</div>
-			{
-				<TextField title="О себе" isShrinkable={true}>
-					{
-						<p className="text-base font-body text-(--text-primary)">
-							{profile.bio ||
-								"Пользователь не указал информацию о себе."}
-						</p>
-					}
-				</TextField>
-			}
+			<TextField title="О себе" isShrinkable={true}>
+				{
+					<p className="text-base font-body text-(--text-primary)">
+						{profile.bio ||
+							"Пользователь не указал информацию о себе."}
+					</p>
+				}
+			</TextField>
 		</div>
 	);
 }

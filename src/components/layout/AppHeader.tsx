@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
-import useAuth from "../../features/auth/useAuth";
+import useAuth from "../../hooks/useAuth";
 import NotificationBell from "../../features/notifications/NotificationBell";
 import Loading from "../ui/Loading";
 import AvatarImage from "../ui/AvatarImage";
@@ -29,6 +29,7 @@ function ProfileMenu({ isOpen, user, onClose }: ProfileMenuProps) {
 
 	const handleFollowingClick = () => {
 		onClose();
+		navigate(`/following`);
 	};
 
 	const handleSettingsClick = () => {

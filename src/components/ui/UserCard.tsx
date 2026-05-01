@@ -14,7 +14,7 @@ const userCardVariants = cva(
 	{
 		variants: {
 			view: {
-				card: `max-w-3xs h-88 flex-col p-6`,
+				card: `max-w-3xs h-80 flex-col p-6`,
 				table: `w-full flex-row px-3 py-4`,
 			},
 		},
@@ -26,7 +26,7 @@ export default function UserCard({ profileData, view }: userCardProps) {
 		<div className={userCardVariants({ view })}>
 			<AvatarImage
 				src={profileData.avatarUrl}
-				size="xl"
+				size={view === "table" ? "xl" : "lg"}
 				alt={profileData.username}
 			/>
 			<div className="text-base text-(--text-secondary) font-body flex flex-col">

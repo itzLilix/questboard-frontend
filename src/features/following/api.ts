@@ -1,7 +1,29 @@
 import { api } from "../../api/axios";
+import type { SessionFormat, SessionType } from "../../types/session";
 import type { ProfileCardData } from "../../types/userCard";
 
-export async function getFollowingList(): Promise<ProfileCardData> {
-	const res = await api.get<ProfileCardData>("/users/");
+export type UsersQuery = {
+	search?: string;
+	format?: SessionFormat;
+	type?: SessionType;
+	city?: string;
+	minRating?: number;
+	followedBy?: string;
+	onlyGMs?: boolean;
+	sort?: string;
+	order?: "asc" | "desc";
+	cursor?: string;
+	limit?: number;
+};
+
+export type UsersListResponse = {
+	items: ProfileCardData[];
+	nextCursor: string | null;
+};
+
+export async function getFollowingList(
+	params: UsersQuery,
+): Promise<UsersListResponse> {
+	const res = await api.get<UsersListResponse>("/users/", { params });
 	return res.data;
 }

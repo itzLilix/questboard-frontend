@@ -10,7 +10,7 @@ import {
 } from "react-hook-form";
 import Button from "../../components/ui/Button";
 import ImageUploader from "./ImageUploader";
-import useAuth from "../auth/useAuth";
+import useAuth from "../../hooks/useAuth";
 import { LabeledInput } from "../../components/ui/InputLabel";
 import Input from "../../components/ui/Input";
 import InputText from "../../components/ui/InputText";
