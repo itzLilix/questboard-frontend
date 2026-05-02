@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
@@ -6,35 +7,24 @@ import NotificationBell from "../../features/notifications/NotificationBell";
 import Loading from "../ui/Loading";
 import AvatarImage from "../ui/AvatarImage";
 import { useEffect, useRef, useState } from "react";
-import Menu, { MenuDivider, MenuItem } from "../ui/Menu";
+import { MenuDivider, MenuItem } from "../ui/Menu";
 import Icon from "../ui/Icon";
 import type { IUser } from "../../types/user";
 import { useLogoutMutation } from "../../features/auth/queries";
 import { useAuthModal } from "../../features/auth/authModalStore";
 
 type ProfileMenuProps = {
-	isOpen: boolean;
 	user: IUser;
 	onClose: () => void;
 };
 
-function ProfileMenu({ isOpen, user, onClose }: ProfileMenuProps) {
+function ProfileMenu({ user, onClose }: ProfileMenuProps) {
 	const navigate = useNavigate();
 	const logout = useLogoutMutation();
 
-	const handleProfileClick = () => {
+	const go = (path: string) => {
 		onClose();
-		navigate(`/users/${user.username}`);
-	};
-
-	const handleFollowingClick = () => {
-		onClose();
-		navigate(`/following`);
-	};
-
-	const handleSettingsClick = () => {
-		onClose();
-		navigate("/settings");
+		navigate(path);
 	};
 
 	const handleLogoutClick = async () => {
@@ -43,13 +33,9 @@ function ProfileMenu({ isOpen, user, onClose }: ProfileMenuProps) {
 	};
 
 	return (
-		<Menu isOpen={isOpen} side="right" className="min-w-48">
+		<>
 			<div className="flex flex-col items-center gap-2 p-3">
-				<AvatarImage
-					src={user.avatarUrl}
-					alt={user.username}
-					size="md"
-				/>
+				<AvatarImage src={user.avatarUrl} alt={user.username} size="md" />
 				<div className="flex flex-col items-start">
 					<span>{user.displayName}</span>
 					<span className="text-sm text-(--text-secondary)">
@@ -59,7 +45,7 @@ function ProfileMenu({ isOpen, user, onClose }: ProfileMenuProps) {
 			</div>
 			<MenuDivider />
 			<MenuItem
-				onClick={handleProfileClick}
+				onClick={() => go(`/users/${user.username}`)}
 				before={
 					<Icon
 						name="account_circle"
@@ -70,7 +56,7 @@ function ProfileMenu({ isOpen, user, onClose }: ProfileMenuProps) {
 				Профиль
 			</MenuItem>
 			<MenuItem
-				onClick={handleFollowingClick}
+				onClick={() => go("/following")}
 				before={
 					<Icon
 						name="group"
@@ -81,7 +67,7 @@ function ProfileMenu({ isOpen, user, onClose }: ProfileMenuProps) {
 				Подписки
 			</MenuItem>
 			<MenuItem
-				onClick={handleSettingsClick}
+				onClick={() => go("/settings")}
 				before={
 					<Icon
 						name="settings"
@@ -100,7 +86,7 @@ function ProfileMenu({ isOpen, user, onClose }: ProfileMenuProps) {
 			>
 				Выйти
 			</MenuItem>
-		</Menu>
+		</>
 	);
 }
 
@@ -108,28 +94,39 @@ export default function AppHeader() {
 	const { isLoading, user } = useAuth();
 	const openAuthModal = useAuthModal((s) => s.open);
 	const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+	const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null);
 
+	const triggerRef = useRef<HTMLButtonElement>(null);
 	const menuRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
+		if (!isProfileMenuOpen) return;
+
 		const handleClickOutside = (event: MouseEvent) => {
+			const t = event.target as Node;
 			if (
-				menuRef.current &&
-				!menuRef.current.contains(event.target as Node)
+				!triggerRef.current?.contains(t) &&
+				!menuRef.current?.contains(t)
 			) {
 				setIsProfileMenuOpen(false);
 			}
 		};
 
-		if (isProfileMenuOpen) {
-			document.addEventListener("mousedown", handleClickOutside);
-			return () =>
-				document.removeEventListener("mousedown", handleClickOutside);
-		}
+		document.addEventListener("mousedown", handleClickOutside);
+		return () =>
+			document.removeEventListener("mousedown", handleClickOutside);
 	}, [isProfileMenuOpen]);
 
+	const handleToggleMenu = () => {
+		if (!isProfileMenuOpen && triggerRef.current) {
+			const rect = triggerRef.current.getBoundingClientRect();
+			setMenuPos({ top: rect.bottom + 8, right: window.innerWidth - rect.right });
+		}
+		setIsProfileMenuOpen((o) => !o);
+	};
+
 	return (
-		<header className="bg-(--bg-base-tp) h-(--header-h) z-10 fixed top-0 w-full border-b border-(--border) backdrop-blur-sm">
+		<header className="bg-(--bg-base-tp) h-(--header-h) z-10 fixed top-0 w-full border-b border-(--border) backdrop-blur-lg">
 			<div className="p-4 flex items-center justify-between h-full max-w-1600 mx-auto">
 				<Link
 					to="/"
@@ -161,30 +158,20 @@ export default function AppHeader() {
 				) : user ? (
 					<div className="flex items-center gap-6">
 						<NotificationBell />
-						<div ref={menuRef}>
-							<button
-								className="flex items-center justify-end gap-2 cursor-pointer"
-								onClick={() =>
-									setIsProfileMenuOpen(!isProfileMenuOpen)
-								}
-							>
-								<span className="text-(--text-primary)">
-									{user.username}
-								</span>
-								<AvatarImage
-									src={user.avatarUrl}
-									alt={user.username}
-									size="sm"
-								/>
-							</button>
-							<div className="relative">
-								<ProfileMenu
-									isOpen={isProfileMenuOpen}
-									user={user}
-									onClose={() => setIsProfileMenuOpen(false)}
-								/>
-							</div>
-						</div>
+						<button
+							ref={triggerRef}
+							className="flex items-center justify-end gap-2 cursor-pointer"
+							onClick={handleToggleMenu}
+						>
+							<span className="text-(--text-primary)">
+								{user.username}
+							</span>
+							<AvatarImage
+								src={user.avatarUrl}
+								alt={user.username}
+								size="sm"
+							/>
+						</button>
 					</div>
 				) : (
 					<div className="flex items-center gap-4">
@@ -205,6 +192,23 @@ export default function AppHeader() {
 					</div>
 				)}
 			</div>
+
+			{isProfileMenuOpen &&
+				menuPos &&
+				user &&
+				createPortal(
+					<div
+						ref={menuRef}
+						className="fixed z-50 bg-(--bg-base-tp) backdrop-blur-lg border border-(--border) rounded-lg p-2 min-w-48"
+						style={{ top: menuPos.top, right: menuPos.right }}
+					>
+						<ProfileMenu
+							user={user}
+							onClose={() => setIsProfileMenuOpen(false)}
+						/>
+					</div>,
+					document.body,
+				)}
 		</header>
 	);
 }
