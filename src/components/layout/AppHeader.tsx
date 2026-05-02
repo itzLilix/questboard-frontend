@@ -12,6 +12,7 @@ import Icon from "../ui/Icon";
 import type { IUser } from "../../types/user";
 import { useLogoutMutation } from "../../features/auth/queries";
 import { useAuthModal } from "../../features/auth/authModalStore";
+import Logo from "../ui/Logo";
 
 type ProfileMenuProps = {
 	user: IUser;
@@ -35,7 +36,11 @@ function ProfileMenu({ user, onClose }: ProfileMenuProps) {
 	return (
 		<>
 			<div className="flex flex-col items-center gap-2 p-3">
-				<AvatarImage src={user.avatarUrl} alt={user.username} size="md" />
+				<AvatarImage
+					src={user.avatarUrl}
+					alt={user.username}
+					size="md"
+				/>
 				<div className="flex flex-col items-start">
 					<span>{user.displayName}</span>
 					<span className="text-sm text-(--text-secondary)">
@@ -94,7 +99,10 @@ export default function AppHeader() {
 	const { isLoading, user } = useAuth();
 	const openAuthModal = useAuthModal((s) => s.open);
 	const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
-	const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null);
+	const [menuPos, setMenuPos] = useState<{
+		top: number;
+		right: number;
+	} | null>(null);
 
 	const triggerRef = useRef<HTMLButtonElement>(null);
 	const menuRef = useRef<HTMLDivElement>(null);
@@ -120,7 +128,10 @@ export default function AppHeader() {
 	const handleToggleMenu = () => {
 		if (!isProfileMenuOpen && triggerRef.current) {
 			const rect = triggerRef.current.getBoundingClientRect();
-			setMenuPos({ top: rect.bottom + 8, right: window.innerWidth - rect.right });
+			setMenuPos({
+				top: rect.bottom + 8,
+				right: window.innerWidth - rect.right,
+			});
 		}
 		setIsProfileMenuOpen((o) => !o);
 	};
@@ -132,8 +143,7 @@ export default function AppHeader() {
 					to="/"
 					className="text-(--text-primary) text-2xl font-display select-none"
 				>
-					<span className="text-(--accent)">Quest</span>
-					<span>Board</span>
+					<Logo />
 				</Link>
 				<div className="flex items-center space-x-4">
 					<Link

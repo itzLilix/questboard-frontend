@@ -15,6 +15,7 @@ import {
 	displayNameRules,
 	passwordRules,
 } from "../../utils/formRules";
+import Logo from "../../components/ui/Logo";
 
 type FormInput = {
 	email: string;
@@ -81,8 +82,7 @@ export default function AuthModal() {
 			></div>
 			<div className="fixed h-180 w-150 m-auto inset-0 bg-(--bg-base-tp) backdrop-blur-lg flex items-stretch justify-start flex-col rounded-2xl border border-(--border) p-12 gap-6 z-50 animate-fade-in">
 				<div className="text-3xl font-display text-(--text-primary) select-none mx-auto mt-6">
-					<span className="text-(--accent)">Quest</span>
-					<span>Board</span>
+					<Logo />
 				</div>
 				<nav className="w-full flex justify-center gap-6 text-3xl">
 					<Tab
