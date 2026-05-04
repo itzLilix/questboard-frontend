@@ -34,3 +34,11 @@ export async function getFollowingList(
 	const res = await api.get<UsersListResponse>("/users/", { params });
 	return res.data;
 }
+
+export async function followUser(username: string) {
+	await api.post(`/users/${username}/follow`);
+}
+
+export async function unfollowUser(username: string) {
+	await api.delete(`/users/${username}/follow`);
+}

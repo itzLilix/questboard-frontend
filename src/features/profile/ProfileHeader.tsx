@@ -1,12 +1,9 @@
 import BannerImage from "./BannerImage";
 import { type IProfile } from "../../types/profile";
 import AvatarImage from "../../components/ui/AvatarImage";
-import Button from "../../components/ui/Button";
 import TextField from "../../components/ui/TextField";
-import { Link, useNavigate } from "react-router-dom";
-import { useFollowMutation, useUnfollowMutation } from "./queries";
-import { useAuthModal } from "../auth/authModalStore";
-import type { AxiosError } from "axios";
+import { Link } from "react-router-dom";
+import FollowButton from "../../components/ui/FollowButton";
 import genericIcon from "../../assets/socials/generic.png";
 import { getPlatform } from "../socials/platforms";
 import Rating from "../../components/ui/UserRating";
@@ -36,12 +33,6 @@ type ProfileInfoProps = {
 };
 
 export function ProfileInfo({ profile, isOwner }: ProfileInfoProps) {
-	const openAuthModal = useAuthModal((s) => s.open);
-	const navigate = useNavigate();
-
-	const follow = useFollowMutation(profile.username);
-	const unfollow = useUnfollowMutation(profile.username);
-
 	const isFollowed = profile.isFollowed;
 
 	return (
@@ -89,39 +80,11 @@ export function ProfileInfo({ profile, isOwner }: ProfileInfoProps) {
 						/>
 					</p>
 				</div>
-				{isOwner ? (
-					<Button
-						variant="secondary"
-						csize="sm"
-						onClick={() => {
-							navigate("/settings/profile");
-						}}
-					>
-						Редактировать
-					</Button>
-				) : isFollowed ? (
-					<Button
-						variant="secondary"
-						csize="sm"
-						onClick={() => unfollow.mutate()}
-					>
-						Отписаться
-					</Button>
-				) : (
-					<Button
-						variant="primary"
-						csize="sm"
-						onClick={() =>
-							follow.mutate(undefined, {
-								onError: (e) =>
-									(e as AxiosError).status === 401 &&
-									openAuthModal("login"),
-							})
-						}
-					>
-						Отслеживать
-					</Button>
-				)}
+				<FollowButton
+					username={profile.username}
+					isOwner={isOwner}
+					isFollowed={isFollowed}
+				/>
 			</div>
 			<TextField title="О себе" isShrinkable={true}>
 				{

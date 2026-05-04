@@ -1,6 +1,5 @@
 import clsx from "clsx";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import Dropdown from "../../components/ui/Dropdown";
 import FilterToggle from "../../components/ui/FilterToggle";
 import Icon from "../../components/ui/Icon";
@@ -165,7 +164,7 @@ export default function FollowingPage() {
 					className={
 						view === "card"
 							? "flex flex-wrap gap-4"
-							: "flex flex-col gap-2"
+							: `grid grid-cols-1 ${data.items.length > 1 ? "md:grid-cols-2" : "md:grid-cols-1"} gap-4`
 					}
 				>
 					{data.items.length === 0 && (
@@ -174,16 +173,7 @@ export default function FollowingPage() {
 						</p>
 					)}
 					{data.items.map((user) => (
-						<Link
-							key={user.id}
-							to={`/users/${user.username}`}
-							className="block"
-						>
-							<UserCard
-								profileData={user as IUserCard}
-								view={view}
-							/>
-						</Link>
+						<UserCard profileData={user as IUserCard} view={view} />
 					))}
 				</div>
 			)}

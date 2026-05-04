@@ -60,11 +60,13 @@ function SingleOption({
 			onClick={() => onSelect(isSelected ? null : option.value)}
 		>
 			{isSelected ? (
-				<Icon name="check" className="text-base! text-(--accent)!" />
+				<Icon name="check" className="text-(--accent)!" />
 			) : (
-				<span className="w-5" />
+				<span className="w-6" />
 			)}
-			<span>{option.label}</span>
+			<span className={isSelected ? "text-(--text-primary)" : ""}>
+				{option.label}
+			</span>
 		</button>
 	);
 }
@@ -98,15 +100,12 @@ function MultiOption({
 			onClick={() => onToggle(option.value)}
 		>
 			{state === "included" && (
-				<Icon
-					name="check_circle"
-					className="text-base! text-(--accent)!"
-				/>
+				<Icon name="check_circle" className="text-(--accent)!" />
 			)}
 			{state === "excluded" && (
-				<Icon name="cancel" className="text-base! text-(--error)!" />
+				<Icon name="cancel" className="text-(--error)!" />
 			)}
-			{!state && <span className="w-5" />}
+			{!state && <span className="w-6" />}
 			<span>{option.label}</span>
 		</button>
 	);

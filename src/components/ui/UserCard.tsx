@@ -3,6 +3,8 @@ import AvatarImage from "./AvatarImage";
 import Rating from "./UserRating";
 import TextSeparator from "./TextSeparator";
 import type { IUserCard } from "../../types/userCard";
+import FollowButton from "./FollowButton";
+import { Link } from "react-router-dom";
 
 type userCardProps = {
 	profileData: IUserCard;
@@ -10,7 +12,7 @@ type userCardProps = {
 };
 
 const userCardVariants = cva(
-	"bg-(--bg-card) border border-(--border) rounded-2xl flex gap-3 items-center",
+	"relative bg-(--bg-card) border border-(--border) rounded-2xl flex gap-3 items-center",
 	{
 		variants: {
 			view: {
@@ -24,6 +26,11 @@ const userCardVariants = cva(
 export default function UserCard({ profileData, view }: userCardProps) {
 	return (
 		<div className={userCardVariants({ view })}>
+			<Link
+				key={profileData.id}
+				to={`/users/${profileData.username}`}
+				className="absolute inset-0 z-0"
+			/>
 			<AvatarImage
 				src={profileData.avatarUrl}
 				size={view === "table" ? "xl" : "lg"}
@@ -42,6 +49,12 @@ export default function UserCard({ profileData, view }: userCardProps) {
 					<span>{profileData.sessionsHosted} партий</span>
 				</p>
 			</div>
+			<FollowButton
+				isFollowed={profileData.isFollowed}
+				isOwner={false}
+				username={profileData.username}
+				className={`relative z-1 ${view === "table" ? "ml-auto" : ""}`}
+			/>
 		</div>
 	);
 }
