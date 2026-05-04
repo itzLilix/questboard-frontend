@@ -4,12 +4,11 @@ import Dropdown from "../../components/ui/Dropdown";
 import FilterToggle from "../../components/ui/FilterToggle";
 import Icon from "../../components/ui/Icon";
 import Input from "../../components/ui/Input";
-import Loading from "../../components/ui/Loading";
-import UserCard from "../../components/ui/UserCard";
 import type { SessionFormat, SessionType } from "../../types/session";
-import type { IUserCard } from "../../types/userCard";
 import { useFollowingQuery } from "./queries";
-import type { SortBy } from "./api";
+import type { SortBy, SortOrder } from "../usersCatalog/api";
+import { UsersList } from "../usersCatalog/GMsPage";
+import type { userCardProps } from "../../components/ui/UserCard";
 
 const FORMAT_OPTIONS = [
 	{ value: "online", label: "Онлайн" },
@@ -36,8 +35,8 @@ export default function FollowingPage() {
 	const [type, setType] = useState<SessionType | null>(null);
 	const [highRating, setHighRating] = useState(false);
 	const [sort, setSort] = useState<SortBy | null>("followedAt");
-	const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-	const [view, setView] = useState<"table" | "card">("table");
+	const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+	const [view, setView] = useState<userCardProps["view"]>("table");
 
 	useEffect(() => {
 		const t = setTimeout(() => setDebouncedSearch(search), 300);
@@ -149,34 +148,12 @@ export default function FollowingPage() {
 				</div>
 			</div>
 
-			{isLoading && (
-				<div className="flex justify-center py-12">
-					<Loading />
-				</div>
-			)}
-			{isError && (
-				<p className="text-(--error) text-center py-12">
-					Ошибка загрузки
-				</p>
-			)}
-			{data && (
-				<div
-					className={
-						view === "card"
-							? "flex flex-wrap gap-4"
-							: `grid grid-cols-1 ${data.items.length > 1 ? "md:grid-cols-2" : "md:grid-cols-1"} gap-4`
-					}
-				>
-					{data.items.length === 0 && (
-						<p className="text-(--text-muted) text-center py-12 w-full">
-							Никого нет
-						</p>
-					)}
-					{data.items.map((user) => (
-						<UserCard profileData={user as IUserCard} view={view} />
-					))}
-				</div>
-			)}
+			<UsersList
+				isError={isError}
+				isLoading={isLoading}
+				data={data}
+				view={view}
+			/>
 		</div>
 	);
 }

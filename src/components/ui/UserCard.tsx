@@ -6,7 +6,7 @@ import type { IUserCard } from "../../types/userCard";
 import FollowButton from "./FollowButton";
 import { Link } from "react-router-dom";
 
-type userCardProps = {
+export type userCardProps = {
 	profileData: IUserCard;
 	view: "card" | "table";
 };

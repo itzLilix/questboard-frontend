@@ -153,7 +153,7 @@ export default function AppHeader() {
 						Сессии
 					</Link>
 					<Link
-						to="/"
+						to="/game-masters"
 						className="text-(--text-secondary) hover:text-(--accent)"
 					>
 						Мастера

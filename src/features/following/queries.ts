@@ -1,9 +1,9 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
-	getFollowingList,
+	getUsersList,
 	type UsersListResponse,
 	type UsersQuery,
-} from "./api";
+} from "../usersCatalog/api";
 import { queryClient } from "../../api/queryClient";
 import type { IProfile } from "../../types/profile";
 import { followUser, unfollowUser } from "./api";
@@ -17,7 +17,7 @@ export const followingKeys = {
 export function useFollowingQuery(params: UsersQuery) {
 	return useQuery({
 		queryKey: followingKeys.detail(params),
-		queryFn: () => getFollowingList(params),
+		queryFn: () => getUsersList(params),
 	});
 }
 

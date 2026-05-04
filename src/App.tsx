@@ -8,12 +8,14 @@ import SecuritySettings from "./features/settings/SecuritySettings";
 import ProfileSettings from "./features/settings/ProfileSettings";
 import GeneralSettings from "./features/settings/GeneralSettings";
 import FollowingPage from "./features/following/FollowingPage";
+import GMsPage from "./features/usersCatalog/GMsPage";
 
 function App() {
 	return (
 		<Routes>
 			<Route element={<RootLayout />}>
 				<Route path="/users/:username" element={<ProfileLayout />} />
+				<Route path="/game-masters" element={<GMsPage />} />
 				<Route element={<RequireAuth />}>
 					<Route path="/following" element={<FollowingPage />} />
 					<Route path="/settings" element={<SettingsLayout />}>
