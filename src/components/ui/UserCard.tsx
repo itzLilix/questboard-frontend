@@ -16,8 +16,8 @@ const userCardVariants = cva(
 	{
 		variants: {
 			view: {
-				card: `max-w-3xs h-80 flex-col p-6`,
-				table: `w-full flex-row px-3 py-4`,
+				card: `max-w-3xs h-80 flex-col p-6 text-center`,
+				table: `w-full flex-row px-6 py-4`,
 			},
 		},
 	},

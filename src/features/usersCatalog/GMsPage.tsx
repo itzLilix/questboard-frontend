@@ -177,20 +177,20 @@ export function UsersList({ isLoading, isError, data, view }: UsersListProps) {
 			<p className="text-(--error) text-center py-12">Ошибка загрузки</p>
 		);
 	}
-	if (data === undefined) return null;
+	if (data === undefined || data.items.length === 0)
+		return (
+			<p className="text-(--text-muted) text-center py-12 w-full">
+				Никого нет
+			</p>
+		);
 	return (
 		<div
 			className={
 				view === "card"
 					? "flex flex-wrap gap-4"
-					: `grid grid-cols-1 ${data.items.length > 1 ? "md:grid-cols-2" : "md:grid-cols-1"} gap-4`
+					: `grid grid-cols-1 md:grid-cols-2 gap-4 justify-items-center`
 			}
 		>
-			{data.items.length === 0 && (
-				<p className="text-(--text-muted) text-center py-12 w-full">
-					Никого нет
-				</p>
-			)}
 			{data.items.map((user) => (
 				<UserCard profileData={user as IUserCard} view={view} />
 			))}

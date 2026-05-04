@@ -174,7 +174,7 @@ export default function AppHeader() {
 							onClick={handleToggleMenu}
 						>
 							<span className="text-(--text-primary)">
-								{user.username}
+								{"@" + user.username}
 							</span>
 							<AvatarImage
 								src={user.avatarUrl}
