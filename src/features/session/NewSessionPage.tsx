@@ -180,7 +180,6 @@ function SessionPreview({ values }: { values: Partial<CreateSessionInput> }) {
 export default function NewSessionPage() {
 	const [campaigns, setCampaigns] = useState<Campaign[]>([]);
 	const [newCampaignMenu, toggleNewCampaign] = useState(false);
-	// const { data: systems = [] } = useSystemsQuery();
 	// const { data: campaigns = [] } = useCampaignsQuery();
 	// const createSession = useCreateSessionMutation();
 
@@ -490,7 +489,7 @@ export default function NewSessionPage() {
 						</LabeledInput>
 					</TextField>
 				</section>
-				<section className="flex w-2/5 flex-col gap-4">
+				<section className="flex w-2/5 flex-col gap-4 sticky top-(--header-h) pt-4 self-start">
 					<TextField title="Предпросмотр" isShrinkable={false}>
 						<SessionPreview
 							values={
