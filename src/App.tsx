@@ -9,8 +9,12 @@ import ProfileSettings from "./features/settings/ProfileSettings";
 import GeneralSettings from "./features/settings/GeneralSettings";
 import FollowingPage from "./features/following/FollowingPage";
 import GMsPage from "./features/usersCatalog/GMsPage";
+import NewSessionPage from "./features/session/NewSessionPage";
+import { useCuratedSystemsQuery } from "./features/session/queries";
 
 function App() {
+	useCuratedSystemsQuery();
+
 	return (
 		<Routes>
 			<Route element={<RootLayout />}>
@@ -31,6 +35,7 @@ function App() {
 							element={<NotificationSettings />}
 						/>
 					</Route>
+					<Route path="sessions/new" element={<NewSessionPage />} />
 				</Route>
 			</Route>
 		</Routes>

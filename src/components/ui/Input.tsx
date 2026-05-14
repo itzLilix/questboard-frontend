@@ -5,6 +5,7 @@ type InputProps = React.InputHTMLAttributes<HTMLInputElement> & {
 export default function Input({
 	csize = "md",
 	className,
+	disabled,
 	...props
 }: InputProps) {
 	return (
@@ -20,8 +21,10 @@ export default function Input({
 				focus:ring-offset-2 focus:ring-offset-(--bg-base)
 				transition-colors duration-200
 				placeholder:text-(--text-muted)
+				disabled:opacity-50 disabled:pointer-events-none
 				${className || ""}
 			`}
+			disabled={disabled}
 			{...props}
 		/>
 	);

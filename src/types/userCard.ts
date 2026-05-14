@@ -30,4 +30,6 @@ export type INextSession = Pick<
 export type ISystem = {
 	slug: string;
 	name: string;
+	isCurated: boolean;
+	badgeColor?: string;
 };

@@ -48,6 +48,18 @@ export default function UserCard({ profileData, view }: userCardProps) {
 					<TextSeparator />
 					<span>{profileData.sessionsHosted} партий</span>
 				</p>
+				{profileData.preferredFormat !== undefined && (
+					<p>
+						<CardLabel text="формат" />
+						<span></span>
+					</p>
+				)}
+				{profileData.preferredType !== undefined && (
+					<p>
+						<CardLabel text="тип" />
+						<span></span>
+					</p>
+				)}
 			</div>
 			<FollowButton
 				isFollowed={profileData.isFollowed}
@@ -56,5 +68,13 @@ export default function UserCard({ profileData, view }: userCardProps) {
 				className={`relative z-1 ${view === "table" ? "ml-auto" : ""}`}
 			/>
 		</div>
+	);
+}
+
+export function CardLabel({ text }: { text: string }) {
+	return (
+		<span className="text-sm text-(--text-muted)">
+			{text.toUpperCase() + ":"}
+		</span>
 	);
 }

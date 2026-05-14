@@ -1,4 +1,4 @@
-import { api } from "../../api/axios";
+import { profileApi } from "../../api/axios";
 import type { SessionFormat, SessionType } from "../../types/session";
 import type { ProfileCardData } from "../../types/userCard";
 
@@ -33,6 +33,6 @@ export type UsersListResponse = {
 export async function getUsersList(
 	params: UsersQuery,
 ): Promise<UsersListResponse> {
-	const res = await api.get<UsersListResponse>("/users/", { params });
+	const res = await profileApi.get<UsersListResponse>("/users/", { params });
 	return res.data;
 }

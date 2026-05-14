@@ -32,3 +32,8 @@ body {
 	font-family: var(--font-body);
 	scrollbar-color: var(--text-secondary) transparent;
 }
+
+input::-webkit-calendar-picker-indicator {
+	filter: invert(31%) sepia(87%) saturate(954%) hue-rotate(308deg)
+		brightness(84%) contrast(96%);
+}

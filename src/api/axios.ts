@@ -1,9 +1,12 @@
 import axios, { type AxiosResponse } from "axios";
 
-const BASE_URL = "http://localhost:3000";
+export const profileApi = axios.create({
+	baseURL: "http://localhost:3000",
+	withCredentials: true,
+});
 
-export const api = axios.create({
-	baseURL: BASE_URL,
+export const sessionApi = axios.create({
+	baseURL: "http://localhost:3001",
 	withCredentials: true,
 });
 
@@ -11,33 +14,38 @@ let refreshPromise: Promise<AxiosResponse> | null = null;
 
 export function refreshTokens() {
 	if (!refreshPromise) {
-		refreshPromise = api.get("/auth/refresh").finally(() => {
+		refreshPromise = profileApi.get("/auth/refresh").finally(() => {
 			refreshPromise = null;
 		});
 	}
 	return refreshPromise;
 }
 
-api.interceptors.response.use(
-	(response) => response,
-	async (error) => {
-		const originalRequest = error.config;
-		const skipRefresh = ["/auth/login", "/auth/signup", "/auth/refresh"];
+function attach401Interceptor(instance: ReturnType<typeof axios.create>) {
+	instance.interceptors.response.use(
+		(response) => response,
+		async (error) => {
+			const originalRequest = error.config;
+			const skipRefresh = ["/auth/login", "/auth/signup", "/auth/refresh"];
 
-		if (
-			error.response?.status === 401 &&
-			!originalRequest._retry &&
-			!skipRefresh.includes(originalRequest.url)
-		) {
-			originalRequest._retry = true;
-			try {
-				await refreshTokens();
-				return api(originalRequest);
-			} catch {
-				return Promise.reject(error);
+			if (
+				error.response?.status === 401 &&
+				!originalRequest._retry &&
+				!skipRefresh.includes(originalRequest.url)
+			) {
+				originalRequest._retry = true;
+				try {
+					await refreshTokens();
+					return instance(originalRequest);
+				} catch {
+					return Promise.reject(error);
+				}
 			}
-		}
 
-		return Promise.reject(error);
-	},
-);
+			return Promise.reject(error);
+		},
+	);
+}
+
+attach401Interceptor(profileApi);
+attach401Interceptor(sessionApi);

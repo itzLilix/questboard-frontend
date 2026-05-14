@@ -28,6 +28,7 @@ type DropdownProps = {
 	placeholder?: string;
 	className?: string;
 	disabled?: boolean;
+	fullWidth?: boolean;
 } & (SingleSelectProps | MultiSelectProps);
 
 function getDisplayText(props: DropdownProps): string {
@@ -137,7 +138,10 @@ export default function Dropdown(props: DropdownProps) {
 		<div ref={containerRef} className={clsx("relative", className)}>
 			<button
 				type="button"
-				className="inline-flex items-center gap-2 h-10 rounded-xl border border-(--border) px-4 bg-(--bg-surface) cursor-pointer transition-colors duration-200 hover:bg-(--bg-elevated) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--accent) focus-visible:ring-offset-2 focus-visible:ring-offset-(--bg-base) disabled:opacity-50 disabled:pointer-events-none"
+				className={clsx(
+					props.fullWidth && "w-full justify-center h-12",
+					"inline-flex items-center gap-2 h-10 rounded-xl border border-(--border) px-4 bg-(--bg-surface) cursor-pointer transition-colors duration-200 hover:bg-(--bg-elevated) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--accent) focus-visible:ring-offset-2 focus-visible:ring-offset-(--bg-base) disabled:opacity-50 disabled:pointer-events-none",
+				)}
 				disabled={disabled}
 				onClick={() => setIsOpen((o) => !o)}
 				onKeyDown={(e) => {
@@ -147,9 +151,11 @@ export default function Dropdown(props: DropdownProps) {
 					}
 				}}
 			>
-				<span className="text-base font-body uppercase text-(--text-muted)">
-					{label}:
-				</span>
+				{label !== "" && (
+					<span className="text-base font-body uppercase text-(--text-muted)">
+						{label + ":"}
+					</span>
+				)}
 				<span className="grid text-base font-body text-(--text-secondary) *:col-start-1 *:row-start-1">
 					<span className="invisible">
 						{props.placeholder ?? "Все"}

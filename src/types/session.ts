@@ -1,3 +1,5 @@
+import type { ISystem } from "./userCard";
+
 export interface ISession {
 	id: string;
 	title: string;
@@ -28,3 +30,11 @@ export type SessionStatus =
 	| "completed"
 	| "cancelled";
 export type SessionType = "oneshot" | "campaign";
+
+export type Campaign = {
+	id: string;
+	title: string;
+	description: string;
+	system: ISystem;
+	status: "active" | "completed" | "cancelled" | "paused";
+};

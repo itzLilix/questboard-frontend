@@ -1,6 +1,6 @@
-import { api } from "../../api/axios";
+import { profileApi } from "../../api/axios";
 
 export async function getUserProfile(username: string) {
-	const res = await api.get(`/users/${username}`);
+	const res = await profileApi.get(`/users/${username}`);
 	return res.data;
 }

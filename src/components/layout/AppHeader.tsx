@@ -107,6 +107,8 @@ export default function AppHeader() {
 	const triggerRef = useRef<HTMLButtonElement>(null);
 	const menuRef = useRef<HTMLDivElement>(null);
 
+	const navigate = useNavigate();
+
 	useEffect(() => {
 		if (!isProfileMenuOpen) return;
 
@@ -160,7 +162,13 @@ export default function AppHeader() {
 					</Link>
 				</div>
 				<Input placeholder={"Поиск..."} csize={"sm"} type="search" />
-				<Button onClick={() => {}} variant="secondary" csize="sm">
+				<Button
+					onClick={() => {
+						navigate("sessions/new");
+					}}
+					variant="secondary"
+					csize="sm"
+				>
 					+ Создать сессию
 				</Button>
 				{isLoading ? (

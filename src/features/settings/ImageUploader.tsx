@@ -6,13 +6,14 @@ type ImageUploaderProps = {
 	currentUrl?: string | null;
 	file: File | null;
 	onChange: (file: File | null) => void;
-	variant: "avatar" | "banner";
+	variant: "avatar" | "banner" | "free";
 	maxSizeMB?: number;
 };
 
 const variantClasses = {
-	avatar: "w-24 h-24 rounded-full",
-	banner: "w-128 h-24 rounded-lg",
+	avatar: "w-24 h-24 rounded-full bg-cover",
+	banner: "w-128 h-24 rounded-lg bg-cover",
+	free: "w-full h-24 rounded-lg bg-fit",
 };
 
 export default function ImageUploader({
@@ -60,7 +61,7 @@ export default function ImageUploader({
 					setIsDragging(false);
 					handleFile(e.dataTransfer.files[0]);
 				}}
-				className={`${isDragging ? "ring-2 ring-(--accent)" : ""} ${variantClasses[variant]} border border-(--border) bg-center bg-cover flex items-center justify-center text-(--text-secondary)`}
+				className={`${isDragging ? "ring-2 ring-(--accent)" : ""} ${variantClasses[variant]} border border-(--border) bg-center bg-no-repeat flex items-center justify-center text-(--text-secondary)`}
 				style={
 					hasImage
 						? { backgroundImage: `url(${displayUrl})` }
@@ -94,7 +95,7 @@ export default function ImageUploader({
 					variant="secondary"
 					csize="sm"
 					onClick={() => onChange(null)}
-					disabled={!currentUrl}
+					disabled={!hasImage}
 				>
 					Удалить
 				</Button>

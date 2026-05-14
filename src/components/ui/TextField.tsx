@@ -18,7 +18,7 @@ export default function TextField({
 
 	return (
 		<div
-			className={`bg-(--bg-surface) rounded-xl p-3 w-full border border-(--border) flex flex-col gap-3
+			className={`bg-(--bg-card) rounded-xl p-3 w-full border border-(--border) flex flex-col gap-3
                 ${isShrinkable ? "cursor-pointer hover:bg-(--bg-elevated)" : ""}
                 ${className || ""}`}
 			onClick={() =>
@@ -42,7 +42,9 @@ export default function TextField({
 					{title}
 				</h2>
 			)}
-			{isExpanded && children}
+			{isExpanded && (
+				<div className="p-4 gap-4 flex flex-col">{children}</div>
+			)}
 		</div>
 	);
 }
