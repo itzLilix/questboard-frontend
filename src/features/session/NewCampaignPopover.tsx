@@ -1,9 +1,9 @@
 import { useForm } from "react-hook-form";
 import Button from "../../components/ui/Button";
-import Field from "../../components/ui/Field";
-import Input from "../../components/ui/Input";
-import InputText from "../../components/ui/InputText";
-import { LabeledInput } from "../../components/ui/InputLabel";
+import Field from "../../components/ui/inputs/Field";
+import Input from "../../components/ui/inputs/Input";
+import InputText from "../../components/ui/inputs/InputText";
+import { LabeledInput } from "../../components/ui/inputs/InputLabel";
 import { Controller } from "react-hook-form";
 import type { ISystem } from "../../types/userCard";
 import SystemSearch from "./SystemSearch";

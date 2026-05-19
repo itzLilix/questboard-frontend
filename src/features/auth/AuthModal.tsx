@@ -1,11 +1,11 @@
 import { Link } from "react-router-dom";
 import { useForm, type SubmitHandler } from "react-hook-form";
-import Input from "../../components/ui/Input";
+import Input from "../../components/ui/inputs/Input";
 import Tab from "../../components/ui/Tab";
 import Button from "../../components/ui/Button";
-import { LabeledInput } from "../../components/ui/InputLabel";
-import Field from "../../components/ui/Field";
-import ErrorMessage from "../../components/ui/ErrorMessage";
+import { LabeledInput } from "../../components/ui/inputs/InputLabel";
+import Field from "../../components/ui/inputs/Field";
+import ErrorMessage from "../../components/ui/inputs/ErrorMessage";
 import { mapError } from "../../api/mapError";
 import { useLoginMutation, useSignupMutation } from "./queries";
 import { useAuthModal } from "./authModalStore";

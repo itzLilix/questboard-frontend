@@ -1,4 +1,4 @@
-import type { ISession, SessionFormat, SessionType } from "./session";
+import type { SessionFormat, SessionType } from "./session";
 
 export type IUserCard = ProfileCardData & Omit<SessionCardData, "userId">;
 
@@ -18,16 +18,22 @@ export interface ProfileCardData {
 }
 
 export interface SessionCardData {
-	systemStats?: ISystem & { sessionsCount: number }[];
+	userId: string;
+	systemStats?: ISystemStat[];
 	nextSession?: INextSession;
 }
 
-export type INextSession = Pick<
-	ISession,
-	"scheduledAt" | "format" | "system" | "type"
->;
+export type ISystemStat = ISystem & { sessionsCount: number };
+
+export type INextSession = {
+	scheduledAt: string;
+	format: SessionFormat;
+	type: SessionType;
+	system: ISystem;
+};
 
 export type ISystem = {
+	id: string;
 	slug: string;
 	name: string;
 	isCurated: boolean;

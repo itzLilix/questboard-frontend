@@ -1,7 +1,7 @@
 import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
 import Button from "../ui/Button";
-import Input from "../ui/Input";
+import Input from "../ui/inputs/Input";
 import useAuth from "../../hooks/useAuth";
 import NotificationBell from "../../features/notifications/NotificationBell";
 import Loading from "../ui/Loading";
@@ -149,7 +149,7 @@ export default function AppHeader() {
 				</Link>
 				<div className="flex items-center space-x-4">
 					<Link
-						to="/"
+						to="/sessions"
 						className="text-(--text-secondary) hover:text-(--accent)"
 					>
 						Сессии

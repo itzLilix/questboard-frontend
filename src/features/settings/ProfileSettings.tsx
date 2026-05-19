@@ -11,13 +11,13 @@ import {
 import Button from "../../components/ui/Button";
 import ImageUploader from "./ImageUploader";
 import useAuth from "../../hooks/useAuth";
-import { LabeledInput } from "../../components/ui/InputLabel";
-import Input from "../../components/ui/Input";
-import InputText from "../../components/ui/InputText";
+import { LabeledInput } from "../../components/ui/inputs/InputLabel";
+import Input from "../../components/ui/inputs/Input";
+import InputText from "../../components/ui/inputs/InputText";
 import AddButton from "../../components/ui/AddButton";
-import Field from "../../components/ui/Field";
+import Field from "../../components/ui/inputs/Field";
 import Icon from "../../components/ui/Icon";
-import ErrorMessage from "../../components/ui/ErrorMessage";
+import ErrorMessage from "../../components/ui/inputs/ErrorMessage";
 import {
 	usernameRules,
 	displayNameRules,

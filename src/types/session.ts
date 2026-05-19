@@ -5,21 +5,30 @@ export interface ISession {
 	title: string;
 	format: SessionFormat;
 	scheduledAt: string;
-	location: string;
-	system: string;
+	duration?: number;
+	location?: ILocation;
+	system: ISystem;
 	type: SessionType;
 	availability: SessionAvailability;
 	description: string;
 	previewUrl: string;
 	maxSeats: number;
 	masterId: string;
-	price: string;
+	price: number;
 	masterNotes: string;
 	status: SessionStatus;
 	freeSeats: number;
 	createdAt: string;
 	updatedAt: string;
 }
+
+export type ISessionCard = ISession & { masterDisplayName: string };
+
+export type ILocation = {
+	address: string;
+	lat: number;
+	lng: number;
+};
 
 export type SessionFormat = "online" | "offline";
 export type SessionAvailability = "open" | "private" | "application";

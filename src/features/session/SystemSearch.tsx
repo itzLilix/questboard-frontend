@@ -3,8 +3,12 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import Icon from "../../components/ui/Icon";
 import useClickOutside from "../../hooks/useClickOutside";
 import type { ISystem } from "../../types/userCard";
-import { useCuratedSystemsQuery, useSystemSearchQuery } from "./queries";
-import Input from "../../components/ui/Input";
+import {
+	useCreateSystemMutation,
+	useCuratedSystemsQuery,
+	useSystemSearchQuery,
+} from "./queries";
+import Input from "../../components/ui/inputs/Input";
 
 type SystemSearchProps = {
 	value: ISystem | null;
@@ -35,7 +39,6 @@ export default function SystemSearch({
 	}
 
 	useEffect(() => {
-		console.log(query);
 		const t = setTimeout(() => setDebouncedQ(query), DEBOUNCE_MS);
 		return () => clearTimeout(t);
 	}, [query]);
@@ -45,6 +48,8 @@ export default function SystemSearch({
 		useSystemSearchQuery(debouncedQ);
 	const { data: curated = [] } = useCuratedSystemsQuery();
 	const results = hasSearch ? searchResults : curated;
+
+	const createMutation = useCreateSystemMutation(query);
 
 	const close = useCallback(() => setIsOpen(false), []);
 	useClickOutside(containerRef, isOpen, close);
@@ -56,13 +61,13 @@ export default function SystemSearch({
 	};
 
 	const handleAddCustom = () => {
-		const custom: ISystem = {
-			slug: query.trim().toLowerCase().replace(/\s+/g, "-"),
-			name: query.trim(),
-			isCurated: false,
-		};
-		onChange(custom);
-		setIsOpen(false);
+		createMutation.mutate(undefined, {
+			onSuccess: (system) => {
+				onChange(system);
+				setQuery(system.name);
+				setIsOpen(false);
+			},
+		});
 	};
 
 	const handleClear = () => {
@@ -91,6 +96,7 @@ export default function SystemSearch({
 						setQuery(e.target.value);
 						if (!isOpen) setIsOpen(true);
 						if (e.target.value === "") onChange(null);
+						if (createMutation.isError) createMutation.reset();
 					}}
 					onFocus={() => setIsOpen(true)}
 					onKeyDown={(e) => {
@@ -118,6 +124,12 @@ export default function SystemSearch({
 				</p>
 			)}
 
+			{createMutation.isError && (
+				<p className="mt-1 text-xs text-(--error)">
+					Система с таким названием уже существует
+				</p>
+			)}
+
 			{isOpen && (
 				<div className="absolute z-50 top-full mt-2 left-0 right-0 bg-(--bg-base-tp) backdrop-blur-lg border border-(--border) rounded-lg p-2 flex flex-col overflow-y-scroll max-h-[50dvh]">
 					{isFetching && results.length === 0 && (
@@ -134,14 +146,16 @@ export default function SystemSearch({
 								onClick={() => handleSelect(s)}
 								className="flex items-center gap-2 px-3 py-2 rounded-xl text-base text-left hover:bg-(--bg-elevated) text-(--text-secondary) hover:text-(--text-primary) transition-colors"
 							>
-								{s.isCurated && (
+								{s.isCurated ? (
 									<Icon
 										name="verified"
 										className="text-(--accent) text-base! shrink-0"
 									/>
-								)}
-								{!s.isCurated && (
-									<span className="w-6 shrink-0" />
+								) : (
+									<Icon
+										name="group"
+										className="text-(--text-secondary) text-base! shrink-0"
+									/>
 								)}
 								<span>{s.name}</span>
 							</button>
@@ -151,7 +165,8 @@ export default function SystemSearch({
 						<button
 							type="button"
 							onClick={handleAddCustom}
-							className="flex items-center gap-2 px-3 py-2 rounded-xl text-base text-left hover:bg-(--bg-elevated) text-(--text-secondary) hover:text-(--text-primary) transition-colors mt-1 pt-2"
+							disabled={createMutation.isPending}
+							className="flex items-center gap-2 px-3 py-2 rounded-xl text-base text-left hover:bg-(--bg-elevated) text-(--text-secondary) hover:text-(--text-primary) transition-colors mt-1 pt-2 disabled:opacity-50 disabled:pointer-events-none"
 						>
 							<Icon name="add" className="text-base! shrink-0" />
 							<span>

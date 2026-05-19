@@ -1,13 +1,14 @@
 import clsx from "clsx";
-import Input from "../../components/ui/Input";
+import Input from "../../components/ui/inputs/Input";
 import { useState, useEffect } from "react";
 import Dropdown from "../../components/ui/Dropdown";
 import FilterToggle from "../../components/ui/FilterToggle";
 import Icon from "../../components/ui/Icon";
 import Loading from "../../components/ui/Loading";
-import UserCard, { type userCardProps } from "../../components/ui/UserCard";
+import UserCard, {
+	type userCardProps,
+} from "../../components/ui/cards/UserCard";
 import type { SessionFormat, SessionType } from "../../types/session";
-import type { IUserCard } from "../../types/userCard";
 import type { SortBy, SortOrder, UsersListResponse } from "../usersCatalog/api";
 import { useUsersCatalogQuery } from "./queries";
 
@@ -192,7 +193,7 @@ export function UsersList({ isLoading, isError, data, view }: UsersListProps) {
 			}
 		>
 			{data.items.map((user) => (
-				<UserCard profileData={user as IUserCard} view={view} />
+				<UserCard key={user.id} profileData={user} view={view} />
 			))}
 		</div>
 	);

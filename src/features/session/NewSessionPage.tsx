@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
 	Controller,
 	useForm,
@@ -11,13 +12,13 @@ import type {
 	SessionFormat,
 	SessionAvailability,
 	Campaign,
-	SessionStatus,
+	ILocation,
 } from "../../types/session";
 import type { ISystem } from "../../types/userCard";
-import Input from "../../components/ui/Input";
-import Field from "../../components/ui/Field";
-import InputText from "../../components/ui/InputText";
-import { LabeledInput } from "../../components/ui/InputLabel";
+import Input from "../../components/ui/inputs/Input";
+import Field from "../../components/ui/inputs/Field";
+import InputText from "../../components/ui/inputs/InputText";
+import { LabeledInput } from "../../components/ui/inputs/InputLabel";
 import ImageUploader from "../settings/ImageUploader";
 import Dropdown from "../../components/ui/Dropdown";
 import FilterToggle from "../../components/ui/FilterToggle";
@@ -25,6 +26,8 @@ import SystemSearch from "./SystemSearch";
 import NewCampaignPopover, {
 	type CreateCampaignInput,
 } from "./NewCampaignPopover";
+import { useCreateSessionMutation } from "./queries";
+import type { CreateSessionPayload } from "./api";
 
 export interface CreateSessionInput {
 	campaignId: string | null;
@@ -33,7 +36,7 @@ export interface CreateSessionInput {
 	image: File | null;
 	system: ISystem | null;
 	format: SessionFormat;
-	location: string;
+	location: ILocation | null;
 	scheduledAt: string;
 	startTime: string;
 	durationHours: number;
@@ -146,7 +149,7 @@ function SessionPreview({ values }: { values: Partial<CreateSessionInput> }) {
 							? `${values.startTime} / GMT${timezone >= 0 ? "+" + timezone : timezone}`
 							: "—",
 					],
-					["Адрес:", values.location || "—"],
+					["Адрес:", values.location?.address || "—"],
 					["Система:", values.system?.name || "—"],
 					[
 						"Доступность:",
@@ -178,10 +181,12 @@ function SessionPreview({ values }: { values: Partial<CreateSessionInput> }) {
 }
 
 export default function NewSessionPage() {
+	const navigate = useNavigate();
+	const createSession = useCreateSessionMutation();
 	const [campaigns, setCampaigns] = useState<Campaign[]>([]);
 	const [newCampaignMenu, toggleNewCampaign] = useState(false);
+	const [submitError, setSubmitError] = useState<string | null>(null);
 	// const { data: campaigns = [] } = useCampaignsQuery();
-	// const createSession = useCreateSessionMutation();
 
 	const { control, handleSubmit, register, setValue, watch } =
 		useForm<CreateSessionInput>({
@@ -193,7 +198,7 @@ export default function NewSessionPage() {
 				image: null,
 				system: null,
 				format: "offline",
-				location: "",
+				location: null,
 				scheduledAt: "",
 				startTime: "",
 				durationHours: 4,
@@ -216,10 +221,68 @@ export default function NewSessionPage() {
 		...campaigns.map((c: Campaign) => ({ value: c.id, label: c.title })),
 	];
 
-	const onSubmit: SubmitHandler<CreateSessionInput> = (data) => {
-		// TODO: createSession.mutate({ ...data, status: intendedStatusRef.current });
-		console.log("submit", data);
+	const buildPayload = (
+		data: CreateSessionInput,
+	): CreateSessionPayload | null => {
+		const system = campaign?.system ?? data.system;
+		if (!system) {
+			setSubmitError("Выберите систему");
+			return null;
+		}
+
+		let scheduledAt: string | undefined;
+		if (data.scheduledAt) {
+			const time = data.startTime || "00:00";
+			const local = new Date(`${data.scheduledAt}T${time}:00`);
+			if (!isNaN(local.getTime())) scheduledAt = local.toISOString();
+		}
+
+		// `register("location")` writes a plain address string into the
+		// `location` field, so the runtime value isn't an ILocation object.
+		const addressRaw = data.location as unknown;
+		const address = typeof addressRaw === "string" ? addressRaw.trim() : "";
+		const location: ILocation | undefined =
+			data.format === "offline" && address
+				? { address, lat: 0, lng: 0 }
+				: undefined;
+
+		const price = data.isFree
+			? 0
+			: data.price === "" || data.price == null
+				? undefined
+				: Number(data.price);
+
+		return {
+			title: data.title.trim(),
+			format: data.format,
+			systemId: system.id,
+			maxSeats: data.maxSeats,
+			scheduledAt,
+			description: data.description?.trim() || undefined,
+			location,
+			durationHours: data.durationHours || undefined,
+			price,
+			availability: data.availability,
+		};
 	};
+
+	const submit =
+		(publish: boolean): SubmitHandler<CreateSessionInput> =>
+		(data) => {
+			setSubmitError(null);
+			const payload = buildPayload(data);
+			if (!payload) return;
+			createSession.mutate(
+				{ payload, publish },
+				{
+					onSuccess: () => navigate("/"),
+					onError: () =>
+						setSubmitError(
+							"Не удалось сохранить сессию. Попробуйте ещё раз.",
+						),
+				},
+			);
+		};
 
 	// When a campaign with a preset system is created, propagate the system
 	// to the session form — but only if the user hasn't already chosen one.
@@ -489,7 +552,7 @@ export default function NewSessionPage() {
 						</LabeledInput>
 					</TextField>
 				</section>
-				<section className="flex w-2/5 flex-col gap-4 sticky top-(--header-h) pt-4 self-start">
+				<section className="flex w-2/5 flex-col gap-4 sticky top-(--header-h) pt-6 self-start">
 					<TextField title="Предпросмотр" isShrinkable={false}>
 						<SessionPreview
 							values={
@@ -497,10 +560,27 @@ export default function NewSessionPage() {
 							}
 						/>
 					</TextField>
-					<Button variant={"secondary"} fullWidth csize={"md"}>
+					{submitError && (
+						<p className="text-sm text-(--error) text-center">
+							{submitError}
+						</p>
+					)}
+					<Button
+						variant={"secondary"}
+						fullWidth
+						csize={"md"}
+						disabled={createSession.isPending}
+						onClick={handleSubmit(submit(false))}
+					>
 						Сохранить черновик
 					</Button>
-					<Button variant={"primary"} fullWidth csize={"md"}>
+					<Button
+						variant={"primary"}
+						fullWidth
+						csize={"md"}
+						disabled={createSession.isPending}
+						onClick={handleSubmit(submit(true))}
+					>
 						Опубликовать
 					</Button>
 				</section>

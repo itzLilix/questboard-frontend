@@ -10,6 +10,7 @@ import GeneralSettings from "./features/settings/GeneralSettings";
 import FollowingPage from "./features/following/FollowingPage";
 import GMsPage from "./features/usersCatalog/GMsPage";
 import NewSessionPage from "./features/session/NewSessionPage";
+import SessionsPage from "./features/session/SessionsPage";
 import { useCuratedSystemsQuery } from "./features/session/queries";
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
 			<Route element={<RootLayout />}>
 				<Route path="/users/:username" element={<ProfileLayout />} />
 				<Route path="/game-masters" element={<GMsPage />} />
+				<Route path="/sessions" element={<SessionsPage />} />
 				<Route element={<RequireAuth />}>
 					<Route path="/following" element={<FollowingPage />} />
 					<Route path="/settings" element={<SettingsLayout />}>
