@@ -12,7 +12,7 @@ export default function Input({
 		<input
 			className={`
 				bg-(--bg-surface)
-				text-(--text-primary)
+				text-(--text-primary) text-base
 				border border-(--border)
 				rounded-xl
                 w-full ${csize === "sm" ? "max-w-80" : ""}

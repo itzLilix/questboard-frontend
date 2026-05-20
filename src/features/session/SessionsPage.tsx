@@ -152,7 +152,7 @@ export default function SessionsPage() {
 						onChange={setSystemId}
 					/>
 					<FilterToggle
-						label="Со свободными местами"
+						label="Есть места"
 						isActive={hasFreeSeats}
 						onChange={setHasFreeSeats}
 					/>

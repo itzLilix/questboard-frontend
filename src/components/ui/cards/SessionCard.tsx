@@ -36,7 +36,7 @@ export default function SessionCard({
 	return (
 		<div
 			className={clsx(
-				"relative max-w-1/5 w-full aspect-9/12 rounded-2xl border border-(--border) overflow-hidden flex flex-col",
+				"relative max-w-1/5 w-full aspect-9/12 rounded-2xl border border-(--border) overflow-hidden flex flex-col min-w-2xs",
 				className,
 			)}
 			style={{
