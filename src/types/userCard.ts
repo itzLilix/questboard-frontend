@@ -39,3 +39,10 @@ export type ISystem = {
 	isCurated: boolean;
 	badgeColor?: string;
 };
+
+export type IUserBrief = {
+	id: string;
+	username: string;
+	displayName: string;
+	avatarUrl?: string;
+};

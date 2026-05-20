@@ -1,6 +1,7 @@
 import Loading from "../../components/ui/Loading";
 import SessionCard from "../../components/ui/cards/SessionCard";
-import type { ISession, ISessionCard } from "../../types/session";
+import type { ISession } from "../../types/session";
+import type { IUserBrief } from "../../types/userCard";
 import { useSessionsQuery } from "./queries";
 
 export default function SessionsPage() {
@@ -16,6 +17,7 @@ export default function SessionsPage() {
 			</h1>
 			<SessionsList
 				items={data?.items}
+				users={data?.users}
 				isLoading={isLoading}
 				isError={isError}
 			/>
@@ -25,10 +27,12 @@ export default function SessionsPage() {
 
 export function SessionsList({
 	items,
+	users,
 	isLoading,
 	isError,
 }: {
 	items?: ISession[];
+	users?: Record<string, IUserBrief>;
 	isLoading: boolean;
 	isError: boolean;
 }) {
@@ -54,12 +58,12 @@ export function SessionsList({
 	return (
 		<div className="flex flex-wrap gap-4">
 			{items.map((s) => (
-				<SessionCard key={s.id} sessionData={toSessionCard(s)} />
+				<SessionCard
+					key={s.id}
+					sessionData={s}
+					master={users?.[s.masterId]}
+				/>
 			))}
 		</div>
 	);
-}
-
-function toSessionCard(s: ISession): ISessionCard {
-	return { ...s, masterDisplayName: "" };
 }

@@ -22,8 +22,6 @@ export interface ISession {
 	updatedAt: string;
 }
 
-export type ISessionCard = ISession & { masterDisplayName: string };
-
 export type ILocation = {
 	address: string;
 	lat: number;

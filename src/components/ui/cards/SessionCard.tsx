@@ -3,12 +3,14 @@ import { Link, useNavigate } from "react-router-dom";
 import Button from "../Button";
 import Icon from "../Icon";
 import { SystemBadge } from "../SystemBadge";
-import type { ISessionCard } from "../../../types/session";
 import {
 	MONTHS_GENITIVE,
 	pluralHours,
 	pluralSeats,
 } from "../../../utils/words";
+import type { IUserBrief } from "../../../types/userCard";
+import type { ISession } from "../../../types/session";
+import { CardLabel } from "./CardLine";
 
 const DEFAULT_BADGE_COLOR = "var(--border)";
 
@@ -18,48 +20,43 @@ const TYPE_LABEL = {
 } as const;
 
 export type SessionCardProps = {
-	sessionData: ISessionCard;
+	sessionData: ISession;
+	master: IUserBrief | undefined;
 	className?: string;
 };
 
 export default function SessionCard({
 	sessionData,
+	master,
 	className,
 }: SessionCardProps) {
-	const {
-		id,
-		title,
-		previewUrl,
-		system,
-		type,
-		duration,
-		scheduledAt,
-		format,
-		location,
-		maxSeats,
-		freeSeats,
-		price,
-		masterDisplayName,
-	} = sessionData;
-
 	const navigate = useNavigate();
-	const fallbackBg = system.badgeColor || DEFAULT_BADGE_COLOR;
-	const occupied = Math.max(0, maxSeats - freeSeats);
+	const fallbackBg = sessionData.system.badgeColor || DEFAULT_BADGE_COLOR;
+	const occupied = Math.max(0, sessionData.maxSeats - sessionData.freeSeats);
 
 	return (
 		<div
 			className={clsx(
-				"relative max-w-1/5 w-full aspect-9/11 rounded-2xl border border-(--border) overflow-hidden flex flex-col",
+				"relative max-w-1/5 w-full aspect-9/12 rounded-2xl border border-(--border) overflow-hidden flex flex-col",
 				className,
 			)}
-			style={{ backgroundColor: fallbackBg }}
+			style={{
+				backgroundColor: fallbackBg,
+			}}
 		>
-			{previewUrl && (
+			{sessionData.previewUrl ? (
 				<img
-					src={previewUrl}
+					src={sessionData.previewUrl}
 					alt=""
 					aria-hidden
 					className="absolute inset-0 w-full h-full object-cover"
+				/>
+			) : (
+				<img
+					src={"src/assets/zero-card.svg"}
+					alt=""
+					aria-hidden
+					className="absolute inset-0 w-1/3 object-contain opacity-50 top-1/8 left-1/2 transform -translate-x-1/2"
 				/>
 			)}
 			<div
@@ -72,28 +69,28 @@ export default function SessionCard({
 			/>
 
 			<div className="absolute top-4 left-4 z-10">
-				<SystemBadge system={system} />
+				<SystemBadge system={sessionData.system} />
 			</div>
 
 			<Link
-				to={`/sessions/${id}`}
+				to={`/sessions/${sessionData.id}`}
 				className="absolute inset-0 z-0"
-				aria-label={title}
+				aria-label={sessionData.title}
 			/>
 
 			<div className="relative z-1 mt-auto flex flex-col gap-3 p-5 pointer-events-none">
 				<div>
 					<h3 className="font-display text-2xl text-(--text-primary)">
-						{title}
+						{sessionData.title}
 					</h3>
-					{masterDisplayName && (
-						<p className="text-base text-(--text-secondary)">
-							Мастер:{" "}
+					{master && (
+						<p className="text-lg text-(--text-secondary)">
+							{"Мастер: "}
 							<Link
-								to={`/users/${masterDisplayName}`}
+								to={`/users/${master.username}`}
 								className="text-(--text-primary) hover:text-(--accent-hover) transition-colors pointer-events-auto relative z-1"
 							>
-								{masterDisplayName}
+								{master.displayName}
 							</Link>
 						</p>
 					)}
@@ -101,16 +98,18 @@ export default function SessionCard({
 
 				<ul className="flex flex-col gap-1.5 text-base text-(--text-primary)">
 					<InfoRow icon="alarm">
-						{TYPE_LABEL[type]}
-						{duration ? `, ~${formatDuration(duration)}` : ""}
+						{TYPE_LABEL[sessionData.type]}
+						{sessionData.duration
+							? `, ~${formatDuration(sessionData.duration)}`
+							: ""}
 					</InfoRow>
 					<InfoRow icon="calendar_today">
-						{formatScheduledAt(scheduledAt)}
+						{formatScheduledAt(sessionData.scheduledAt)}
 					</InfoRow>
-					{format === "offline" ? (
-						location?.address && (
+					{sessionData.format === "offline" ? (
+						sessionData.location?.address && (
 							<InfoRow icon="location_on">
-								{location.address}
+								{sessionData.location.address}
 							</InfoRow>
 						)
 					) : (
@@ -121,18 +120,20 @@ export default function SessionCard({
 				<div className="flex items-center justify-between gap-3">
 					<SeatsIndicator
 						occupied={occupied}
-						maxSeats={maxSeats}
-						freeSeats={freeSeats}
+						maxSeats={sessionData.maxSeats}
+						freeSeats={sessionData.freeSeats}
 					/>
 					<span
 						className={clsx(
 							"text-base font-medium shrink-0",
-							price === 0
+							sessionData.price === 0
 								? "text-(--success)"
 								: "text-(--text-primary)",
 						)}
 					>
-						{price === 0 ? "Бесплатно" : `${price} ₽`}
+						{sessionData.price === 0
+							? "Бесплатно"
+							: `${sessionData.price} ₽`}
 					</span>
 				</div>
 
@@ -142,7 +143,7 @@ export default function SessionCard({
 						csize="sm"
 						fullWidth
 						className="flex-1 relative z-1"
-						onClick={() => navigate(`/sessions/${id}`)}
+						onClick={() => navigate(`/sessions/${sessionData.id}`)}
 					>
 						Подробнее
 					</Button>

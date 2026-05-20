@@ -7,7 +7,11 @@ import type {
 	SessionStatus,
 	SessionType,
 } from "../../types/session";
-import type { ISystem, SessionCardData } from "../../types/userCard";
+import type {
+	IUserBrief,
+	ISystem,
+	SessionCardData,
+} from "../../types/userCard";
 
 export async function fetchCuratedSystems(): Promise<ISystem[]> {
 	const { data } = await sessionApi.get<ISystem[]>("/game-systems/curated");
@@ -100,6 +104,7 @@ export type SessionListQuery = {
 export type SessionsListResponse = {
 	items: ISession[];
 	nextCursor: string | null;
+	users: Record<string, IUserBrief>;
 };
 
 export async function fetchSessions(
@@ -108,5 +113,9 @@ export async function fetchSessions(
 	const { data } = await sessionApi.get<SessionsListResponse>("/sessions/", {
 		params,
 	});
-	return { items: data.items ?? [], nextCursor: data.nextCursor ?? null };
+	return {
+		items: data.items ?? [],
+		nextCursor: data.nextCursor ?? null,
+		users: data.users ?? {},
+	};
 }
