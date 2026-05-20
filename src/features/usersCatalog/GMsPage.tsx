@@ -1,10 +1,8 @@
-import clsx from "clsx";
 import Input from "../../components/ui/inputs/Input";
 import { useState, useEffect } from "react";
 import ClearFiltersButton from "../../components/ui/ClearFiltersButton";
 import Dropdown from "../../components/ui/Dropdown";
 import FilterToggle from "../../components/ui/FilterToggle";
-import Icon from "../../components/ui/Icon";
 import Loading from "../../components/ui/Loading";
 import UserCard, {
 	type userCardProps,

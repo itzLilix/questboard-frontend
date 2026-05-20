@@ -1,8 +1,6 @@
-import clsx from "clsx";
 import { useEffect, useState } from "react";
 import Dropdown from "../../components/ui/Dropdown";
 import FilterToggle from "../../components/ui/FilterToggle";
-import Icon from "../../components/ui/Icon";
 import Input from "../../components/ui/inputs/Input";
 import type { SessionFormat, SessionType } from "../../types/session";
 import { useFollowingQuery } from "./queries";

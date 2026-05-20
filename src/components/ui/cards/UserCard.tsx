@@ -7,7 +7,8 @@ import type { SessionFormat, SessionType } from "../../../types/session";
 import FollowButton from "../FollowButton";
 import { Link } from "react-router-dom";
 import SystemBadgesRow from "./SystemBadgesRow";
-import { formatRelativeDate, pluralPartiy } from "../../../utils/words";
+import { formatRelativeDate } from "../../../utils/dateFormats";
+import { pluralPartiy } from "../../../utils/words";
 import { CardLine } from "./CardLine";
 
 export type userCardProps = {

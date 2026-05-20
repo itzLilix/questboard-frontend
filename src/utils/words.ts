@@ -34,7 +34,8 @@ export function pluralSeats(n: number) {
 	const mod10 = n % 10;
 	const mod100 = n % 100;
 	if (mod10 === 1 && mod100 !== 11) return "место";
-	if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return "места";
+	if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14))
+		return "места";
 	return "мест";
 }
 
@@ -64,27 +65,3 @@ export const DAYS_OF_WEEK = [
 	"Пятница",
 	"Суббота",
 ];
-
-export function formatRelativeDate(iso: string): string {
-	const date = new Date(iso);
-	if (isNaN(date.getTime())) return "—";
-
-	const now = new Date();
-	const startOfDay = (d: Date) =>
-		new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-	const dayDiff = Math.round(
-		(startOfDay(date) - startOfDay(now)) / (1000 * 60 * 60 * 24),
-	);
-
-	if (dayDiff === 0) return "сегодня";
-	if (dayDiff === 1) return "завтра";
-	if (dayDiff === -1) return "вчера";
-	if (dayDiff > 1 && dayDiff <= 7)
-		return `через ${dayDiff} ${pluralDays(dayDiff)}`;
-	if (dayDiff < -1 && dayDiff >= -7) {
-		const n = -dayDiff;
-		return `${n} ${pluralDays(n)} назад`;
-	}
-
-	return `${date.getDate()} ${MONTHS_GENITIVE[date.getMonth()]}`;
-}

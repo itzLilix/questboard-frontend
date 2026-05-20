@@ -1,9 +1,7 @@
-import clsx from "clsx";
 import { useEffect, useMemo, useState } from "react";
 import ClearFiltersButton from "../../components/ui/ClearFiltersButton";
 import Dropdown from "../../components/ui/Dropdown";
 import FilterToggle from "../../components/ui/FilterToggle";
-import Icon from "../../components/ui/Icon";
 import Input from "../../components/ui/inputs/Input";
 import Loading from "../../components/ui/Loading";
 import SessionCard from "../../components/ui/cards/SessionCard";
@@ -11,10 +9,11 @@ import { SystemBadge } from "../../components/ui/SystemBadge";
 import type { ISession, SessionFormat, SessionType } from "../../types/session";
 import type { ISystem, IUserBrief } from "../../types/userCard";
 import { type Option, options, type OptionValue } from "../../utils/options";
-import { DAYS_OF_WEEK, MONTHS_GENITIVE } from "../../utils/words";
 import { useCuratedSystemsQuery, useSessionsQuery } from "./queries";
 import SessionGroup from "./SessionGroup";
 import ToggleSortOrder from "../../components/ui/ToggleSortOrder";
+import RangeField from "../../components/ui/FilterRange";
+import { dateKey, formatDateWeekday } from "../../utils/dateFormats";
 
 const FORMAT_OPTIONS = options([
 	{ value: "online", label: "Онлайн" },
@@ -105,8 +104,8 @@ export default function SessionsPage() {
 		type: type ?? undefined,
 		systemId: systemId ?? undefined,
 		hasFreeSeats: hasFreeSeats || undefined,
-		priceMin: isFree ? 0 : parseNumber(priceMin),
-		priceMax: isFree ? 0 : parseNumber(priceMax),
+		priceMin: isFree ? 0 : parseInt(priceMin, 10) || undefined,
+		priceMax: isFree ? 0 : parseInt(priceMax, 10) || undefined,
 		dateFrom: dateFrom || undefined,
 		dateTo: dateTo || undefined,
 		sort,
@@ -239,55 +238,6 @@ export default function SessionsPage() {
 	);
 }
 
-function RangeField({
-	label,
-	suffix,
-	type,
-	from,
-	to,
-	onFromChange,
-	onToChange,
-	disabled,
-}: {
-	label: string;
-	suffix?: string;
-	type: "number" | "date";
-	from: string;
-	to: string;
-	onFromChange: (v: string) => void;
-	onToChange: (v: string) => void;
-	disabled?: boolean;
-}) {
-	return (
-		<div className="flex items-center gap-2">
-			<span className="text-base font-body uppercase text-(--text-muted)">
-				{label}:
-			</span>
-			<Input
-				csize="sm"
-				type={type}
-				placeholder="От"
-				value={from}
-				disabled={disabled}
-				onChange={(e) => onFromChange(e.target.value)}
-				className="w-32!"
-			/>
-			<Input
-				csize="sm"
-				type={type}
-				placeholder="До"
-				value={to}
-				disabled={disabled}
-				onChange={(e) => onToChange(e.target.value)}
-				className="w-32!"
-			/>
-			{suffix && (
-				<span className="text-base text-(--text-muted)">{suffix}</span>
-			)}
-		</div>
-	);
-}
-
 export function SessionsList({
 	items,
 	users,
@@ -340,6 +290,17 @@ export function SessionsList({
 
 	const groups = groupSessions(items, groupBy);
 
+	function renderSystemGroup(
+		systemId: string,
+		curated: ISystem[],
+		items: ISession[],
+	) {
+		const system =
+			items[0]?.system ?? curated.find((s) => s.id === systemId);
+		if (!system) return systemId;
+		return <SystemBadge system={system} />;
+	}
+
 	return (
 		<div className="flex flex-col gap-6">
 			{groups.map((g) => (
@@ -347,7 +308,7 @@ export function SessionsList({
 					key={g.key}
 					title={
 						groupBy.kind === "date"
-							? formatDateGroup(g.key)
+							? formatDateWeekday(g.key)
 							: renderSystemGroup(g.key, curated, g.items)
 					}
 					count={g.items.length}
@@ -385,40 +346,4 @@ function groupSessions(
 		map.get(key)!.push(s);
 	}
 	return order.map((key) => ({ key, items: map.get(key)! }));
-}
-
-function dateKey(iso: string | undefined): string {
-	if (!iso) return "no-date";
-	const d = new Date(iso);
-	if (isNaN(d.getTime())) return "no-date";
-	const y = d.getFullYear();
-	const m = String(d.getMonth() + 1).padStart(2, "0");
-	const day = String(d.getDate()).padStart(2, "0");
-	return `${y}-${m}-${day}`;
-}
-
-function formatDateGroup(key: string): string {
-	if (key === "no-date") return "Без даты";
-	const [y, m, d] = key.split("-").map(Number);
-	const date = new Date(y, m - 1, d);
-	const day = date.getDate();
-	const month = MONTHS_GENITIVE[date.getMonth()];
-	const weekday = DAYS_OF_WEEK[date.getDay()];
-	return `${day} ${month}, ${weekday}`;
-}
-
-function renderSystemGroup(
-	systemId: string,
-	curated: ISystem[],
-	items: ISession[],
-) {
-	const system = items[0]?.system ?? curated.find((s) => s.id === systemId);
-	if (!system) return systemId;
-	return <SystemBadge system={system} />;
-}
-
-function parseNumber(s: string): number | undefined {
-	if (s.trim() === "") return undefined;
-	const n = Number(s);
-	return isNaN(n) ? undefined : n;
 }
