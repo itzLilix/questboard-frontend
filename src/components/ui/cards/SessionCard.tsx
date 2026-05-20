@@ -10,7 +10,6 @@ import {
 } from "../../../utils/words";
 import type { IUserBrief } from "../../../types/userCard";
 import type { ISession } from "../../../types/session";
-import { CardLabel } from "./CardLine";
 
 const DEFAULT_BADGE_COLOR = "var(--border)";
 

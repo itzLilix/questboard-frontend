@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import Input from "../../components/ui/inputs/Input";
 import { useState, useEffect } from "react";
+import ClearFiltersButton from "../../components/ui/ClearFiltersButton";
 import Dropdown from "../../components/ui/Dropdown";
 import FilterToggle from "../../components/ui/FilterToggle";
 import Icon from "../../components/ui/Icon";
@@ -9,25 +10,28 @@ import UserCard, {
 	type userCardProps,
 } from "../../components/ui/cards/UserCard";
 import type { SessionFormat, SessionType } from "../../types/session";
+import { type Option, options } from "../../utils/options";
 import type { SortBy, SortOrder, UsersListResponse } from "../usersCatalog/api";
 import { useUsersCatalogQuery } from "./queries";
+import ToggleSortOrder from "../../components/ui/ToggleSortOrder";
+import ToggleView from "../../components/ui/ToggleView";
 
-const FORMAT_OPTIONS = [
+const FORMAT_OPTIONS = options([
 	{ value: "online", label: "Онлайн" },
 	{ value: "offline", label: "Оффлайн" },
-];
+]) satisfies readonly Option<SessionFormat>[];
 
-const TYPE_OPTIONS = [
+const TYPE_OPTIONS = options([
 	{ value: "oneshot", label: "Ваншот" },
 	{ value: "campaign", label: "Кампания" },
-];
+]) satisfies readonly Option<SessionType>[];
 
-const SORT_OPTIONS = [
+const SORT_OPTIONS = options([
 	{ value: "rating", label: "Рейтинг" },
 	{ value: "reviews", label: "Отзывы" },
 	{ value: "recent", label: "Регистрация" },
 	{ value: "sessions", label: "Игры" },
-];
+]) satisfies readonly Option<SortBy>[];
 
 export default function GMsPage() {
 	const [search, setSearch] = useState("");
@@ -43,6 +47,13 @@ export default function GMsPage() {
 		const t = setTimeout(() => setDebouncedSearch(search), 300);
 		return () => clearTimeout(t);
 	}, [search]);
+
+	const clearFilters = () => {
+		setSearch("");
+		setFormat(null);
+		setType(null);
+		setHighRating(false);
+	};
 
 	const { data, isLoading, isError } = useUsersCatalogQuery({
 		search: debouncedSearch || undefined,
@@ -70,13 +81,13 @@ export default function GMsPage() {
 				<div className="flex flex-wrap items-center gap-3">
 					<Dropdown
 						label="Формат"
-						options={FORMAT_OPTIONS}
+						options={[...FORMAT_OPTIONS]}
 						value={format}
 						onChange={(v) => setFormat(v as SessionFormat | null)}
 					/>
 					<Dropdown
 						label="Тип"
-						options={TYPE_OPTIONS}
+						options={[...TYPE_OPTIONS]}
 						value={type}
 						onChange={(v) => setType(v as SessionType | null)}
 					/>
@@ -94,57 +105,27 @@ export default function GMsPage() {
 					/>
 
 					<div className="ml-auto flex items-center gap-2">
-						<FilterToggle
-							isActive={false}
-							onChange={() =>
-								setView(view === "table" ? "card" : "table")
-							}
-						>
-							<Icon
-								name={
-									view === "table"
-										? "view_agenda"
-										: "grid_view"
-								}
-								className="text-lg! leading-none!"
-							/>
-						</FilterToggle>
+						<ClearFiltersButton
+							filters={{ search, format, type, highRating }}
+							onClear={clearFilters}
+						/>
+						<ToggleView view={view} setView={setView} />
 						<Dropdown
 							label="Сортировка"
-							options={SORT_OPTIONS}
+							options={[...SORT_OPTIONS]}
 							value={sort}
 							onChange={(v) => {
 								if (v !== null) setSort(v as SortBy);
 							}}
 						/>
-						<button
-							type="button"
-							title={
-								sortOrder === "asc"
-									? "По возрастанию"
-									: "По убыванию"
-							}
-							className={clsx(
-								"inline-flex items-center justify-center h-10 w-10 rounded-xl border border-(--border) bg-(--bg-surface)",
-								"cursor-pointer transition-colors duration-200 hover:bg-(--bg-elevated)",
-								"focus:outline-none focus-visible:ring-2 focus-visible:ring-(--accent)",
-								"focus-visible:ring-offset-2 focus-visible:ring-offset-(--bg-base)",
-							)}
-							onClick={() =>
+						<ToggleSortOrder
+							sortOrder={sortOrder}
+							onToggle={() =>
 								setSortOrder((o) =>
 									o === "asc" ? "desc" : "asc",
 								)
 							}
-						>
-							<Icon
-								name={
-									sortOrder === "asc"
-										? "arrow_upward"
-										: "arrow_downward"
-								}
-								className="text-lg! leading-none! text-(--text-muted)!"
-							/>
-						</button>
+						/>
 					</div>
 				</div>
 			</div>

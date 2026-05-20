@@ -9,6 +9,9 @@ import { useFollowingQuery } from "./queries";
 import type { SortBy, SortOrder } from "../usersCatalog/api";
 import { UsersList } from "../usersCatalog/GMsPage";
 import type { userCardProps } from "../../components/ui/cards/UserCard";
+import ClearFiltersButton from "../../components/ui/ClearFiltersButton";
+import ToggleSortOrder from "../../components/ui/ToggleSortOrder";
+import ToggleView from "../../components/ui/ToggleView";
 
 const FORMAT_OPTIONS = [
 	{ value: "online", label: "Онлайн" },
@@ -26,7 +29,7 @@ const SORT_OPTIONS = [
 	{ value: "reviews", label: "Отзывы" },
 	{ value: "recent", label: "Регистрация" },
 	{ value: "sessions", label: "Игры" },
-];
+] as const satisfies readonly { value: string; label: string }[];
 
 export default function FollowingPage() {
 	const [search, setSearch] = useState("");
@@ -52,6 +55,13 @@ export default function FollowingPage() {
 		sort: sort ?? undefined,
 		order: sortOrder,
 	});
+
+	const clearFilters = () => {
+		setSearch("");
+		setFormat(null);
+		setType(null);
+		setHighRating(false);
+	};
 
 	return (
 		<div className="max-w-1600 mx-auto px-4 py-6">
@@ -93,57 +103,27 @@ export default function FollowingPage() {
 					/>
 
 					<div className="ml-auto flex items-center gap-2">
-						<FilterToggle
-							isActive={false}
-							onChange={() =>
-								setView(view === "table" ? "card" : "table")
-							}
-						>
-							<Icon
-								name={
-									view === "table"
-										? "view_agenda"
-										: "grid_view"
-								}
-								className="text-lg! leading-none!"
-							/>
-						</FilterToggle>
+						<ClearFiltersButton
+							filters={{ search, format, type, highRating }}
+							onClear={clearFilters}
+						/>
+						<ToggleView view={view} setView={setView} />
 						<Dropdown
 							label="Сортировка"
-							options={SORT_OPTIONS}
+							options={[...SORT_OPTIONS]}
 							value={sort}
 							onChange={(v) => {
 								if (v !== null) setSort(v as SortBy);
 							}}
 						/>
-						<button
-							type="button"
-							title={
-								sortOrder === "asc"
-									? "По возрастанию"
-									: "По убыванию"
-							}
-							className={clsx(
-								"inline-flex items-center justify-center h-10 w-10 rounded-xl border border-(--border) bg-(--bg-surface)",
-								"cursor-pointer transition-colors duration-200 hover:bg-(--bg-elevated)",
-								"focus:outline-none focus-visible:ring-2 focus-visible:ring-(--accent)",
-								"focus-visible:ring-offset-2 focus-visible:ring-offset-(--bg-base)",
-							)}
-							onClick={() =>
+						<ToggleSortOrder
+							sortOrder={sortOrder}
+							onToggle={() =>
 								setSortOrder((o) =>
 									o === "asc" ? "desc" : "asc",
 								)
 							}
-						>
-							<Icon
-								name={
-									sortOrder === "asc"
-										? "arrow_upward"
-										: "arrow_downward"
-								}
-								className="text-lg! leading-none! text-(--text-muted)!"
-							/>
-						</button>
+						/>
 					</div>
 				</div>
 			</div>

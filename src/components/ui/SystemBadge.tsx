@@ -19,7 +19,7 @@ export function SystemBadge({
 	const pill = (
 		<span
 			className={clsx(
-				"inline-flex items-center px-2.5 py-1 rounded-md text-sm font-bold uppercase whitespace-nowrap text-(--text-primary) select-none",
+				"inline-flex items-center px-2.5 py-1 rounded-md text-sm font-body font-bold uppercase whitespace-nowrap text-(--text-primary) select-none",
 				className,
 			)}
 			style={{

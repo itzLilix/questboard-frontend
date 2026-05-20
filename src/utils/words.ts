@@ -47,6 +47,24 @@ export function pluralHours(n: number) {
 	return "часов";
 }
 
+export function pluralGames(n: number) {
+	const mod10 = n % 10;
+	const mod100 = n % 100;
+	if (mod10 === 1 && mod100 !== 11) return "игра";
+	if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return "игры";
+	return "игр";
+}
+
+export const DAYS_OF_WEEK = [
+	"Воскресенье",
+	"Понедельник",
+	"Вторник",
+	"Среда",
+	"Четверг",
+	"Пятница",
+	"Суббота",
+];
+
 export function formatRelativeDate(iso: string): string {
 	const date = new Date(iso);
 	if (isNaN(date.getTime())) return "—";
