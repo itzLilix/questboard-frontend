@@ -7,29 +7,30 @@ import Loading from "../../components/ui/Loading";
 import UserCard, {
 	type userCardProps,
 } from "../../components/ui/cards/UserCard";
-import type { SessionFormat, SessionType } from "../../types/session";
+import { SessionFormat, SessionType } from "../../types/session";
 import { type Option, options } from "../../utils/options";
-import type { SortBy, SortOrder, UsersListResponse } from "../usersCatalog/api";
+import { UserSortBy, type UsersListResponse } from "../usersCatalog/api";
+import { SortOrder } from "../../types/query";
 import { useUsersCatalogQuery } from "./queries";
 import ToggleSortOrder from "../../components/ui/ToggleSortOrder";
 import ToggleView from "../../components/ui/ToggleView";
 
 const FORMAT_OPTIONS = options([
-	{ value: "online", label: "Онлайн" },
-	{ value: "offline", label: "Оффлайн" },
+	{ value: SessionFormat.Online, label: "Онлайн" },
+	{ value: SessionFormat.Offline, label: "Оффлайн" },
 ]) satisfies readonly Option<SessionFormat>[];
 
 const TYPE_OPTIONS = options([
-	{ value: "oneshot", label: "Ваншот" },
-	{ value: "campaign", label: "Кампания" },
+	{ value: SessionType.Oneshot, label: "Ваншот" },
+	{ value: SessionType.Campaign, label: "Кампания" },
 ]) satisfies readonly Option<SessionType>[];
 
 const SORT_OPTIONS = options([
-	{ value: "rating", label: "Рейтинг" },
-	{ value: "reviews", label: "Отзывы" },
-	{ value: "recent", label: "Регистрация" },
-	{ value: "sessions", label: "Игры" },
-]) satisfies readonly Option<SortBy>[];
+	{ value: UserSortBy.Rating, label: "Рейтинг" },
+	{ value: UserSortBy.Reviews, label: "Отзывы" },
+	{ value: UserSortBy.Recent, label: "Регистрация" },
+	{ value: UserSortBy.Sessions, label: "Игры" },
+]) satisfies readonly Option<UserSortBy>[];
 
 export default function GMsPage() {
 	const [search, setSearch] = useState("");
@@ -37,8 +38,8 @@ export default function GMsPage() {
 	const [format, setFormat] = useState<SessionFormat | null>(null);
 	const [type, setType] = useState<SessionType | null>(null);
 	const [highRating, setHighRating] = useState(false);
-	const [sort, setSort] = useState<SortBy | null>("rating");
-	const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+	const [sort, setSort] = useState<UserSortBy | null>(UserSortBy.Rating);
+	const [sortOrder, setSortOrder] = useState<SortOrder>(SortOrder.Desc);
 	const [view, setView] = useState<userCardProps["view"]>("table");
 
 	useEffect(() => {
@@ -113,14 +114,16 @@ export default function GMsPage() {
 							options={[...SORT_OPTIONS]}
 							value={sort}
 							onChange={(v) => {
-								if (v !== null) setSort(v as SortBy);
+								if (v !== null) setSort(v as UserSortBy);
 							}}
 						/>
 						<ToggleSortOrder
 							sortOrder={sortOrder}
 							onToggle={() =>
 								setSortOrder((o) =>
-									o === "asc" ? "desc" : "asc",
+									o === SortOrder.Asc
+										? SortOrder.Desc
+										: SortOrder.Asc,
 								)
 							}
 						/>

@@ -1,5 +1,11 @@
 import type { Socials } from "../features/socials/types";
 
+export const UserRole = {
+	User: "user",
+	Admin: "admin",
+} as const;
+export type UserRole = (typeof UserRole)[keyof typeof UserRole];
+
 export interface IUser {
 	id: string;
 	username: string;
@@ -8,7 +14,7 @@ export interface IUser {
 	lastLogin?: string;
 	avatarUrl?: string;
 	bannerUrl?: string;
-	role: "user" | "admin";
+	role: UserRole;
 	displayName: string;
 	isEmailVerified: boolean;
 	sessionsPlayed: number;

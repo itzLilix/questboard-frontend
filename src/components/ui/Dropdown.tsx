@@ -174,7 +174,7 @@ export default function Dropdown(props: DropdownProps) {
 			{isOpen && (
 				<div
 					role="listbox"
-					className="absolute z-50 top-full mt-2 left-0 bg-(--bg-base-tp) backdrop-blur-lg border border-(--border) rounded-lg p-2 min-w-full"
+					className="absolute z-50 top-full mt-2 left-0 bg-(--bg-base-tp) overflow-y-auto max-h-[50dvh] backdrop-blur-lg border border-(--border) rounded-lg p-2 min-w-full"
 				>
 					{props.multiple
 						? options.map((option) => (

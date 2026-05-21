@@ -1,4 +1,49 @@
-import type { ISystem } from "./userCard";
+import type { ISystem, IUserBrief } from "./userCard";
+
+export const SessionFormat = {
+	Online: "online",
+	Offline: "offline",
+} as const;
+export type SessionFormat = (typeof SessionFormat)[keyof typeof SessionFormat];
+
+export const SessionAvailability = {
+	Open: "open",
+	Private: "private",
+	Application: "application",
+} as const;
+export type SessionAvailability =
+	(typeof SessionAvailability)[keyof typeof SessionAvailability];
+
+export const SessionStatus = {
+	Draft: "draft",
+	Published: "published",
+	Ongoing: "ongoing",
+	Completed: "completed",
+	Cancelled: "cancelled",
+} as const;
+export type SessionStatus = (typeof SessionStatus)[keyof typeof SessionStatus];
+
+export const SessionType = {
+	Oneshot: "oneshot",
+	Campaign: "campaign",
+} as const;
+export type SessionType = (typeof SessionType)[keyof typeof SessionType];
+
+export const CampaignStatus = {
+	Active: "active",
+	Completed: "completed",
+	Cancelled: "cancelled",
+	Paused: "paused",
+} as const;
+export type CampaignStatus =
+	(typeof CampaignStatus)[keyof typeof CampaignStatus];
+
+export const PlayerStatus = {
+	Active: "active",
+	Kicked: "kicked",
+	Left: "left",
+} as const;
+export type PlayerStatus = (typeof PlayerStatus)[keyof typeof PlayerStatus];
 
 export interface ISession {
 	id: string;
@@ -28,20 +73,37 @@ export type ILocation = {
 	lng: number;
 };
 
-export type SessionFormat = "online" | "offline";
-export type SessionAvailability = "open" | "private" | "application";
-export type SessionStatus =
-	| "draft"
-	| "published"
-	| "ongoing"
-	| "completed"
-	| "cancelled";
-export type SessionType = "oneshot" | "campaign";
-
 export type Campaign = {
 	id: string;
 	title: string;
 	description: string;
 	system: ISystem;
-	status: "active" | "completed" | "cancelled" | "paused";
+	status: CampaignStatus;
+};
+
+export type ICharacter = {
+	id: string;
+	playerId: string;
+	name: string;
+	class: string | null;
+	level: number | null;
+	avatarUrl?: string;
+	description?: string | null;
+	sheetUrl?: string | null;
+	createdAt: string;
+	updatedAt: string;
+};
+
+export type IPlayer = {
+	sessionId: string;
+	playerId: string;
+	status: PlayerStatus;
+	joinedAt: string;
+	character: ICharacter | null;
+};
+
+export type SessionResponse = {
+	session: ISession;
+	players: IPlayer[];
+	users: IUserBrief[];
 };

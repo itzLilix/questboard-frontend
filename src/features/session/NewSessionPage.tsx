@@ -8,11 +8,11 @@ import {
 } from "react-hook-form";
 import Button from "../../components/ui/Button";
 import TextField from "../../components/ui/TextField";
-import type {
-	SessionFormat,
+import {
 	SessionAvailability,
-	Campaign,
-	ILocation,
+	SessionFormat,
+	type Campaign,
+	type ILocation,
 } from "../../types/session";
 import type { ISystem } from "../../types/userCard";
 import Input from "../../components/ui/inputs/Input";
@@ -68,21 +68,25 @@ const AVAILABILITY_OPTIONS: {
 	hint: string;
 }[] = [
 	{
-		value: "open",
+		value: SessionAvailability.Open,
 		label: "Открытая",
 		hint: "Любой желающий может записаться",
 	},
 	{
-		value: "application",
+		value: SessionAvailability.Application,
 		label: "По заявкам",
 		hint: "Мастер одобряет каждую заявку",
 	},
-	{ value: "private", label: "Закрытая", hint: "Только по ссылке" },
+	{
+		value: SessionAvailability.Private,
+		label: "Закрытая",
+		hint: "Только по ссылке",
+	},
 ];
 
-const FORMAT_OPTIONS = [
-	{ value: "offline", label: "Оффлайн" },
-	{ value: "online", label: "Онлайн" },
+const FORMAT_OPTIONS: { value: SessionFormat; label: string }[] = [
+	{ value: SessionFormat.Offline, label: "Оффлайн" },
+	{ value: SessionFormat.Online, label: "Онлайн" },
 ];
 
 function SessionPreview({ values }: { values: Partial<CreateSessionInput> }) {
@@ -242,7 +246,7 @@ export default function NewSessionPage() {
 		const addressRaw = data.location as unknown;
 		const address = typeof addressRaw === "string" ? addressRaw.trim() : "";
 		const location: ILocation | undefined =
-			data.format === "offline" && address
+			data.format === SessionFormat.Offline && address
 				? { address, lat: 0, lng: 0 }
 				: undefined;
 
@@ -428,7 +432,9 @@ export default function NewSessionPage() {
 											options={FORMAT_OPTIONS}
 											value={field.value}
 											onChange={(v) =>
-												field.onChange(v ?? "offline")
+												field.onChange(
+													v ?? SessionFormat.Offline,
+												)
 											}
 											fullWidth
 										/>
@@ -441,7 +447,7 @@ export default function NewSessionPage() {
 									type="text"
 									placeholder="Город, улица, дом"
 									className="w-full"
-									disabled={format === "online"}
+									disabled={format === SessionFormat.Online}
 								/>
 							</LabeledInput>
 						</div>

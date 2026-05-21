@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import Dropdown from "../../components/ui/Dropdown";
 import FilterToggle from "../../components/ui/FilterToggle";
 import Input from "../../components/ui/inputs/Input";
-import type { SessionFormat, SessionType } from "../../types/session";
+import { SessionFormat, SessionType } from "../../types/session";
 import { useFollowingQuery } from "./queries";
-import type { SortBy, SortOrder } from "../usersCatalog/api";
+import { UserSortBy } from "../usersCatalog/api";
+import { SortOrder } from "../../types/query";
 import { UsersList } from "../usersCatalog/GMsPage";
 import type { userCardProps } from "../../components/ui/cards/UserCard";
 import ClearFiltersButton from "../../components/ui/ClearFiltersButton";
@@ -12,22 +13,22 @@ import ToggleSortOrder from "../../components/ui/ToggleSortOrder";
 import ToggleView from "../../components/ui/ToggleView";
 
 const FORMAT_OPTIONS = [
-	{ value: "online", label: "Онлайн" },
-	{ value: "offline", label: "Оффлайн" },
+	{ value: SessionFormat.Online, label: "Онлайн" },
+	{ value: SessionFormat.Offline, label: "Оффлайн" },
 ];
 
 const TYPE_OPTIONS = [
-	{ value: "oneshot", label: "Ваншот" },
-	{ value: "campaign", label: "Кампания" },
+	{ value: SessionType.Oneshot, label: "Ваншот" },
+	{ value: SessionType.Campaign, label: "Кампания" },
 ];
 
 const SORT_OPTIONS = [
-	{ value: "rating", label: "Рейтинг" },
-	{ value: "followedAt", label: "Дата подписки" },
-	{ value: "reviews", label: "Отзывы" },
-	{ value: "recent", label: "Регистрация" },
-	{ value: "sessions", label: "Игры" },
-] as const satisfies readonly { value: string; label: string }[];
+	{ value: UserSortBy.Rating, label: "Рейтинг" },
+	{ value: UserSortBy.FollowedAt, label: "Дата подписки" },
+	{ value: UserSortBy.Reviews, label: "Отзывы" },
+	{ value: UserSortBy.Recent, label: "Регистрация" },
+	{ value: UserSortBy.Sessions, label: "Игры" },
+] as const satisfies readonly { value: UserSortBy; label: string }[];
 
 export default function FollowingPage() {
 	const [search, setSearch] = useState("");
@@ -35,8 +36,8 @@ export default function FollowingPage() {
 	const [format, setFormat] = useState<SessionFormat | null>(null);
 	const [type, setType] = useState<SessionType | null>(null);
 	const [highRating, setHighRating] = useState(false);
-	const [sort, setSort] = useState<SortBy | null>("followedAt");
-	const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+	const [sort, setSort] = useState<UserSortBy | null>(UserSortBy.FollowedAt);
+	const [sortOrder, setSortOrder] = useState<SortOrder>(SortOrder.Desc);
 	const [view, setView] = useState<userCardProps["view"]>("table");
 
 	useEffect(() => {
@@ -111,14 +112,16 @@ export default function FollowingPage() {
 							options={[...SORT_OPTIONS]}
 							value={sort}
 							onChange={(v) => {
-								if (v !== null) setSort(v as SortBy);
+								if (v !== null) setSort(v as UserSortBy);
 							}}
 						/>
 						<ToggleSortOrder
 							sortOrder={sortOrder}
 							onToggle={() =>
 								setSortOrder((o) =>
-									o === "asc" ? "desc" : "asc",
+									o === SortOrder.Asc
+										? SortOrder.Desc
+										: SortOrder.Asc,
 								)
 							}
 						/>

@@ -1,17 +1,42 @@
 import { sessionApi } from "../../api/axios";
-import type {
-	ILocation,
-	ISession,
-	SessionAvailability,
-	SessionFormat,
+import {
 	SessionStatus,
-	SessionType,
+	type ILocation,
+	type ISession,
+	type SessionAvailability,
+	type SessionFormat,
+	type SessionResponse,
+	type SessionType,
 } from "../../types/session";
 import type {
 	IUserBrief,
 	ISystem,
 	SessionCardData,
 } from "../../types/userCard";
+import type { SortOrder } from "../../types/query";
+
+export const SessionScope = {
+	Catalog: "catalog",
+	Mastering: "mastering",
+	Playing: "playing",
+} as const;
+export type SessionScope = (typeof SessionScope)[keyof typeof SessionScope];
+
+export const StatusFilter = {
+	...SessionStatus,
+	Public: "public",
+} as const;
+export type StatusFilter = (typeof StatusFilter)[keyof typeof StatusFilter];
+
+export const SessionSortBy = {
+	ScheduledAt: "scheduled_at",
+	CreatedAt: "created_at",
+	System: "system",
+	Price: "price",
+	Title: "title",
+} as const;
+export type SessionSortBy =
+	(typeof SessionSortBy)[keyof typeof SessionSortBy];
 
 export async function fetchCuratedSystems(): Promise<ISystem[]> {
 	const { data } = await sessionApi.get<ISystem[]>("/game-systems/curated");
@@ -81,10 +106,10 @@ export async function fetchSessionCards(
 }
 
 export type SessionListQuery = {
-	scope?: "catalog" | "mastering" | "playing";
+	scope?: SessionScope;
 	masterId?: string;
 	playerId?: string;
-	status: SessionStatus | "public";
+	status: StatusFilter;
 	search?: string;
 	format?: SessionFormat;
 	type?: SessionType;
@@ -95,8 +120,8 @@ export type SessionListQuery = {
 	priceMax?: number;
 	dateFrom?: string;
 	dateTo?: string;
-	sort?: string;
-	order?: "asc" | "desc";
+	sort?: SessionSortBy;
+	order?: SortOrder;
 	cursor?: string;
 	limit?: number;
 };
@@ -118,4 +143,9 @@ export async function fetchSessions(
 		nextCursor: data.nextCursor ?? null,
 		users: data.users ?? {},
 	};
+}
+
+export async function fetchSession(id: string): Promise<SessionResponse> {
+	const { data } = await sessionApi.get<SessionResponse>(`/sessions/${id}`);
+	return data;
 }

@@ -1,21 +1,23 @@
 import FilterToggle from "./FilterToggle";
 import Icon from "./Icon";
+import { SortOrder } from "../../types/query";
 
 export default function ToggleSortOrder({
 	sortOrder,
 	onToggle,
 }: {
-	sortOrder: "asc" | "desc";
+	sortOrder: SortOrder;
 	onToggle: () => void;
 }) {
+	const isAsc = sortOrder === SortOrder.Asc;
 	return (
 		<FilterToggle
 			isActive={false}
 			onChange={onToggle}
-			title={sortOrder === "asc" ? "По возрастанию" : "По убыванию"}
+			title={isAsc ? "По возрастанию" : "По убыванию"}
 		>
 			<Icon
-				name={sortOrder === "asc" ? "arrow_upward" : "arrow_downward"}
+				name={isAsc ? "arrow_upward" : "arrow_downward"}
 				className="text-lg! leading-none! text-(--text-muted)!"
 			/>
 		</FilterToggle>

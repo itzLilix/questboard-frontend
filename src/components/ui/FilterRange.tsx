@@ -21,9 +21,11 @@ export default function RangeField({
 }) {
 	return (
 		<div className="flex items-center gap-2">
-			<span className="text-base font-body uppercase text-(--text-muted)">
-				{label}:
-			</span>
+			{label && (
+				<span className="text-base font-body uppercase text-(--text-muted)">
+					{label}:
+				</span>
+			)}
 			<Input
 				csize="sm"
 				type={type}

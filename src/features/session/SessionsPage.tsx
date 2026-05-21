@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import ClearFiltersButton from "../../components/ui/ClearFiltersButton";
 import Dropdown from "../../components/ui/Dropdown";
 import FilterToggle from "../../components/ui/FilterToggle";
@@ -6,38 +7,42 @@ import Input from "../../components/ui/inputs/Input";
 import Loading from "../../components/ui/Loading";
 import SessionCard from "../../components/ui/cards/SessionCard";
 import { SystemBadge } from "../../components/ui/SystemBadge";
-import type { ISession, SessionFormat, SessionType } from "../../types/session";
+import {
+	SessionFormat,
+	SessionType,
+	type ISession,
+} from "../../types/session";
 import type { ISystem, IUserBrief } from "../../types/userCard";
-import { type Option, options, type OptionValue } from "../../utils/options";
+import { type Option, options } from "../../utils/options";
 import { useCuratedSystemsQuery, useSessionsQuery } from "./queries";
+import { SessionSortBy, StatusFilter } from "./api";
+import { SortOrder } from "../../types/query";
 import SessionGroup from "./SessionGroup";
 import ToggleSortOrder from "../../components/ui/ToggleSortOrder";
 import RangeField from "../../components/ui/FilterRange";
 import { dateKey, formatDateWeekday } from "../../utils/dateFormats";
 
 const FORMAT_OPTIONS = options([
-	{ value: "online", label: "Онлайн" },
-	{ value: "offline", label: "Оффлайн" },
+	{ value: SessionFormat.Online, label: "Онлайн" },
+	{ value: SessionFormat.Offline, label: "Оффлайн" },
 ]) satisfies readonly Option<SessionFormat>[];
 
 const TYPE_OPTIONS = options([
-	{ value: "oneshot", label: "Ваншот" },
-	{ value: "campaign", label: "Кампания" },
+	{ value: SessionType.Oneshot, label: "Ваншот" },
+	{ value: SessionType.Campaign, label: "Кампания" },
 ]) satisfies readonly Option<SessionType>[];
 
 const SORT_OPTIONS = options([
-	{ value: "scheduled_at", label: "Дата проведения" },
-	{ value: "created_at", label: "Дата создания" },
-	{ value: "system", label: "Система" },
-	{ value: "price", label: "Цена" },
-	{ value: "title", label: "Название" },
-]);
-
-type SessionSortBy = OptionValue<typeof SORT_OPTIONS>;
+	{ value: SessionSortBy.ScheduledAt, label: "Дата проведения" },
+	{ value: SessionSortBy.CreatedAt, label: "Дата создания" },
+	{ value: SessionSortBy.System, label: "Система" },
+	{ value: SessionSortBy.Price, label: "Цена" },
+	{ value: SessionSortBy.Title, label: "Название" },
+]) satisfies readonly Option<SessionSortBy>[];
 
 const DATE_FIELD_BY_SORT = {
-	scheduled_at: "scheduledAt",
-	created_at: "createdAt",
+	[SessionSortBy.ScheduledAt]: "scheduledAt",
+	[SessionSortBy.CreatedAt]: "createdAt",
 } as const satisfies Partial<Record<SessionSortBy, keyof ISession>>;
 
 type DateSort = keyof typeof DATE_FIELD_BY_SORT;
@@ -53,24 +58,48 @@ function getGroupBy(sort: SessionSortBy): GroupBy {
 			field: DATE_FIELD_BY_SORT[sort as DateSort],
 		};
 	}
-	if (sort === "system") return { kind: "system" };
+	if (sort === SessionSortBy.System) return { kind: "system" };
 	return null;
 }
 
+function parseFormat(v: string | null): SessionFormat | null {
+	return v === SessionFormat.Online || v === SessionFormat.Offline ? v : null;
+}
+
+function parseType(v: string | null): SessionType | null {
+	return v === SessionType.Oneshot || v === SessionType.Campaign ? v : null;
+}
+
 export default function SessionsPage() {
-	const [search, setSearch] = useState("");
-	const [debouncedSearch, setDebouncedSearch] = useState("");
-	const [format, setFormat] = useState<SessionFormat | null>(null);
-	const [type, setType] = useState<SessionType | null>(null);
-	const [systemId, setSystemId] = useState<string | null>(null);
+	const [searchParams] = useSearchParams();
+
+	const [search, setSearch] = useState(
+		() => searchParams.get("search") ?? "",
+	);
+	const [debouncedSearch, setDebouncedSearch] = useState(
+		() => searchParams.get("search") ?? "",
+	);
+	const [format, setFormat] = useState<SessionFormat | null>(() =>
+		parseFormat(searchParams.get("format")),
+	);
+	const [type, setType] = useState<SessionType | null>(() =>
+		parseType(searchParams.get("type")),
+	);
+	const [systemId, setSystemId] = useState<string | null>(() =>
+		searchParams.get("systemId"),
+	);
 	const [hasFreeSeats, setHasFreeSeats] = useState(false);
 	const [isFree, setIsFree] = useState(false);
-	const [priceMin, setPriceMin] = useState("");
-	const [priceMax, setPriceMax] = useState("");
+	const [priceMin, setPriceMin] = useState(
+		() => searchParams.get("priceMin") ?? "",
+	);
+	const [priceMax, setPriceMax] = useState(
+		() => searchParams.get("priceMax") ?? "",
+	);
 	const [dateFrom, setDateFrom] = useState("");
 	const [dateTo, setDateTo] = useState("");
-	const [sort, setSort] = useState<SessionSortBy>("scheduled_at");
-	const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+	const [sort, setSort] = useState<SessionSortBy>(SessionSortBy.ScheduledAt);
+	const [sortOrder, setSortOrder] = useState<SortOrder>(SortOrder.Asc);
 
 	useEffect(() => {
 		const t = setTimeout(() => setDebouncedSearch(search), 300);
@@ -97,7 +126,7 @@ export default function SessionsPage() {
 	);
 
 	const { data, isLoading, isError } = useSessionsQuery({
-		status: "public",
+		status: StatusFilter.Public,
 		limit: 20,
 		search: debouncedSearch || undefined,
 		format: format ?? undefined,
@@ -197,7 +226,9 @@ export default function SessionsPage() {
 							sortOrder={sortOrder}
 							onToggle={() =>
 								setSortOrder((o) =>
-									o === "asc" ? "desc" : "asc",
+									o === SortOrder.Asc
+										? SortOrder.Desc
+										: SortOrder.Asc,
 								)
 							}
 						/>

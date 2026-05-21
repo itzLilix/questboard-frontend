@@ -9,8 +9,19 @@ import ProfileSettings from "./features/settings/ProfileSettings";
 import GeneralSettings from "./features/settings/GeneralSettings";
 import FollowingPage from "./features/following/FollowingPage";
 import GMsPage from "./features/usersCatalog/GMsPage";
+import HomePage from "./features/home/HomePage";
 import NewSessionPage from "./features/session/NewSessionPage";
 import SessionsPage from "./features/session/SessionsPage";
+import SessionLayout from "./features/session/SessionLayout";
+import {
+	CampaignTab,
+	ChatTab,
+	EditTab,
+	InfoTab,
+	NotesTab,
+	PlayTab,
+	VTTTab,
+} from "./features/session/sessionTabs/sessionTabs";
 import { useCuratedSystemsQuery } from "./features/session/queries";
 
 function App() {
@@ -19,9 +30,20 @@ function App() {
 	return (
 		<Routes>
 			<Route element={<RootLayout />}>
+				<Route index element={<HomePage />} />
 				<Route path="/users/:username" element={<ProfileLayout />} />
 				<Route path="/game-masters" element={<GMsPage />} />
 				<Route path="/sessions" element={<SessionsPage />} />
+				<Route path="/sessions/:id" element={<SessionLayout />}>
+					<Route index element={<Navigate to="info" replace />} />
+					<Route path="info" element={<InfoTab />} />
+					<Route path="campaign" element={<CampaignTab />} />
+					<Route path="chat" element={<ChatTab />} />
+					<Route path="data" element={<PlayTab />} />
+					<Route path="vtt" element={<VTTTab />} />
+					<Route path="notes" element={<NotesTab />} />
+					<Route path="edit" element={<EditTab />} />
+				</Route>
 				<Route element={<RequireAuth />}>
 					<Route path="/following" element={<FollowingPage />} />
 					<Route path="/settings" element={<SettingsLayout />}>

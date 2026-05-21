@@ -5,6 +5,7 @@ import {
 	changeSessionStatus,
 	createSession,
 	fetchCuratedSystems,
+	fetchSession,
 	fetchSessions,
 	searchSystems,
 	type CreateSessionPayload,
@@ -23,6 +24,7 @@ export const gameSystemKeys = {
 export const sessionKeys = {
 	all: ["sessions"] as const,
 	list: (params: SessionListQuery) => ["sessions", "list", params] as const,
+	detail: (id: string) => ["sessions", id] as const,
 };
 
 export function useSessionsQuery(params: SessionListQuery) {
@@ -77,5 +79,13 @@ export function useCreateSessionMutation() {
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: sessionKeys.all });
 		},
+	});
+}
+
+export function useFetchSessionQuery(id: string | undefined) {
+	return useQuery({
+		queryKey: sessionKeys.detail(id ?? ""),
+		queryFn: () => fetchSession(id!),
+		enabled: !!id,
 	});
 }

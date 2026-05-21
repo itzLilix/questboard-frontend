@@ -1,6 +1,7 @@
 import { profileApi } from "../../api/axios";
 import type { SessionFormat, SessionType } from "../../types/session";
 import type { IUserCard, ProfileCardData } from "../../types/userCard";
+import type { SortOrder } from "../../types/query";
 import { fetchSessionCards } from "../session/api";
 
 export type UsersQuery = {
@@ -11,20 +12,20 @@ export type UsersQuery = {
 	minRating?: number;
 	followedBy?: string;
 	onlyGMs?: boolean;
-	sort?: SortBy;
-	order?: "asc" | "desc";
+	sort?: UserSortBy;
+	order?: SortOrder;
 	cursor?: string;
 	limit?: number;
 };
 
-export type SortBy =
-	| "rating"
-	| "recent"
-	| "followedAt"
-	| "reviews"
-	| "sessions";
-
-export type SortOrder = "asc" | "desc";
+export const UserSortBy = {
+	Rating: "rating",
+	Recent: "recent",
+	FollowedAt: "followedAt",
+	Reviews: "reviews",
+	Sessions: "sessions",
+} as const;
+export type UserSortBy = (typeof UserSortBy)[keyof typeof UserSortBy];
 
 export type UsersListResponse = {
 	items: IUserCard[];

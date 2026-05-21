@@ -16,6 +16,7 @@ import {
 	passwordRules,
 } from "../../utils/formRules";
 import Logo from "../../components/ui/Logo";
+import OrDivider from "../../components/ui/OrDivider";
 
 type FormInput = {
 	email: string;
@@ -201,15 +202,7 @@ export default function AuthModal() {
 					</Button>
 				</form>
 
-				{isLogin && (
-					<div className="flex items-center gap-4 my-12 mx-24">
-						<div className="flex-1 border-t border-(--accent)" />
-						<span className="text-base font-body text-(--accent)">
-							или
-						</span>
-						<div className="flex-1 border-t border-(--accent)" />
-					</div>
-				)}
+				{isLogin && <OrDivider className="my-12" />}
 			</div>
 		</>
 	);

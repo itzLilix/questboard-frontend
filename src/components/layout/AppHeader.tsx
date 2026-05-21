@@ -72,6 +72,17 @@ function ProfileMenu({ user, onClose }: ProfileMenuProps) {
 				Подписки
 			</MenuItem>
 			<MenuItem
+				onClick={() => go("/")}
+				before={
+					<Icon
+						name="stack"
+						className="text-lg! text-(--text-secondary)!"
+					/>
+				}
+			>
+				Мои сессии
+			</MenuItem>
+			<MenuItem
 				onClick={() => go("/settings")}
 				before={
 					<Icon

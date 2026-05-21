@@ -9,14 +9,21 @@ import {
 	pluralSeats,
 } from "../../../utils/words";
 import type { IUserBrief } from "../../../types/userCard";
-import type { ISession } from "../../../types/session";
+import {
+	SessionAvailability,
+	SessionFormat,
+	SessionType,
+	type ISession,
+} from "../../../types/session";
+import useAuth from "../../../hooks/useAuth";
+import { useAuthModal } from "../../../features/auth/authModalStore";
 
 const DEFAULT_BADGE_COLOR = "var(--border)";
 
-const TYPE_LABEL = {
-	oneshot: "Ваншот",
-	campaign: "Кампейн",
-} as const;
+const TYPE_LABEL: Record<SessionType, string> = {
+	[SessionType.Oneshot]: "Ваншот",
+	[SessionType.Campaign]: "Кампейн",
+};
 
 export type SessionCardProps = {
 	sessionData: ISession;
@@ -32,6 +39,8 @@ export default function SessionCard({
 	const navigate = useNavigate();
 	const fallbackBg = sessionData.system.badgeColor || DEFAULT_BADGE_COLOR;
 	const occupied = Math.max(0, sessionData.maxSeats - sessionData.freeSeats);
+
+	const { user: authUser, isLoading: authLoading } = useAuth();
 
 	return (
 		<div
@@ -105,7 +114,7 @@ export default function SessionCard({
 					<InfoRow icon="calendar_today">
 						{formatScheduledAt(sessionData.scheduledAt)}
 					</InfoRow>
-					{sessionData.format === "offline" ? (
+					{sessionData.format === SessionFormat.Offline ? (
 						sessionData.location?.address && (
 							<InfoRow icon="location_on">
 								{sessionData.location.address}
@@ -122,41 +131,109 @@ export default function SessionCard({
 						maxSeats={sessionData.maxSeats}
 						freeSeats={sessionData.freeSeats}
 					/>
-					<span
-						className={clsx(
-							"text-base font-medium shrink-0",
-							sessionData.price === 0
-								? "text-(--success)"
-								: "text-(--text-primary)",
-						)}
-					>
-						{sessionData.price === 0
-							? "Бесплатно"
-							: `${sessionData.price} ₽`}
-					</span>
+					<Price price={sessionData.price} />
 				</div>
 
-				<div className="flex gap-3 pointer-events-auto">
+				<div className="grid grid-cols-2 gap-3 pointer-events-auto">
 					<Button
 						variant="secondary"
 						csize="sm"
-						fullWidth
 						className="flex-1 relative z-1"
 						onClick={() => navigate(`/sessions/${sessionData.id}`)}
 					>
 						Подробнее
 					</Button>
-					<Button
-						variant="primary"
-						csize="sm"
-						fullWidth
-						className="flex-1 relative z-1"
-					>
-						Записаться
-					</Button>
+					<ApplyButton
+						availability={sessionData.availability}
+						disabled={
+							authLoading || occupied >= sessionData.maxSeats
+						}
+						isAutenticated={!!authUser}
+						isParticipant={authUser?.id === sessionData.masterId}
+						sessionId={sessionData.id}
+					/>
 				</div>
 			</div>
 		</div>
+	);
+}
+
+export function Price({ price }: { price: number | null }) {
+	if (price === null) return null;
+	return (
+		<span
+			className={clsx(
+				"text-base font-medium shrink-0",
+				price === 0 ? "text-(--success)" : "text-(--text-primary)",
+			)}
+		>
+			{price === 0 ? "Бесплатно" : `${price} ₽`}
+		</span>
+	);
+}
+
+export function ApplyButton({
+	availability,
+	disabled,
+	isAutenticated,
+	isParticipant,
+	sessionId,
+}: {
+	availability: SessionAvailability;
+	disabled: boolean;
+	isAutenticated: boolean;
+	isParticipant: boolean;
+	sessionId: string;
+}) {
+	if (isParticipant) {
+		return (
+			<Button
+				variant="secondary"
+				csize="sm"
+				className="flex-1 relative z-1 text-(--success)!"
+				disabled={true}
+			>
+				<Icon name="check" className="text-sm!" /> Участник
+			</Button>
+		);
+	}
+	if (availability === SessionAvailability.Application) {
+		return (
+			<Button
+				variant="primary"
+				csize="sm"
+				className="flex-1 relative z-1"
+				disabled={disabled}
+				onClick={() => {
+					if (!isAutenticated) {
+						useAuthModal().open("login");
+						return;
+					}
+					// join
+				}}
+			>
+				Подать заявку
+			</Button>
+		);
+	}
+
+	return (
+		<Button
+			variant="primary"
+			csize="sm"
+			fullWidth
+			className="flex-1 relative z-1"
+			disabled={disabled}
+			onClick={() => {
+				if (!isAutenticated) {
+					useAuthModal().open("login");
+					return;
+				}
+				// apply
+			}}
+		>
+			Записаться
+		</Button>
 	);
 }
 
@@ -184,6 +261,7 @@ function SeatsIndicator({
 	maxSeats: number;
 	freeSeats: number;
 }) {
+	const full = occupied === maxSeats;
 	return (
 		<div className="flex items-center gap-2 min-w-0">
 			<div className="flex items-center gap-1 shrink-0">
@@ -199,9 +277,13 @@ function SeatsIndicator({
 					/>
 				))}
 			</div>
-			<span className="text-base text-(--text-secondary) truncate">
-				{freeSeats} {pluralSeats(freeSeats)}
-			</span>
+			{full ? (
+				<span className="text-base text-(--error)">Нет мест</span>
+			) : (
+				<span className="text-base text-(--text-secondary) truncate">
+					{freeSeats} {pluralSeats(freeSeats)}
+				</span>
+			)}
 		</div>
 	);
 }

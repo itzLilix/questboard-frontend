@@ -3,7 +3,10 @@ import AvatarImage from "../AvatarImage";
 import Rating from "../UserRating";
 import TextSeparator from "../TextSeparator";
 import type { INextSession, IUserCard } from "../../../types/userCard";
-import type { SessionFormat, SessionType } from "../../../types/session";
+import {
+	SessionFormat,
+	SessionType,
+} from "../../../types/session";
 import FollowButton from "../FollowButton";
 import { Link } from "react-router-dom";
 import SystemBadgesRow from "./SystemBadgesRow";
@@ -29,13 +32,13 @@ const userCardVariants = cva(
 );
 
 const FORMAT_LABEL: Record<SessionFormat, string> = {
-	online: "Онлайн",
-	offline: "Оффлайн",
+	[SessionFormat.Online]: "Онлайн",
+	[SessionFormat.Offline]: "Оффлайн",
 };
 
 const TYPE_LABEL: Record<SessionType, string> = {
-	oneshot: "Ваншот",
-	campaign: "Кампейн",
+	[SessionType.Oneshot]: "Ваншот",
+	[SessionType.Campaign]: "Кампейн",
 };
 
 export default function UserCard({ profileData, view }: userCardProps) {
