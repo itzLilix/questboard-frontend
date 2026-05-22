@@ -26,6 +26,7 @@ export interface SessionCardData {
 export type ISystemStat = ISystem & { sessionsCount: number };
 
 export type INextSession = {
+	id: string;
 	scheduledAt: string;
 	format: SessionFormat;
 	type: SessionType;

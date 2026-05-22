@@ -6,7 +6,6 @@ import { SessionFormat, SessionType } from "../../types/session";
 import { SessionSortBy, StatusFilter } from "../session/api";
 import { UserSortBy } from "../usersCatalog/api";
 import { SortOrder } from "../../types/query";
-import { options, type Option } from "../../utils/options";
 import Button from "../../components/ui/Button";
 import Dropdown from "../../components/ui/Dropdown";
 import FilterToggle from "../../components/ui/FilterToggle";
@@ -16,11 +15,7 @@ import Loading from "../../components/ui/Loading";
 import OrDivider from "../../components/ui/OrDivider";
 import SessionCard from "../../components/ui/cards/SessionCard";
 import UserCard from "../../components/ui/cards/UserCard";
-
-const TYPE_OPTIONS = options([
-	{ value: SessionType.Oneshot, label: "Ваншот" },
-	{ value: SessionType.Campaign, label: "Кампания" },
-]) satisfies readonly Option<SessionType>[];
+import { TYPE_OPTIONS } from "../../utils/words";
 
 function Label({ label, children }: { label: string; children: ReactNode }) {
 	return (
@@ -309,7 +304,7 @@ function ClosestSessionsRow() {
 			<ViewAllCard
 				to="/sessions"
 				label="Все сессии"
-				className="max-w-1/5 w-full aspect-9/12 min-w-2xs"
+				className="aspect-9/12 min-w-2xs"
 			/>
 		</RowSection>
 	);

@@ -105,5 +105,5 @@ export type IPlayer = {
 export type SessionResponse = {
 	session: ISession;
 	players: IPlayer[];
-	users: IUserBrief[];
+	users: Record<string, IUserBrief>;
 };

@@ -7,11 +7,7 @@ import Input from "../../components/ui/inputs/Input";
 import Loading from "../../components/ui/Loading";
 import SessionCard from "../../components/ui/cards/SessionCard";
 import { SystemBadge } from "../../components/ui/SystemBadge";
-import {
-	SessionFormat,
-	SessionType,
-	type ISession,
-} from "../../types/session";
+import { SessionFormat, SessionType, type ISession } from "../../types/session";
 import type { ISystem, IUserBrief } from "../../types/userCard";
 import { type Option, options } from "../../utils/options";
 import { useCuratedSystemsQuery, useSessionsQuery } from "./queries";
@@ -21,16 +17,7 @@ import SessionGroup from "./SessionGroup";
 import ToggleSortOrder from "../../components/ui/ToggleSortOrder";
 import RangeField from "../../components/ui/FilterRange";
 import { dateKey, formatDateWeekday } from "../../utils/dateFormats";
-
-const FORMAT_OPTIONS = options([
-	{ value: SessionFormat.Online, label: "Онлайн" },
-	{ value: SessionFormat.Offline, label: "Оффлайн" },
-]) satisfies readonly Option<SessionFormat>[];
-
-const TYPE_OPTIONS = options([
-	{ value: SessionType.Oneshot, label: "Ваншот" },
-	{ value: SessionType.Campaign, label: "Кампания" },
-]) satisfies readonly Option<SessionType>[];
+import { FORMAT_OPTIONS, TYPE_OPTIONS } from "../../utils/words";
 
 const SORT_OPTIONS = options([
 	{ value: SessionSortBy.ScheduledAt, label: "Дата проведения" },
@@ -307,7 +294,7 @@ export function SessionsList({
 	const groupBy = getGroupBy(sort);
 	if (!groupBy) {
 		return (
-			<div className="flex flex-wrap gap-4">
+			<div className="grid grid-cols-5 gap-4">
 				{items.map((s) => (
 					<SessionCard
 						key={s.id}

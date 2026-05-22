@@ -1,7 +1,5 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import RootLayout from "./components/layout/RootLayout";
-import ProfileLayout from "./components/layout/ProfileLayout";
-import SettingsLayout from "./components/layout/SettingsLayout";
 import RequireAuth from "./features/auth/RequireAuth";
 import NotificationSettings from "./features/settings/NotificationSettings";
 import SecuritySettings from "./features/settings/SecuritySettings";
@@ -17,12 +15,15 @@ import {
 	CampaignTab,
 	ChatTab,
 	EditTab,
-	InfoTab,
 	NotesTab,
 	PlayTab,
 	VTTTab,
 } from "./features/session/sessionTabs/sessionTabs";
+import { InfoTab } from "./features/session/sessionTabs/InfoTab";
 import { useCuratedSystemsQuery } from "./features/session/queries";
+import SettingsLayout from "./features/settings/SettingsLayout";
+import ProfileLayout from "./features/profile/ProfileLayout";
+import MySessionsLayout from "./features/session/MySessions";
 
 function App() {
 	useCuratedSystemsQuery();
@@ -45,6 +46,7 @@ function App() {
 					<Route path="edit" element={<EditTab />} />
 				</Route>
 				<Route element={<RequireAuth />}>
+					<Route path="/sessions/new" element={<NewSessionPage />} />
 					<Route path="/following" element={<FollowingPage />} />
 					<Route path="/settings" element={<SettingsLayout />}>
 						<Route
@@ -59,7 +61,16 @@ function App() {
 							element={<NotificationSettings />}
 						/>
 					</Route>
-					<Route path="sessions/new" element={<NewSessionPage />} />
+					<Route path="sessions/my" element={<MySessionsLayout />}>
+						<Route
+							index
+							element={<Navigate to="mastering" replace />}
+						/>
+						<Route path="mastering"></Route>
+						<Route path="playing"></Route>
+						<Route path="cancelled"></Route>
+						<Route path="drafts"></Route>
+					</Route>
 				</Route>
 			</Route>
 		</Routes>

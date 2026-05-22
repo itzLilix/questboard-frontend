@@ -1,3 +1,10 @@
+import {
+	SessionAvailability,
+	SessionFormat,
+	SessionType,
+} from "../types/session";
+import { options, type Option } from "./options";
+
 export function pluralPartiy(n: number) {
 	const mod10 = n % 10;
 	const mod100 = n % 100;
@@ -65,3 +72,51 @@ export const DAYS_OF_WEEK = [
 	"Пятница",
 	"Суббота",
 ];
+
+export const FORMAT_LABEL: Record<SessionFormat, string> = {
+	[SessionFormat.Online]: "Онлайн",
+	[SessionFormat.Offline]: "Оффлайн",
+};
+
+export const TYPE_LABEL: Record<SessionType, string> = {
+	[SessionType.Oneshot]: "Ваншот",
+	[SessionType.Campaign]: "Кампания",
+};
+
+export const AVAILABILITY_LABEL: Record<SessionAvailability, string> = {
+	[SessionAvailability.Open]: "Открытая",
+	[SessionAvailability.Application]: "По заявкам",
+	[SessionAvailability.Private]: "Закрытая",
+};
+
+export const AVAILABILITY_OPTIONS: {
+	value: SessionAvailability;
+	label: string;
+	hint: string;
+}[] = [
+	{
+		value: SessionAvailability.Open,
+		label: "Открытая",
+		hint: "Любой желающий может записаться",
+	},
+	{
+		value: SessionAvailability.Application,
+		label: "По заявкам",
+		hint: "Мастер одобряет каждую заявку",
+	},
+	{
+		value: SessionAvailability.Private,
+		label: "Закрытая",
+		hint: "Только по ссылке",
+	},
+];
+
+export const FORMAT_OPTIONS = options([
+	{ value: SessionFormat.Online, label: "Онлайн" },
+	{ value: SessionFormat.Offline, label: "Оффлайн" },
+]) satisfies readonly Option<SessionFormat>[];
+
+export const TYPE_OPTIONS = options([
+	{ value: SessionType.Oneshot, label: "Ваншот" },
+	{ value: SessionType.Campaign, label: "Кампания" },
+]) satisfies readonly Option<SessionType>[];

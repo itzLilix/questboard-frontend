@@ -55,7 +55,7 @@ export function OverflowBadge({ items, className }: OverflowBadgeProps) {
 		<BadgePopover
 			content={
 				<ul className="flex flex-col gap-1">
-					{items.map((s) => (
+					{items.slice(0, 10).map((s) => (
 						<li
 							key={s.id}
 							className="flex items-center justify-between gap-3"
@@ -84,8 +84,6 @@ export function OverflowBadge({ items, className }: OverflowBadgeProps) {
 	);
 }
 
-const ESTIMATED_POPOVER_PX = 240;
-
 function BadgePopover({
 	content,
 	children,
@@ -94,35 +92,24 @@ function BadgePopover({
 	children: React.ReactNode;
 }) {
 	const wrapperRef = useRef<HTMLSpanElement>(null);
-	const [openAlign, setOpenAlign] = useState<"left" | "right" | null>(null);
-
-	const open = () => {
-		const trigger = wrapperRef.current?.getBoundingClientRect();
-		if (!trigger) {
-			setOpenAlign("left");
-			return;
-		}
-		const fitsRight =
-			trigger.left + ESTIMATED_POPOVER_PX <= window.innerWidth - 8;
-		setOpenAlign(fitsRight ? "left" : "right");
-	};
+	const [isOpen, open] = useState<boolean>(false);
 
 	return (
 		<span
 			ref={wrapperRef}
 			className="relative inline-flex"
-			onMouseEnter={open}
-			onMouseLeave={() => setOpenAlign(null)}
-			onFocus={open}
-			onBlur={() => setOpenAlign(null)}
+			onMouseEnter={() => open(true)}
+			onMouseLeave={() => open(false)}
+			onFocus={() => open(true)}
+			onBlur={() => open(false)}
 		>
 			{children}
-			{openAlign && (
+			{isOpen && (
 				<div
 					role="tooltip"
 					className={clsx(
-						"absolute z-20 top-full mt-2 bg-(--bg-base-tp) backdrop-blur-lg border border-(--border) rounded-lg px-3 py-2 text-sm text-(--text-secondary) shadow-lg whitespace-nowrap pointer-events-none",
-						openAlign === "left" ? "left-0" : "right-0",
+						"absolute z-20 bottom-full mb-2 bg-(--bg-base-tp) backdrop-blur-lg border border-(--border) rounded-lg px-3 py-2 text-sm text-(--text-secondary) shadow-lg whitespace-nowrap pointer-events-none",
+						isOpen && "left-1/2 transform -translate-x-1/2",
 					)}
 				>
 					{content}

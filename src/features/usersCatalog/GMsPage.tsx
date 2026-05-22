@@ -14,16 +14,8 @@ import { SortOrder } from "../../types/query";
 import { useUsersCatalogQuery } from "./queries";
 import ToggleSortOrder from "../../components/ui/ToggleSortOrder";
 import ToggleView from "../../components/ui/ToggleView";
-
-const FORMAT_OPTIONS = options([
-	{ value: SessionFormat.Online, label: "Онлайн" },
-	{ value: SessionFormat.Offline, label: "Оффлайн" },
-]) satisfies readonly Option<SessionFormat>[];
-
-const TYPE_OPTIONS = options([
-	{ value: SessionType.Oneshot, label: "Ваншот" },
-	{ value: SessionType.Campaign, label: "Кампания" },
-]) satisfies readonly Option<SessionType>[];
+import { FORMAT_OPTIONS, TYPE_OPTIONS } from "../../utils/words";
+import useAuth from "../../hooks/useAuth";
 
 const SORT_OPTIONS = options([
 	{ value: UserSortBy.Rating, label: "Рейтинг" },
@@ -41,6 +33,7 @@ export default function GMsPage() {
 	const [sort, setSort] = useState<UserSortBy | null>(UserSortBy.Rating);
 	const [sortOrder, setSortOrder] = useState<SortOrder>(SortOrder.Desc);
 	const [view, setView] = useState<userCardProps["view"]>("table");
+	const { user } = useAuth();
 
 	useEffect(() => {
 		const t = setTimeout(() => setDebouncedSearch(search), 300);
@@ -54,7 +47,7 @@ export default function GMsPage() {
 		setHighRating(false);
 	};
 
-	const { data, isLoading, isError } = useUsersCatalogQuery({
+	const { data: rawData, isLoading, isError } = useUsersCatalogQuery({
 		search: debouncedSearch || undefined,
 		format: format ?? undefined,
 		type: type ?? undefined,
@@ -63,6 +56,11 @@ export default function GMsPage() {
 		sort: sort ?? undefined,
 		order: sortOrder,
 	});
+
+	const data =
+		rawData && user
+			? { ...rawData, items: rawData.items.filter((u) => u.userId !== user.id) }
+			: rawData;
 
 	return (
 		<div className="max-w-1600 mx-auto px-4 py-6">

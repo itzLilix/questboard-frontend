@@ -15,15 +15,6 @@ function Placeholder({ title, hint }: PlaceholderProps) {
 	);
 }
 
-export function InfoTab() {
-	return (
-		<Placeholder
-			title="Инфо"
-			hint="Описание, обложка, детали (формат, дата, время, адрес, система, доступность). Видно всем."
-		/>
-	);
-}
-
 export function CampaignTab() {
 	return (
 		<Placeholder

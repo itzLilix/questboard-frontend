@@ -72,7 +72,7 @@ function ProfileMenu({ user, onClose }: ProfileMenuProps) {
 				Подписки
 			</MenuItem>
 			<MenuItem
-				onClick={() => go("/")}
+				onClick={() => go("/sessions/my")}
 				before={
 					<Icon
 						name="stack"
@@ -175,7 +175,9 @@ export default function AppHeader() {
 				<Input placeholder={"Поиск..."} csize={"sm"} type="search" />
 				<Button
 					onClick={() => {
-						navigate("sessions/new");
+						user
+							? navigate("/sessions/new")
+							: openAuthModal("login");
 					}}
 					variant="secondary"
 					csize="sm"

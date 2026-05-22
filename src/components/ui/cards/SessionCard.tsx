@@ -3,27 +3,18 @@ import { Link, useNavigate } from "react-router-dom";
 import Button from "../Button";
 import Icon from "../Icon";
 import { SystemBadge } from "../SystemBadge";
-import {
-	MONTHS_GENITIVE,
-	pluralHours,
-	pluralSeats,
-} from "../../../utils/words";
+import { pluralHours, pluralSeats, TYPE_LABEL } from "../../../utils/words";
 import type { IUserBrief } from "../../../types/userCard";
 import {
 	SessionAvailability,
 	SessionFormat,
-	SessionType,
 	type ISession,
 } from "../../../types/session";
 import useAuth from "../../../hooks/useAuth";
 import { useAuthModal } from "../../../features/auth/authModalStore";
+import { formatDatetime } from "../../../utils/dateFormats";
 
 const DEFAULT_BADGE_COLOR = "var(--border)";
-
-const TYPE_LABEL: Record<SessionType, string> = {
-	[SessionType.Oneshot]: "Ваншот",
-	[SessionType.Campaign]: "Кампейн",
-};
 
 export type SessionCardProps = {
 	sessionData: ISession;
@@ -45,13 +36,14 @@ export default function SessionCard({
 	return (
 		<div
 			className={clsx(
-				"relative max-w-1/5 w-full aspect-9/12 rounded-2xl border border-(--border) overflow-hidden flex flex-col min-w-2xs",
+				"relative aspect-9/12 rounded-2xl border border-(--border) overflow-hidden flex flex-col min-w-2xs bg-(--bg-card)",
 				className,
 			)}
-			style={{
-				backgroundColor: fallbackBg,
-			}}
 		>
+			<div
+				className="absolute inset-0 bottom-1/2"
+				style={{ backgroundColor: fallbackBg }}
+			/>
 			{sessionData.previewUrl ? (
 				<img
 					src={sessionData.previewUrl}
@@ -76,7 +68,7 @@ export default function SessionCard({
 				}}
 			/>
 
-			<div className="absolute top-4 left-4 z-10">
+			<div className="absolute top-4 left-4 z-1">
 				<SystemBadge system={sessionData.system} />
 			</div>
 
@@ -112,7 +104,7 @@ export default function SessionCard({
 							: ""}
 					</InfoRow>
 					<InfoRow icon="calendar_today">
-						{formatScheduledAt(sessionData.scheduledAt)}
+						{formatDatetime(sessionData.scheduledAt)}
 					</InfoRow>
 					{sessionData.format === SessionFormat.Offline ? (
 						sessionData.location?.address && (
@@ -209,10 +201,10 @@ export function ApplyButton({
 						useAuthModal().open("login");
 						return;
 					}
-					// join
+					// apply
 				}}
 			>
-				Подать заявку
+				Заявка
 			</Button>
 		);
 	}
@@ -229,10 +221,10 @@ export function ApplyButton({
 					useAuthModal().open("login");
 					return;
 				}
-				// apply
+				// join
 			}}
 		>
-			Записаться
+			Вступить
 		</Button>
 	);
 }
@@ -264,19 +256,21 @@ function SeatsIndicator({
 	const full = occupied === maxSeats;
 	return (
 		<div className="flex items-center gap-2 min-w-0">
-			<div className="flex items-center gap-1 shrink-0">
-				{Array.from({ length: maxSeats }).map((_, i) => (
-					<span
-						key={i}
-						className={clsx(
-							"w-4 h-4 rounded-sm",
-							i < occupied
-								? "bg-(--accent)"
-								: "border border-(--accent)",
-						)}
-					/>
-				))}
-			</div>
+			{maxSeats <= 6 && (
+				<div className="flex items-center gap-1 shrink-0">
+					{Array.from({ length: maxSeats }).map((_, i) => (
+						<span
+							key={i}
+							className={clsx(
+								"w-4 h-4 rounded-sm",
+								i < occupied
+									? "bg-(--accent)"
+									: "border border-(--accent)",
+							)}
+						/>
+					))}
+				</div>
+			)}
 			{full ? (
 				<span className="text-base text-(--error)">Нет мест</span>
 			) : (
@@ -294,16 +288,4 @@ function formatDuration(hours: number): string {
 		? `${rounded}`
 		: rounded.toFixed(1).replace(".", ",");
 	return `${display} ${pluralHours(rounded)}`;
-}
-
-function formatScheduledAt(iso: string): string {
-	const date = new Date(iso);
-	if (isNaN(date.getTime())) return "—";
-	const day = date.getDate();
-	const month = MONTHS_GENITIVE[date.getMonth()];
-	const hours = String(date.getHours()).padStart(2, "0");
-	const minutes = String(date.getMinutes()).padStart(2, "0");
-	const tzOffset = -date.getTimezoneOffset() / 60;
-	const tz = `GMT${tzOffset >= 0 ? "+" : ""}${tzOffset}`;
-	return `${day} ${month}, ${hours}:${minutes} / ${tz}`;
 }

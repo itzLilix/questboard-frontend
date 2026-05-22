@@ -28,6 +28,10 @@ import NewCampaignPopover, {
 } from "./NewCampaignPopover";
 import { useCreateSessionMutation } from "./queries";
 import type { CreateSessionPayload } from "./api";
+import SessionFactsList from "./SessionFactsList";
+import { formatDate, timeAddTz } from "../../utils/dateFormats";
+import useAuth from "../../hooks/useAuth";
+import { AVAILABILITY_OPTIONS, FORMAT_OPTIONS } from "../../utils/words";
 
 export interface CreateSessionInput {
 	campaignId: string | null;
@@ -62,59 +66,9 @@ const seatsRules = {
 	max: { value: 50, message: "Максимум 50 мест" },
 };
 
-const AVAILABILITY_OPTIONS: {
-	value: SessionAvailability;
-	label: string;
-	hint: string;
-}[] = [
-	{
-		value: SessionAvailability.Open,
-		label: "Открытая",
-		hint: "Любой желающий может записаться",
-	},
-	{
-		value: SessionAvailability.Application,
-		label: "По заявкам",
-		hint: "Мастер одобряет каждую заявку",
-	},
-	{
-		value: SessionAvailability.Private,
-		label: "Закрытая",
-		hint: "Только по ссылке",
-	},
-];
-
-const FORMAT_OPTIONS: { value: SessionFormat; label: string }[] = [
-	{ value: SessionFormat.Offline, label: "Оффлайн" },
-	{ value: SessionFormat.Online, label: "Онлайн" },
-];
-
 function SessionPreview({ values }: { values: Partial<CreateSessionInput> }) {
-	const formatDate = (d?: string) => {
-		if (!d) return "—";
-		const [, m, day] = d.split("-");
-		const months = [
-			"янв",
-			"фев",
-			"мар",
-			"апр",
-			"мая",
-			"июн",
-			"июл",
-			"авг",
-			"сен",
-			"окт",
-			"ноя",
-			"дек",
-		];
-		return `${parseInt(day)} ${months[parseInt(m) - 1]}`;
-	};
-	const timezone = new Date().getTimezoneOffset() / -60;
-
-	// const formatLabel: Record<SessionFormat, string> = { online: "Онлайн", offline: "Оффлайн" };
-	// const availabilityLabel: Record<SessionAvailability, string> = {
-	// 	open: "Открытая", application: "По заявкам", private: "Закрытая",
-	// };
+	const date = formatDate(values.scheduledAt);
+	const time = timeAddTz(values.startTime);
 
 	const previewUrl = values.image ? URL.createObjectURL(values.image) : null;
 
@@ -136,55 +90,43 @@ function SessionPreview({ values }: { values: Partial<CreateSessionInput> }) {
 				)}
 			</div>
 
-			<dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-base">
-				{[
-					[
-						"Формат:",
-						values.format
+			<SessionFactsList
+				facts={[
+					{
+						label: "Формат:",
+						value: values.format
 							? FORMAT_OPTIONS.find(
 									(o) => o.value === values.format,
 								)?.label
-							: "—",
-					],
-					["Дата:", formatDate(values.scheduledAt)],
-					[
-						"Время:",
-						values.startTime
-							? `${values.startTime} / GMT${timezone >= 0 ? "+" + timezone : timezone}`
-							: "—",
-					],
-					["Адрес:", values.location?.address || "—"],
-					["Система:", values.system?.name || "—"],
-					[
-						"Доступность:",
-						values.availability
+							: null,
+					},
+					{
+						label: "Дата:",
+						value: values.scheduledAt ? date : null,
+					},
+					{
+						label: "Время:",
+						value: values.startTime ? time : null,
+					},
+					{ label: "Адрес:", value: values.location?.address },
+					{ label: "Система:", value: values.system?.name },
+					{
+						label: "Доступность:",
+						value: values.availability
 							? AVAILABILITY_OPTIONS.find(
 									(o) => o.value === values.availability,
 								)?.label
-							: "—",
-					],
-				].map(([label, val]) => (
-					<>
-						<dt
-							key={`l-${label}`}
-							className="text-(--text-secondary)"
-						>
-							{label}
-						</dt>
-						<dd
-							key={`v-${label}`}
-							className="text-(--text-primary)"
-						>
-							{val}
-						</dd>
-					</>
-				))}
-			</dl>
+							: null,
+					},
+				]}
+			/>
 		</>
 	);
 }
 
 export default function NewSessionPage() {
+	const { user } = useAuth();
+
 	const navigate = useNavigate();
 	const createSession = useCreateSessionMutation();
 	const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -224,6 +166,10 @@ export default function NewSessionPage() {
 		{ value: "", label: "Одиночная сессия" },
 		...campaigns.map((c: Campaign) => ({ value: c.id, label: c.title })),
 	];
+
+	if (!user) {
+		return;
+	}
 
 	const buildPayload = (
 		data: CreateSessionInput,
@@ -277,9 +223,9 @@ export default function NewSessionPage() {
 			const payload = buildPayload(data);
 			if (!payload) return;
 			createSession.mutate(
-				{ payload, publish },
+				{ payload, publish, gmUsername: user.username },
 				{
-					onSuccess: () => navigate("/"),
+					onSuccess: (data) => navigate(`/sessions/${data.id}`),
 					onError: () =>
 						setSubmitError(
 							"Не удалось сохранить сессию. Попробуйте ещё раз.",

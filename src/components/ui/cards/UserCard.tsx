@@ -3,15 +3,12 @@ import AvatarImage from "../AvatarImage";
 import Rating from "../UserRating";
 import TextSeparator from "../TextSeparator";
 import type { INextSession, IUserCard } from "../../../types/userCard";
-import {
-	SessionFormat,
-	SessionType,
-} from "../../../types/session";
+import { SessionFormat, SessionType } from "../../../types/session";
 import FollowButton from "../FollowButton";
 import { Link } from "react-router-dom";
 import SystemBadgesRow from "./SystemBadgesRow";
-import { formatRelativeDate } from "../../../utils/dateFormats";
-import { pluralPartiy } from "../../../utils/words";
+import { formatDateRelative } from "../../../utils/dateFormats";
+import { FORMAT_LABEL, pluralPartiy, TYPE_LABEL } from "../../../utils/words";
 import { CardLine } from "./CardLine";
 
 export type userCardProps = {
@@ -30,16 +27,6 @@ const userCardVariants = cva(
 		},
 	},
 );
-
-const FORMAT_LABEL: Record<SessionFormat, string> = {
-	[SessionFormat.Online]: "Онлайн",
-	[SessionFormat.Offline]: "Оффлайн",
-};
-
-const TYPE_LABEL: Record<SessionType, string> = {
-	[SessionType.Oneshot]: "Ваншот",
-	[SessionType.Campaign]: "Кампейн",
-};
 
 export default function UserCard({ profileData, view }: userCardProps) {
 	if (view === "table") return <TableCard profileData={profileData} />;
@@ -173,14 +160,19 @@ function NextSessionBlock({
 	layout: "row" | "inline";
 }) {
 	if (!nextSession) return null;
-	const date = formatRelativeDate(nextSession.scheduledAt);
-	const detail = `${FORMAT_LABEL[nextSession.format]} / ${TYPE_LABEL[nextSession.type]}`;
+	const date = (
+		<Link
+			to={`/sessions/${nextSession.id}`}
+			className="relative z-1 text-(--text-primary) hover:text-(--accent)"
+		>
+			{formatDateRelative(nextSession.scheduledAt)}
+		</Link>
+	);
 
 	if (layout === "inline") {
 		return (
 			<p className="text-base text-(--text-secondary)">
-				Следующая игра:{" "}
-				<span className="text-(--text-primary)">{date}</span>
+				Следующая игра: {date}
 			</p>
 		);
 	}
@@ -190,8 +182,14 @@ function NextSessionBlock({
 			<span className="text-sm text-(--text-muted) uppercase">
 				ближайшая игра:
 			</span>
-			<span className="text-(--text-primary)">{date}</span>
-			<span className="text-sm">{detail}</span>
+
+			{date}
+
+			<span className="text-sm">
+				{FORMAT_LABEL[nextSession.format]}
+				<TextSeparator />
+				{TYPE_LABEL[nextSession.type]}
+			</span>
 		</div>
 	);
 }

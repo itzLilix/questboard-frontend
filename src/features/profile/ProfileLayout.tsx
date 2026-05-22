@@ -2,7 +2,7 @@ import { useParams } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
 import ProfileHeader from "../../features/profile/ProfileHeader";
 import { useProfileQuery } from "../../features/profile/queries";
-import Loading from "../ui/Loading";
+import Loading from "../../components/ui/Loading";
 
 export default function ProfileLayout() {
 	const { username } = useParams<{ username: string }>();

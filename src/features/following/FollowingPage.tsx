@@ -11,16 +11,7 @@ import type { userCardProps } from "../../components/ui/cards/UserCard";
 import ClearFiltersButton from "../../components/ui/ClearFiltersButton";
 import ToggleSortOrder from "../../components/ui/ToggleSortOrder";
 import ToggleView from "../../components/ui/ToggleView";
-
-const FORMAT_OPTIONS = [
-	{ value: SessionFormat.Online, label: "Онлайн" },
-	{ value: SessionFormat.Offline, label: "Оффлайн" },
-];
-
-const TYPE_OPTIONS = [
-	{ value: SessionType.Oneshot, label: "Ваншот" },
-	{ value: SessionType.Campaign, label: "Кампания" },
-];
+import { FORMAT_OPTIONS, TYPE_OPTIONS } from "../../utils/words";
 
 const SORT_OPTIONS = [
 	{ value: UserSortBy.Rating, label: "Рейтинг" },

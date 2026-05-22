@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import { NavMenu, NavMenuItem } from "../ui/NavMenu";
+import { NavMenu, NavMenuItem } from "../../components/ui/NavMenu";
 
 export default function SettingsLayout() {
 	return (

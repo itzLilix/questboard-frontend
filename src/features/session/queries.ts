@@ -11,6 +11,8 @@ import {
 	type CreateSessionPayload,
 	type SessionListQuery,
 } from "./api";
+import { usersCatalogKeys } from "../usersCatalog/queries";
+import { profileKeys } from "../profile/queries";
 
 const DAY_MS = 1000 * 60 * 60 * 24;
 
@@ -69,6 +71,7 @@ export function useCreateSessionMutation() {
 		mutationFn: async (input: {
 			payload: CreateSessionPayload;
 			publish: boolean;
+			gmUsername: string;
 		}) => {
 			const session = await createSession(input.payload);
 			if (input.publish) {
@@ -76,8 +79,14 @@ export function useCreateSessionMutation() {
 			}
 			return session;
 		},
-		onSuccess: () => {
+		onSuccess: (_, variables) => {
 			qc.invalidateQueries({ queryKey: sessionKeys.all });
+			if (variables.publish) {
+				qc.invalidateQueries({ queryKey: usersCatalogKeys.all });
+				qc.invalidateQueries({
+					queryKey: profileKeys.detail(variables.gmUsername),
+				});
+			}
 		},
 	});
 }

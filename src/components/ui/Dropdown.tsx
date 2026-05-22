@@ -24,7 +24,7 @@ type MultiSelectProps = {
 
 type DropdownProps = {
 	label: string;
-	options: DropdownOption[];
+	options: readonly DropdownOption[];
 	placeholder?: string;
 	className?: string;
 	disabled?: boolean;

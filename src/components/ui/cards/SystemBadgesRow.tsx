@@ -94,10 +94,7 @@ export default function SystemBadgesRow({
 
 			<div
 				ref={containerRef}
-				className={clsx(
-					"flex items-center w-full min-w-0 overflow-hidden",
-					className,
-				)}
+				className={clsx("flex items-center w-full min-w-0", className)}
 				style={{ gap: gapPx }}
 			>
 				{visible.map((s) => (
@@ -105,9 +102,12 @@ export default function SystemBadgesRow({
 						key={s.id}
 						system={s}
 						sessionsCount={s.sessionsCount}
+						className="relative z-1"
 					/>
 				))}
-				{hidden.length > 0 && <OverflowBadge items={hidden} />}
+				{hidden.length > 0 && (
+					<OverflowBadge items={hidden} className="relative z-1" />
+				)}
 			</div>
 		</>
 	);

@@ -1,6 +1,7 @@
 import { pluralDays, MONTHS_GENITIVE, DAYS_OF_WEEK } from "./words";
 
-export function formatRelativeDate(iso: string): string {
+export function formatDateRelative(iso: string | undefined): string {
+	if (!iso || iso === "—") return "—";
 	const date = new Date(iso);
 	if (isNaN(date.getTime())) return "—";
 
@@ -24,22 +25,67 @@ export function formatRelativeDate(iso: string): string {
 	return `${date.getDate()} ${MONTHS_GENITIVE[date.getMonth()]}`;
 }
 
-export function formatDateWeekday(key: string): string {
-	if (key === "no-date") return "Без даты";
-	const [y, m, d] = key.split("-").map(Number);
-	const date = new Date(y, m - 1, d);
+export function formatDateWeekday(iso: string | undefined): string {
+	if (!iso || iso === "—") return "—";
+	const date = new Date(iso);
+	if (isNaN(date.getTime())) return "—";
 	const day = date.getDate();
 	const month = MONTHS_GENITIVE[date.getMonth()];
 	const weekday = DAYS_OF_WEEK[date.getDay()];
 	return `${day} ${month}, ${weekday}`;
 }
 
+export function formatDate(iso: string | undefined): string {
+	if (!iso || iso === "—") return "—";
+	const date = new Date(iso);
+	if (isNaN(date.getTime())) return "—";
+	const d = date.getDate();
+	const m = MONTHS_GENITIVE[date.getMonth()];
+	const y = date.getFullYear();
+	return `${d} ${m} ${y}`;
+}
+
+export function timeAddTz(time: string | undefined): string {
+	if (!time) return "—";
+	const tzOffset = new Date().getTimezoneOffset() / -60;
+	const tz = `GMT${tzOffset >= 0 ? "+" : ""}${tzOffset}`;
+	return `${time} / ${tz}`;
+}
+
+export function formatDatetime(iso: string | undefined): string {
+	if (!iso || iso === "—") return "—";
+	const date = new Date(iso);
+	if (isNaN(date.getTime())) return "—";
+	const d = date.getDate();
+	const m = MONTHS_GENITIVE[date.getMonth()];
+	const hh = String(date.getHours()).padStart(2, "0");
+	const mm = String(date.getMinutes()).padStart(2, "0");
+	const tzOffset = -date.getTimezoneOffset() / 60;
+	const tz = `GMT${tzOffset >= 0 ? "+" : ""}${tzOffset}`;
+	return `${d} ${m}, ${hh}:${mm} / ${tz}`;
+}
+
 export function dateKey(iso: string | undefined): string {
-	if (!iso) return "no-date";
+	if (!iso || iso === "—") return "—";
+	const date = new Date(iso);
+	if (isNaN(date.getTime())) return "—";
+	const y = date.getFullYear();
+	const m = String(date.getMonth() + 1).padStart(2, "0");
+	const d = String(date.getDate()).padStart(2, "0");
+	return `${y}-${m}-${d}`;
+}
+
+export function splitDatetime(iso: string | undefined): {
+	date: string;
+	time: string;
+} {
+	if (!iso || iso === "—") return { date: "—", time: "—" };
 	const d = new Date(iso);
-	if (isNaN(d.getTime())) return "no-date";
-	const y = d.getFullYear();
-	const m = String(d.getMonth() + 1).padStart(2, "0");
-	const day = String(d.getDate()).padStart(2, "0");
-	return `${y}-${m}-${day}`;
+	if (isNaN(d.getTime())) return { date: "—", time: "—" };
+	const date = `${d.getDate()} ${MONTHS_GENITIVE[d.getMonth()]}`;
+	const hh = String(d.getHours()).padStart(2, "0");
+	const mm = String(d.getMinutes()).padStart(2, "0");
+	const tz = -d.getTimezoneOffset() / 60;
+	const time = `${hh}:${mm} / GMT${tz >= 0 ? "+" + tz : tz}`;
+	return { date, time };
 }

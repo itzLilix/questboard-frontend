@@ -19,16 +19,15 @@ export default function TextField({
 	return (
 		<div
 			className={`bg-(--bg-card) rounded-xl p-3 w-full border border-(--border) flex flex-col gap-3
-                ${isShrinkable ? "cursor-pointer hover:bg-(--bg-elevated)" : ""}
                 ${className || ""}`}
-			onClick={() =>
-				title && isShrinkable && toggleIsExpanded(!isExpanded)
-			}
 			{...props}
 		>
 			{title && (
 				<h2
-					className={`flex items-center gap-2 text-(--text-secondary) font-display text-lg select-none`}
+					className={`flex items-center gap-2 text-(--text-secondary) font-display text-lg select-none ${isShrinkable && "cursor-pointer"}`}
+					onClick={() =>
+						isShrinkable && toggleIsExpanded(!isExpanded)
+					}
 				>
 					{isShrinkable && (
 						<span

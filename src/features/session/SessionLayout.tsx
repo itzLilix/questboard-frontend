@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useParams } from "react-router-dom";
+import { Link, NavLink, Outlet, useParams } from "react-router-dom";
 import clsx from "clsx";
 import Button from "../../components/ui/Button";
 import Icon from "../../components/ui/Icon";
@@ -11,8 +11,12 @@ import {
 import useAuth from "../../hooks/useAuth";
 import { useFetchSessionQuery } from "./queries";
 import Loading from "../../components/ui/Loading";
-import type { ISession, SessionResponse } from "../../types/session";
+import type { IPlayer, SessionResponse } from "../../types/session";
 import { Price } from "../../components/ui/cards/SessionCard";
+import type { IUserBrief } from "../../types/userCard";
+import AvatarImage from "../../components/ui/AvatarImage";
+import GMBadge from "./GMBadge";
+import { SessionProvider, useSessionRole } from "./SessionContext";
 
 const HAS_CAMPAIGN = true;
 
@@ -34,7 +38,7 @@ const TABS: TabDef[] = [
 	{
 		to: "chat",
 		label: "Чат",
-		icon: "chat_bubble",
+		icon: "forum",
 		minAccess: AccessLevel.Access,
 	},
 	{
@@ -104,18 +108,29 @@ export default function SessionLayout() {
 	const visibleTabs = visibleFor(role);
 
 	return (
-		<main className="max-w-1600 mx-auto px-4 py-6 flex gap-4 items-start">
-			<TabRail tabs={visibleTabs} />
+		<SessionProvider role={role} sessionData={sessionData}>
+			<main className="max-w-1600 mx-auto px-4 py-6 flex gap-4 items-start">
+				<TabRail tabs={visibleTabs} />
 
-			<section className="flex-1 min-w-0 flex flex-col gap-4">
-				<SessionHeader sessionData={sessionData} role={role} />
-				<div className="rounded-2xl border border-(--border) bg-(--bg-card) p-6 min-h-96">
-					<Outlet context={{}} />
-				</div>
-			</section>
+				<section className="flex-1 min-w-0 flex flex-col gap-4">
+					<SessionHeader />
+					<div className="p-6 min-h-96">
+						<Outlet context={[sessionData]} />
+					</div>
+				</section>
 
-			<RightRail />
-		</main>
+				<RightRail
+					masterId={sessionData.session.masterId}
+					players={sessionData.players}
+					briefs={sessionData.users}
+					authId={user?.id}
+					seats={{
+						max: sessionData.session.maxSeats,
+						free: sessionData.session.freeSeats,
+					}}
+				/>
+			</main>
+		</SessionProvider>
 	);
 }
 
@@ -143,13 +158,8 @@ function TabRail({ tabs }: { tabs: TabDef[] }) {
 	);
 }
 
-function SessionHeader({
-	sessionData,
-	role,
-}: {
-	sessionData: SessionResponse;
-	role: SessionRole;
-}) {
+function SessionHeader() {
+	const { role, sessionData } = useSessionRole();
 	return (
 		<header className="flex items-center justify-between gap-4">
 			<h1 className="font-display text-3xl text-(--text-primary) truncate">
@@ -167,25 +177,49 @@ function SessionHeader({
 	);
 }
 
-function RightRail() {
+function RightRail({
+	masterId,
+	players,
+	briefs,
+	authId,
+	seats,
+}: {
+	masterId: string;
+	players: IPlayer[];
+	briefs: Record<string, IUserBrief>;
+	authId?: string;
+	seats: {
+		max: number;
+		free: number;
+	};
+}) {
+	const occupied = seats.max - seats.free;
+
 	return (
 		<aside className="w-80 shrink-0 flex flex-col gap-6 sticky top-[calc(var(--header-h)+1rem)]">
 			<RailSection title="Мастер">
-				<div className="rounded-xl border border-(--border) bg-(--bg-card) p-3 h-20" />
+				<ParticipantCard
+					key={masterId}
+					brief={briefs[masterId]}
+					isViewer={masterId === authId}
+					gm
+				/>
 			</RailSection>
 
-			<RailSection title="Игроки · 3/5">
+			<RailSection title={`Игроки · ${occupied}/${seats.max}`}>
 				<div className="flex flex-col gap-2">
-					{Array.from({ length: 3 }).map((_, i) => (
-						<div
-							key={i}
-							className="rounded-xl border border-(--border) bg-(--bg-card) p-3 h-16"
+					{players.map((p) => (
+						<ParticipantCard
+							key={p.playerId}
+							player={p}
+							brief={briefs[p.playerId]}
+							isViewer={p.playerId === authId}
 						/>
 					))}
-					{Array.from({ length: 2 }).map((_, i) => (
+					{Array.from({ length: seats.free }).map((_, i) => (
 						<div
 							key={`empty-${i}`}
-							className="rounded-xl border border-dashed border-(--border) p-3 h-12 flex items-center justify-center text-(--text-muted) text-sm"
+							className="rounded-xl border border-dashed border-(--border) p-3 h-12 flex items-center justify-center text-(--text-muted) text-sm hover:border-(--accent) hover:text-(--text-accent) transition-colors cursor-pointer"
 						>
 							+ Место свободно
 						</div>
@@ -193,6 +227,50 @@ function RightRail() {
 				</div>
 			</RailSection>
 		</aside>
+	);
+}
+
+function ParticipantCard({
+	player,
+	brief,
+	isViewer,
+	gm = false,
+}: {
+	player?: IPlayer;
+	brief: IUserBrief;
+	isViewer: boolean;
+	gm?: boolean;
+}) {
+	const { role } = useSessionRole();
+	return (
+		<div className="rounded-xl border border-(--border) bg-(--bg-card) p-3 h-16 flex items-center gap-3">
+			<AvatarImage src={brief.avatarUrl} alt={brief.username} size="sm" />
+			<div className="flex-1 flex flex-col gap-2 min-w-0">
+				<Link
+					className="text-(--text-primary) flex gap-1 items-end"
+					to={`/users/${brief.username}`}
+				>
+					<span className="hover:underline truncate">
+						{brief.displayName}
+					</span>
+					{gm && <GMBadge />}
+				</Link>
+				{player?.character && (
+					<span className="text-(--text-secondary) text-sm truncate">
+						{[
+							player.character.name,
+							player.character.class,
+							player.character.level,
+						]
+							.filter(Boolean)
+							.join(" · ")}
+					</span>
+				)}
+			</div>
+			{role.can(AccessLevel.Access) && !isViewer && (
+				<Icon name="chat" className="text-(--accent)!" />
+			)}
+		</div>
 	);
 }
 
