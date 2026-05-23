@@ -21,7 +21,7 @@ import InputText from "../../components/ui/inputs/InputText";
 import { LabeledInput } from "../../components/ui/inputs/InputLabel";
 import ImageUploader from "../settings/ImageUploader";
 import Dropdown from "../../components/ui/Dropdown";
-import FilterToggle from "../../components/ui/FilterToggle";
+import FilterToggle from "../../components/ui/filters/FilterToggle";
 import SystemSearch from "./SystemSearch";
 import NewCampaignPopover, {
 	type CreateCampaignInput,

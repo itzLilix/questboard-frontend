@@ -120,3 +120,10 @@ export const TYPE_OPTIONS = options([
 	{ value: SessionType.Oneshot, label: "Ваншот" },
 	{ value: SessionType.Campaign, label: "Кампания" },
 ]) satisfies readonly Option<SessionType>[];
+
+export const MultiSelectState = {
+	Included: "included",
+	Excluded: "excluded",
+} as const;
+export type MultiSelectState =
+	(typeof MultiSelectState)[keyof typeof MultiSelectState];

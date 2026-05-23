@@ -1,23 +1,35 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import ClearFiltersButton from "../../components/ui/ClearFiltersButton";
+import ActiveFilterChips, {
+	type ChipItem,
+} from "../../components/ui/filters/ActiveFilterChips";
+import ClearFiltersButton from "../../components/ui/filters/ClearFiltersButton";
 import Dropdown from "../../components/ui/Dropdown";
-import FilterToggle from "../../components/ui/FilterToggle";
+import FilterButton from "../../components/ui/filters/FilterButton";
+import FilterModal, {
+	FilterSection,
+} from "../../components/ui/filters/FilterModal";
+import RangeField from "../../components/ui/filters/FilterRange";
+import FilterToggle from "../../components/ui/filters/FilterToggle";
 import Input from "../../components/ui/inputs/Input";
 import Loading from "../../components/ui/Loading";
 import SessionCard from "../../components/ui/cards/SessionCard";
 import { SystemBadge } from "../../components/ui/SystemBadge";
+import ToggleSortOrder from "../../components/ui/filters/ToggleSortOrder";
 import { SessionFormat, SessionType, type ISession } from "../../types/session";
-import type { ISystem, IUserBrief } from "../../types/userCard";
-import { type Option, options } from "../../utils/options";
-import { useCuratedSystemsQuery, useSessionsQuery } from "./queries";
-import { SessionSortBy, StatusFilter } from "./api";
 import { SortOrder } from "../../types/query";
-import SessionGroup from "./SessionGroup";
-import ToggleSortOrder from "../../components/ui/ToggleSortOrder";
-import RangeField from "../../components/ui/FilterRange";
+import type { ISystem, IUserBrief } from "../../types/userCard";
 import { dateKey, formatDateWeekday } from "../../utils/dateFormats";
-import { FORMAT_OPTIONS, TYPE_OPTIONS } from "../../utils/words";
+import { type Option, options } from "../../utils/options";
+import {
+	FORMAT_OPTIONS,
+	MultiSelectState,
+	TYPE_OPTIONS,
+} from "../../utils/words";
+import { SessionSortBy, StatusFilter } from "./api";
+import { useCuratedSystemsQuery, useSessionsQuery } from "./queries";
+import SessionGroup from "./SessionGroup";
+import SystemSearch from "./SystemSearch";
 
 const SORT_OPTIONS = options([
 	{ value: SessionSortBy.ScheduledAt, label: "Дата проведения" },
@@ -72,11 +84,12 @@ export default function SessionsPage() {
 	const [type, setType] = useState<SessionType | null>(() =>
 		parseType(searchParams.get("type")),
 	);
-	const [systemId, setSystemId] = useState<string | null>(() =>
-		searchParams.get("systemId"),
+	const [systems, setSystems] = useState<Map<ISystem, MultiSelectState>>(
+		new Map(),
 	);
-	const [hasFreeSeats, setHasFreeSeats] = useState(false);
+	const [freeSeats, setFreeSeats] = useState("");
 	const [isFree, setIsFree] = useState(false);
+	const [hasFreeSeats, setHasFreeSeats] = useState(false);
 	const [priceMin, setPriceMin] = useState(
 		() => searchParams.get("priceMin") ?? "",
 	);
@@ -97,8 +110,8 @@ export default function SessionsPage() {
 		setSearch("");
 		setFormat(null);
 		setType(null);
-		setSystemId(null);
-		setHasFreeSeats(false);
+		setSystems(new Map());
+		setFreeSeats("");
 		setIsFree(false);
 		setPriceMin("");
 		setPriceMax("");
@@ -106,11 +119,108 @@ export default function SessionsPage() {
 		setDateTo("");
 	};
 
+	const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+
 	const { data: curated = [] } = useCuratedSystemsQuery();
-	const systemOptions = useMemo(
-		() => curated.map((s) => ({ value: s.id, label: s.name })),
-		[curated],
+
+	const [includedIds, excludedIds] = useMemo(
+		() =>
+			[...systems].reduce<[string[], string[]]>(
+				([inc, exc], [gs, state]) =>
+					state === MultiSelectState.Included
+						? [[...inc, gs.id], exc]
+						: [inc, [...exc, gs.id]],
+				[[], []],
+			),
+		[systems],
 	);
+
+	const chips = useMemo<ChipItem[]>(() => {
+		const list: ChipItem[] = [];
+		if (format) {
+			list.push({
+				key: "format",
+				label: "Формат",
+				value:
+					FORMAT_OPTIONS.find((o) => o.value === format)?.label ??
+					format,
+				onRemove: () => setFormat(null),
+			});
+		}
+		if (type) {
+			list.push({
+				key: "type",
+				label: "Тип",
+				value:
+					TYPE_OPTIONS.find((o) => o.value === type)?.label ?? type,
+				onRemove: () => setType(null),
+			});
+		}
+		for (const [gs, state] of systems) {
+			list.push({
+				key: `sys-${gs.id}`,
+				label: "Система",
+				value:
+					state === MultiSelectState.Excluded
+						? `не ${gs.name}`
+						: gs.name,
+				variant:
+					state === MultiSelectState.Excluded ? "danger" : "default",
+				onRemove: () =>
+					setSystems((prev) => {
+						const next = new Map(prev);
+						next.delete(gs);
+						return next;
+					}),
+			});
+		}
+		if (priceMin || priceMax) {
+			const value = `${priceMin || "0"} – ${priceMax || "∞"} ₽`;
+			list.push({
+				key: "price",
+				label: "Цена",
+				value,
+				onRemove: () => {
+					setPriceMin("");
+					setPriceMax("");
+				},
+			});
+		}
+		if (dateFrom || dateTo) {
+			const value = `${dateFrom || "…"} – ${dateTo || "…"}`;
+			list.push({
+				key: "date",
+				label: "Дата",
+				value,
+				onRemove: () => {
+					setDateFrom("");
+					setDateTo("");
+				},
+			});
+		}
+		if (freeSeats) {
+			const value = `${freeSeats}+`;
+			list.push({
+				key: "seats",
+				label: "Места",
+				value,
+				onRemove: () => {
+					setFreeSeats("");
+				},
+			});
+		}
+		return list;
+	}, [
+		format,
+		type,
+		systems,
+		curated,
+		priceMin,
+		priceMax,
+		dateFrom,
+		dateTo,
+		freeSeats,
+	]);
 
 	const { data, isLoading, isError } = useSessionsQuery({
 		status: StatusFilter.Public,
@@ -118,8 +228,9 @@ export default function SessionsPage() {
 		search: debouncedSearch || undefined,
 		format: format ?? undefined,
 		type: type ?? undefined,
-		systemId: systemId ?? undefined,
-		hasFreeSeats: hasFreeSeats || undefined,
+		systemIncluded: includedIds.length > 0 ? includedIds : undefined,
+		systemExcluded: excludedIds.length > 0 ? excludedIds : undefined,
+		freeSeats: hasFreeSeats ? 1 : parseInt(freeSeats) || undefined,
 		priceMin: isFree ? 0 : parseInt(priceMin, 10) || undefined,
 		priceMax: isFree ? 0 : parseInt(priceMax, 10) || undefined,
 		dateFrom: dateFrom || undefined,
@@ -135,96 +246,140 @@ export default function SessionsPage() {
 			</h1>
 
 			<div className="flex flex-col gap-4 mb-6">
-				<Input
-					placeholder="Поиск"
-					value={search}
-					onChange={(e) => setSearch(e.target.value)}
-				/>
-
-				<div className="flex flex-wrap items-center gap-3">
+				<div className="flex gap-3 items-center">
+					<Input
+						placeholder="Поиск"
+						value={search}
+						onChange={(e) => setSearch(e.target.value)}
+					/>
 					<Dropdown
-						label="Формат"
+						label=""
+						labelIcon="sort"
+						options={[...SORT_OPTIONS]}
+						value={sort}
+						onChange={(v) => {
+							if (v !== null) setSort(v as SessionSortBy);
+						}}
+						className="shrink-0"
+					/>
+					<ToggleSortOrder
+						sortOrder={sortOrder}
+						onToggle={() =>
+							setSortOrder((o) =>
+								o === SortOrder.Asc
+									? SortOrder.Desc
+									: SortOrder.Asc,
+							)
+						}
+					/>
+				</div>
+
+				<div className="flex items-start gap-3">
+					<div className="flex flex-wrap gap-3">
+						<FilterButton
+							onClick={() => setIsFilterModalOpen(true)}
+							count={chips.length}
+						/>
+						<FilterToggle
+							label="Есть места"
+							isActive={hasFreeSeats}
+							onChange={() => {
+								setHasFreeSeats(!hasFreeSeats);
+								setFreeSeats("");
+							}}
+						/>
+						<FilterToggle
+							label="Бесплатно"
+							isActive={isFree}
+							onChange={(v) => {
+								setIsFree(v);
+								if (v) {
+									setPriceMin("");
+									setPriceMax("");
+								}
+							}}
+						/>
+
+						<ActiveFilterChips
+							chips={chips}
+							className="self-center"
+						/>
+					</div>
+
+					<ClearFiltersButton
+						filters={{
+							search,
+							format,
+							type,
+							systems: [...systems.keys()],
+							hasFreeSeats,
+							freeSeats,
+							isFree,
+							priceMin,
+							priceMax,
+							dateFrom,
+							dateTo,
+						}}
+						onClear={clearFilters}
+						className="ml-auto"
+					/>
+				</div>
+			</div>
+
+			<FilterModal
+				isOpen={isFilterModalOpen}
+				onClose={() => setIsFilterModalOpen(false)}
+			>
+				<FilterSection label="Формат">
+					<Dropdown
+						label=""
 						options={[...FORMAT_OPTIONS]}
 						value={format}
 						onChange={(v) => setFormat(v as SessionFormat | null)}
+						fullWidth
 					/>
+				</FilterSection>
+				<FilterSection label="Тип">
 					<Dropdown
-						label="Тип"
+						label=""
 						options={[...TYPE_OPTIONS]}
 						value={type}
 						onChange={(v) => setType(v as SessionType | null)}
+						fullWidth
 					/>
+				</FilterSection>
+				<FilterSection label="Город">
 					<Dropdown
-						label="Город"
+						label=""
 						options={[]}
 						value={null}
 						onChange={() => {}}
 						disabled
+						fullWidth
 					/>
-					<Dropdown
-						label="Система"
-						options={systemOptions}
-						value={systemId}
-						onChange={setSystemId}
+				</FilterSection>
+				<FilterSection label="Система">
+					<SystemSearch
+						multiple
+						onAdd={(s) =>
+							setSystems((prev) =>
+								new Map(prev).set(s, MultiSelectState.Included),
+							)
+						}
+						onExclude={(s) =>
+							setSystems((prev) =>
+								new Map(prev).set(s, MultiSelectState.Excluded),
+							)
+						}
 					/>
-					<FilterToggle
-						label="Есть места"
-						isActive={hasFreeSeats}
-						onChange={setHasFreeSeats}
+					<ActiveFilterChips
+						chips={chips.filter((c) => c.key.startsWith("sys-", 0))}
+						className="mt-3"
 					/>
-					<FilterToggle
-						label="Бесплатно"
-						isActive={isFree}
-						onChange={(v) => {
-							setIsFree(v);
-							if (v) {
-								setPriceMin("");
-								setPriceMax("");
-							}
-						}}
-					/>
-
-					<div className="ml-auto flex items-center gap-2">
-						<ClearFiltersButton
-							filters={{
-								search,
-								format,
-								type,
-								systemId,
-								hasFreeSeats,
-								isFree,
-								priceMin,
-								priceMax,
-								dateFrom,
-								dateTo,
-							}}
-							onClear={clearFilters}
-							className="ml-auto"
-						/>
-						<Dropdown
-							label="Сортировка"
-							options={[...SORT_OPTIONS]}
-							value={sort}
-							onChange={(v) => {
-								if (v !== null) setSort(v as SessionSortBy);
-							}}
-						/>
-						<ToggleSortOrder
-							sortOrder={sortOrder}
-							onToggle={() =>
-								setSortOrder((o) =>
-									o === SortOrder.Asc
-										? SortOrder.Desc
-										: SortOrder.Asc,
-								)
-							}
-						/>
-					</div>
-				</div>
-
-				<div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+				</FilterSection>
+				<FilterSection label="Цена">
 					<RangeField
-						label="Цена"
+						label=""
 						suffix="₽"
 						type="number"
 						from={priceMin}
@@ -233,16 +388,28 @@ export default function SessionsPage() {
 						onToChange={setPriceMax}
 						disabled={isFree}
 					/>
+				</FilterSection>
+				<FilterSection label="Дата">
 					<RangeField
-						label="Дата"
+						label=""
 						type="date"
 						from={dateFrom}
 						to={dateTo}
 						onFromChange={setDateFrom}
 						onToChange={setDateTo}
 					/>
-				</div>
-			</div>
+				</FilterSection>
+				<FilterSection label="Свободные места">
+					<Input
+						type="number"
+						step={1}
+						min={0}
+						max={50}
+						csize="sm"
+						onChange={(e) => setFreeSeats(e.target.value)}
+					></Input>
+				</FilterSection>
+			</FilterModal>
 
 			<SessionsList
 				items={data?.items}

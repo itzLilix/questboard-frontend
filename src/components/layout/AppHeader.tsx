@@ -1,4 +1,3 @@
-import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
 import Button from "../ui/Button";
 import Input from "../ui/inputs/Input";
@@ -6,8 +5,8 @@ import useAuth from "../../hooks/useAuth";
 import NotificationBell from "../../features/notifications/NotificationBell";
 import Loading from "../ui/Loading";
 import AvatarImage from "../ui/AvatarImage";
-import { useEffect, useRef, useState } from "react";
-import { MenuDivider, MenuItem } from "../ui/Menu";
+import { useRef, useState } from "react";
+import Menu, { MenuDivider, MenuItem } from "../ui/Menu";
 import Icon from "../ui/Icon";
 import type { IUser } from "../../types/user";
 import { useLogoutMutation } from "../../features/auth/queries";
@@ -110,47 +109,13 @@ export default function AppHeader() {
 	const { isLoading, user } = useAuth();
 	const openAuthModal = useAuthModal((s) => s.open);
 	const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
-	const [menuPos, setMenuPos] = useState<{
-		top: number;
-		right: number;
-	} | null>(null);
 
 	const triggerRef = useRef<HTMLButtonElement>(null);
-	const menuRef = useRef<HTMLDivElement>(null);
 
 	const navigate = useNavigate();
 
-	useEffect(() => {
-		if (!isProfileMenuOpen) return;
-
-		const handleClickOutside = (event: MouseEvent) => {
-			const t = event.target as Node;
-			if (
-				!triggerRef.current?.contains(t) &&
-				!menuRef.current?.contains(t)
-			) {
-				setIsProfileMenuOpen(false);
-			}
-		};
-
-		document.addEventListener("mousedown", handleClickOutside);
-		return () =>
-			document.removeEventListener("mousedown", handleClickOutside);
-	}, [isProfileMenuOpen]);
-
-	const handleToggleMenu = () => {
-		if (!isProfileMenuOpen && triggerRef.current) {
-			const rect = triggerRef.current.getBoundingClientRect();
-			setMenuPos({
-				top: rect.bottom + 8,
-				right: window.innerWidth - rect.right,
-			});
-		}
-		setIsProfileMenuOpen((o) => !o);
-	};
-
 	return (
-		<header className="bg-(--bg-base-tp) h-(--header-h) z-10 fixed top-0 w-full border-b border-(--border) backdrop-blur-lg">
+		<header className="bg-(--bg-base-tp) h-(--header-h) z-100 fixed top-0 w-full border-b border-(--border) backdrop-blur-lg">
 			<div className="p-4 flex items-center justify-between h-full max-w-1600 mx-auto">
 				<Link
 					to="/"
@@ -192,7 +157,7 @@ export default function AppHeader() {
 						<button
 							ref={triggerRef}
 							className="flex items-center justify-end gap-2 cursor-pointer"
-							onClick={handleToggleMenu}
+							onClick={() => setIsProfileMenuOpen((o) => !o)}
 						>
 							<span className="text-(--text-primary)">
 								{"@" + user.username}
@@ -224,22 +189,19 @@ export default function AppHeader() {
 				)}
 			</div>
 
-			{isProfileMenuOpen &&
-				menuPos &&
-				user &&
-				createPortal(
-					<div
-						ref={menuRef}
-						className="fixed z-50 bg-(--bg-base-tp) backdrop-blur-lg border border-(--border) rounded-lg p-2 min-w-48"
-						style={{ top: menuPos.top, right: menuPos.right }}
-					>
-						<ProfileMenu
-							user={user}
-							onClose={() => setIsProfileMenuOpen(false)}
-						/>
-					</div>,
-					document.body,
-				)}
+			{user && (
+				<Menu
+					isOpen={isProfileMenuOpen}
+					onClose={() => setIsProfileMenuOpen(false)}
+					triggerRef={triggerRef}
+					align="end"
+				>
+					<ProfileMenu
+						user={user}
+						onClose={() => setIsProfileMenuOpen(false)}
+					/>
+				</Menu>
+			)}
 		</header>
 	);
 }

@@ -1,4 +1,4 @@
-import Input from "./inputs/Input";
+import Input from "../inputs/Input";
 
 export default function RangeField({
 	label,

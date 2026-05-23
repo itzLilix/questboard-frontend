@@ -1,4 +1,4 @@
-import FilterToggle from "./FilterToggle";
+import FilterToggle from "./filters/FilterToggle";
 import Icon from "./Icon";
 
 type ToggleViewProps = {

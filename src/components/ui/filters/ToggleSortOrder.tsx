@@ -1,6 +1,6 @@
 import FilterToggle from "./FilterToggle";
-import Icon from "./Icon";
-import { SortOrder } from "../../types/query";
+import Icon from "../Icon";
+import { SortOrder } from "../../../types/query";
 
 export default function ToggleSortOrder({
 	sortOrder,

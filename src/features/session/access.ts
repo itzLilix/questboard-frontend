@@ -9,23 +9,52 @@ export const AccessLevel = {
 } as const;
 export type AccessLevel = (typeof AccessLevel)[keyof typeof AccessLevel];
 
+export const SessionRelation = {
+	Viewer: "viewer",
+	Player: "player",
+	GM: "gm",
+} as const;
+export type SessionRelation =
+	(typeof SessionRelation)[keyof typeof SessionRelation];
+
 const ACTIVE_STATUSES: PlayerStatus[] = [PlayerStatus.Active];
 
-export class SessionRole {
-	readonly key: string;
-	readonly level: AccessLevel;
+const RELATION_LEVEL: Record<SessionRelation, AccessLevel> = {
+	[SessionRelation.Viewer]: AccessLevel.View,
+	[SessionRelation.Player]: AccessLevel.Access,
+	[SessionRelation.GM]: AccessLevel.Edit,
+};
 
-	constructor(key: string, level: AccessLevel) {
-		this.key = key;
-		this.level = level;
+export class SessionRole {
+	readonly relation: SessionRelation;
+	readonly isAdmin: boolean;
+
+	constructor(relation: SessionRelation, isAdmin: boolean) {
+		this.relation = relation;
+		this.isAdmin = isAdmin;
+	}
+
+	get level(): AccessLevel {
+		const base = RELATION_LEVEL[this.relation];
+		return this.isAdmin && AccessLevel.Edit > base
+			? AccessLevel.Edit
+			: base;
 	}
 
 	can(required: AccessLevel): boolean {
 		return this.level >= required;
 	}
 
-	is(role: SessionRole): boolean {
-		return this.key === role.key;
+	is(relation: SessionRelation): boolean {
+		return this.relation === relation;
+	}
+
+	in(relations: SessionRelation[]) {
+		return relations.includes(this.relation);
+	}
+
+	isParticipant(): boolean {
+		return this.in([SessionRelation.Player, SessionRelation.GM]);
 	}
 }
 
@@ -34,30 +63,18 @@ export function roleFor(
 	sessionData: SessionResponse,
 ): SessionRole {
 	if (!user) {
-		return SESSION_ROLES.viewer;
+		return new SessionRole(SessionRelation.Viewer, false);
 	}
-	if (user.role === UserRole.Admin) {
-		return SESSION_ROLES.admin;
-	}
+	const isAdmin = user.role === UserRole.Admin;
 	if (sessionData.session.masterId === user.id) {
-		return SESSION_ROLES.gm;
+		return new SessionRole(SessionRelation.GM, isAdmin);
 	}
 	if (sessionData.players.some(isActiveParticipant(user.id))) {
-		return SESSION_ROLES.player;
+		return new SessionRole(SessionRelation.Player, isAdmin);
 	}
-	return SESSION_ROLES.viewer;
+	return new SessionRole(SessionRelation.Viewer, isAdmin);
 }
 
 const isActiveParticipant =
 	(userId: string) => (p: SessionResponse["players"][number]) =>
 		p.playerId === userId && ACTIVE_STATUSES.includes(p.status);
-
-export const SESSION_ROLES = {
-	banned: new SessionRole("banned", AccessLevel.None),
-	viewer: new SessionRole("viewer", AccessLevel.View),
-	player: new SessionRole("player", AccessLevel.Access),
-	gm: new SessionRole("gm", AccessLevel.Edit),
-	admin: new SessionRole("admin", AccessLevel.Edit),
-} as const;
-
-export type SessionRoleKey = keyof typeof SESSION_ROLES;

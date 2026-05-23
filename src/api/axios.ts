@@ -1,13 +1,25 @@
 import axios, { type AxiosResponse } from "axios";
 
 export const profileApi = axios.create({
-	baseURL: "http://localhost:3000",
+	baseURL: "http://localhost:3000/v1",
 	withCredentials: true,
 });
 
 export const sessionApi = axios.create({
-	baseURL: "http://localhost:3001",
+	baseURL: "http://localhost:3001/v1",
 	withCredentials: true,
+	paramsSerializer: (params) => {
+		const sp = new URLSearchParams();
+		for (const [k, v] of Object.entries(params)) {
+			if (v === undefined || v === null) continue;
+			if (Array.isArray(v)) {
+				v.forEach((item) => sp.append(k, String(item)));
+			} else {
+				sp.append(k, String(v));
+			}
+		}
+		return sp.toString();
+	},
 });
 
 let refreshPromise: Promise<AxiosResponse> | null = null;
@@ -26,7 +38,11 @@ function attach401Interceptor(instance: ReturnType<typeof axios.create>) {
 		(response) => response,
 		async (error) => {
 			const originalRequest = error.config;
-			const skipRefresh = ["/auth/login", "/auth/signup", "/auth/refresh"];
+			const skipRefresh = [
+				"/auth/login",
+				"/auth/signup",
+				"/auth/refresh",
+			];
 
 			if (
 				error.response?.status === 401 &&

@@ -8,7 +8,7 @@ import { UserSortBy } from "../usersCatalog/api";
 import { SortOrder } from "../../types/query";
 import Button from "../../components/ui/Button";
 import Dropdown from "../../components/ui/Dropdown";
-import FilterToggle from "../../components/ui/FilterToggle";
+import FilterToggle from "../../components/ui/filters/FilterToggle";
 import Icon from "../../components/ui/Icon";
 import Input from "../../components/ui/inputs/Input";
 import Loading from "../../components/ui/Loading";

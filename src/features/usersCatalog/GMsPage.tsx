@@ -1,8 +1,8 @@
 import Input from "../../components/ui/inputs/Input";
 import { useState, useEffect } from "react";
-import ClearFiltersButton from "../../components/ui/ClearFiltersButton";
+import ClearFiltersButton from "../../components/ui/filters/ClearFiltersButton";
 import Dropdown from "../../components/ui/Dropdown";
-import FilterToggle from "../../components/ui/FilterToggle";
+import FilterToggle from "../../components/ui/filters/FilterToggle";
 import Loading from "../../components/ui/Loading";
 import UserCard, {
 	type userCardProps,
@@ -12,7 +12,7 @@ import { type Option, options } from "../../utils/options";
 import { UserSortBy, type UsersListResponse } from "../usersCatalog/api";
 import { SortOrder } from "../../types/query";
 import { useUsersCatalogQuery } from "./queries";
-import ToggleSortOrder from "../../components/ui/ToggleSortOrder";
+import ToggleSortOrder from "../../components/ui/filters/ToggleSortOrder";
 import ToggleView from "../../components/ui/ToggleView";
 import { FORMAT_OPTIONS, TYPE_OPTIONS } from "../../utils/words";
 import useAuth from "../../hooks/useAuth";
@@ -47,7 +47,11 @@ export default function GMsPage() {
 		setHighRating(false);
 	};
 
-	const { data: rawData, isLoading, isError } = useUsersCatalogQuery({
+	const {
+		data: rawData,
+		isLoading,
+		isError,
+	} = useUsersCatalogQuery({
 		search: debouncedSearch || undefined,
 		format: format ?? undefined,
 		type: type ?? undefined,
@@ -59,7 +63,10 @@ export default function GMsPage() {
 
 	const data =
 		rawData && user
-			? { ...rawData, items: rawData.items.filter((u) => u.userId !== user.id) }
+			? {
+					...rawData,
+					items: rawData.items.filter((u) => u.id !== user.id),
+				}
 			: rawData;
 
 	return (
@@ -69,12 +76,34 @@ export default function GMsPage() {
 			</h1>
 
 			<div className="flex flex-col gap-4 mb-6">
-				<Input
-					placeholder="Поиск"
-					value={search}
-					onChange={(e) => setSearch(e.target.value)}
-				/>
-
+				<div className="flex gap-3 items-center">
+					<Input
+						placeholder="Поиск"
+						value={search}
+						onChange={(e) => setSearch(e.target.value)}
+					/>
+					<ToggleView view={view} setView={setView} />
+					<Dropdown
+						label=""
+						labelIcon="sort"
+						options={[...SORT_OPTIONS]}
+						value={sort}
+						onChange={(v) => {
+							if (v !== null) setSort(v as UserSortBy);
+						}}
+						className="shrink-0"
+					/>
+					<ToggleSortOrder
+						sortOrder={sortOrder}
+						onToggle={() =>
+							setSortOrder((o) =>
+								o === SortOrder.Asc
+									? SortOrder.Desc
+									: SortOrder.Asc,
+							)
+						}
+					/>
+				</div>
 				<div className="flex flex-wrap items-center gap-3">
 					<Dropdown
 						label="Формат"
@@ -105,25 +134,6 @@ export default function GMsPage() {
 						<ClearFiltersButton
 							filters={{ search, format, type, highRating }}
 							onClear={clearFilters}
-						/>
-						<ToggleView view={view} setView={setView} />
-						<Dropdown
-							label="Сортировка"
-							options={[...SORT_OPTIONS]}
-							value={sort}
-							onChange={(v) => {
-								if (v !== null) setSort(v as UserSortBy);
-							}}
-						/>
-						<ToggleSortOrder
-							sortOrder={sortOrder}
-							onToggle={() =>
-								setSortOrder((o) =>
-									o === SortOrder.Asc
-										? SortOrder.Desc
-										: SortOrder.Asc,
-								)
-							}
 						/>
 					</div>
 				</div>

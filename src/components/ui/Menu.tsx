@@ -1,30 +1,78 @@
-import { cva } from "class-variance-authority";
-import type { ButtonHTMLAttributes } from "react";
-import type React from "react";
+import clsx from "clsx";
+import {
+	useCallback,
+	useEffect,
+	useRef,
+	type ButtonHTMLAttributes,
+	type ReactNode,
+	type RefObject,
+} from "react";
+import { createPortal } from "react-dom";
+import useAnchoredPosition, {
+	type AnchorAlign,
+} from "../../hooks/useAnchoredPosition";
+import useClickOutside from "../../hooks/useClickOutside";
 
-type MenuProps = React.HtmlHTMLAttributes<HTMLDivElement> & {
+type MenuProps = {
 	isOpen: boolean;
-	side: "left" | "right" | "top" | "bottom";
+	onClose: () => void;
+	triggerRef: RefObject<HTMLElement | null>;
+	align?: AnchorAlign;
+	className?: string;
+	children: ReactNode;
 };
 
-const sideClasses = cva(
-	`bg-(--bg-base-tp) backdrop-blur-lg border border-(--border) rounded-lg p-2 absolute z-50`,
-	{
-		variants: {
-			side: {
-				left: "left-0 top-full mt-6",
-				right: "right-0 top-full mt-6",
-				top: "top-0 left-full ml-6",
-				bottom: "bottom-0 left-full ml-6",
-			},
-		},
-	},
-);
+export default function Menu({
+	isOpen,
+	onClose,
+	triggerRef,
+	align = "start",
+	className,
+	children,
+}: MenuProps) {
+	const menuRef = useRef<HTMLDivElement>(null);
+	const close = useCallback(() => onClose(), [onClose]);
+
+	useClickOutside(triggerRef, isOpen, close, menuRef);
+	const pos = useAnchoredPosition(triggerRef, isOpen, align);
+
+	useEffect(() => {
+		if (!isOpen) return;
+		const onKey = (e: KeyboardEvent) => {
+			if (e.key === "Escape") onClose();
+		};
+		document.addEventListener("keydown", onKey);
+		return () => document.removeEventListener("keydown", onKey);
+	}, [isOpen, onClose]);
+
+	if (!isOpen || !pos) return null;
+
+	return createPortal(
+		<div
+			ref={menuRef}
+			role="menu"
+			className={clsx(
+				"fixed z-101 bg-(--bg-base-tp) backdrop-blur-lg border border-(--border) rounded-lg p-2 min-w-48 overflow-y-auto",
+				className,
+			)}
+			style={{
+				top: pos.top,
+				bottom: pos.bottom,
+				left: pos.left,
+				right: pos.right,
+				maxHeight: pos.maxHeight,
+			}}
+		>
+			{children}
+		</div>,
+		document.body,
+	);
+}
 
 type MenuItemProps = {
-	children: React.ReactNode;
+	children: ReactNode;
 	onClick: () => void;
-	before?: React.ReactNode;
+	before?: ReactNode;
 } & ButtonHTMLAttributes<HTMLButtonElement>;
 
 export function MenuItem({
@@ -35,7 +83,7 @@ export function MenuItem({
 }: MenuItemProps) {
 	return (
 		<button
-			className="text-base font-body font-(--text-primary) rounded-xl cursor-pointer hover:bg-(--bg-elevated) px-3 py-2 flex items-center gap-2 w-full text-left"
+			className="text-base font-body font-(--text-primary) rounded-xl cursor-pointer hover:bg-(--bg-elevated) px-3 py-2 flex items-center gap-2 w-full text-left disabled:opacity-50 disabled:pointer-events-none"
 			onClick={onClick}
 			{...props}
 		>
@@ -49,20 +97,4 @@ export function MenuItem({
 
 export function MenuDivider() {
 	return <div className="border-t border-(--border) my-1 w-full" />;
-}
-
-export default function Menu({
-	isOpen,
-	side,
-	children,
-	className,
-	...props
-}: MenuProps) {
-	if (!isOpen) return null;
-
-	return (
-		<div className={sideClasses({ side }) + " " + className} {...props}>
-			{children}
-		</div>
-	);
 }

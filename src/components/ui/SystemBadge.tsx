@@ -5,6 +5,21 @@ import { pluralPartiy } from "../../utils/words";
 
 const DEFAULT_BADGE_COLOR = "#2a2440";
 
+function badgeTextColor(bgHex: string): string {
+	const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(bgHex);
+	if (!m) return "var(--text-primary)";
+	const toLinear = (c: number) => {
+		const s = c / 255;
+		return s <= 0.04045 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+	};
+	const lum =
+		0.2126 * toLinear(parseInt(m[1], 16)) +
+		0.7152 * toLinear(parseInt(m[2], 16)) +
+		0.0722 * toLinear(parseInt(m[3], 16));
+	// contrast ratio vs white ≈ 4.5:1 at lum = 0.179 (WCAG AA)
+	return lum > 0.179 ? "var(--text-dark)" : "var(--text-primary)";
+}
+
 type SystemBadgeProps = {
 	system: ISystem;
 	sessionsCount?: number;
@@ -19,11 +34,12 @@ export function SystemBadge({
 	const pill = (
 		<span
 			className={clsx(
-				"inline-flex items-center px-2.5 py-1 rounded-md text-sm font-body font-bold uppercase whitespace-nowrap text-(--text-primary) select-none",
+				"inline-flex items-center px-2.5 py-1 rounded-md text-sm font-body font-bold uppercase whitespace-nowrap select-none",
 				className,
 			)}
 			style={{
 				backgroundColor: system.badgeColor || DEFAULT_BADGE_COLOR,
+				color: badgeTextColor(system.badgeColor || DEFAULT_BADGE_COLOR),
 			}}
 		>
 			{system.name}

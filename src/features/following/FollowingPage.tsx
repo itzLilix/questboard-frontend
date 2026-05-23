@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import Dropdown from "../../components/ui/Dropdown";
-import FilterToggle from "../../components/ui/FilterToggle";
+import FilterToggle from "../../components/ui/filters/FilterToggle";
 import Input from "../../components/ui/inputs/Input";
 import { SessionFormat, SessionType } from "../../types/session";
 import { useFollowingQuery } from "./queries";
@@ -8,8 +8,8 @@ import { UserSortBy } from "../usersCatalog/api";
 import { SortOrder } from "../../types/query";
 import { UsersList } from "../usersCatalog/GMsPage";
 import type { userCardProps } from "../../components/ui/cards/UserCard";
-import ClearFiltersButton from "../../components/ui/ClearFiltersButton";
-import ToggleSortOrder from "../../components/ui/ToggleSortOrder";
+import ClearFiltersButton from "../../components/ui/filters/ClearFiltersButton";
+import ToggleSortOrder from "../../components/ui/filters/ToggleSortOrder";
 import ToggleView from "../../components/ui/ToggleView";
 import { FORMAT_OPTIONS, TYPE_OPTIONS } from "../../utils/words";
 
@@ -60,11 +60,34 @@ export default function FollowingPage() {
 			</h1>
 
 			<div className="flex flex-col gap-4 mb-6">
-				<Input
-					placeholder="Поиск"
-					value={search}
-					onChange={(e) => setSearch(e.target.value)}
-				/>
+				<div className="flex gap-3 items-center">
+					<Input
+						placeholder="Поиск"
+						value={search}
+						onChange={(e) => setSearch(e.target.value)}
+					/>
+					<ToggleView view={view} setView={setView} />
+					<Dropdown
+						label=""
+						labelIcon="sort"
+						options={[...SORT_OPTIONS]}
+						value={sort}
+						onChange={(v) => {
+							if (v !== null) setSort(v as UserSortBy);
+						}}
+						className="shrink-0"
+					/>
+					<ToggleSortOrder
+						sortOrder={sortOrder}
+						onToggle={() =>
+							setSortOrder((o) =>
+								o === SortOrder.Asc
+									? SortOrder.Desc
+									: SortOrder.Asc,
+							)
+						}
+					/>
+				</div>
 
 				<div className="flex flex-wrap items-center gap-3">
 					<Dropdown
@@ -96,25 +119,6 @@ export default function FollowingPage() {
 						<ClearFiltersButton
 							filters={{ search, format, type, highRating }}
 							onClear={clearFilters}
-						/>
-						<ToggleView view={view} setView={setView} />
-						<Dropdown
-							label="Сортировка"
-							options={[...SORT_OPTIONS]}
-							value={sort}
-							onChange={(v) => {
-								if (v !== null) setSort(v as UserSortBy);
-							}}
-						/>
-						<ToggleSortOrder
-							sortOrder={sortOrder}
-							onToggle={() =>
-								setSortOrder((o) =>
-									o === SortOrder.Asc
-										? SortOrder.Desc
-										: SortOrder.Asc,
-								)
-							}
 						/>
 					</div>
 				</div>

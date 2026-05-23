@@ -5,18 +5,19 @@ import Icon from "../../components/ui/Icon";
 import {
 	AccessLevel,
 	roleFor,
-	SESSION_ROLES,
+	SessionRelation,
 	type SessionRole,
 } from "./access";
 import useAuth from "../../hooks/useAuth";
 import { useFetchSessionQuery } from "./queries";
 import Loading from "../../components/ui/Loading";
 import type { IPlayer, SessionResponse } from "../../types/session";
-import { Price } from "../../components/ui/cards/SessionCard";
+import { ApplyButton, Price } from "../../components/ui/cards/SessionCard";
 import type { IUserBrief } from "../../types/userCard";
 import AvatarImage from "../../components/ui/AvatarImage";
 import GMBadge from "./GMBadge";
 import { SessionProvider, useSessionRole } from "./SessionContext";
+import type { IUser } from "../../types/user";
 
 const HAS_CAMPAIGN = true;
 
@@ -113,7 +114,7 @@ export default function SessionLayout() {
 				<TabRail tabs={visibleTabs} />
 
 				<section className="flex-1 min-w-0 flex flex-col gap-4">
-					<SessionHeader />
+					<SessionHeader user={user} />
 					<div className="p-6 min-h-96">
 						<Outlet context={[sessionData]} />
 					</div>
@@ -158,19 +159,24 @@ function TabRail({ tabs }: { tabs: TabDef[] }) {
 	);
 }
 
-function SessionHeader() {
+function SessionHeader({ user }: { user: IUser | null }) {
 	const { role, sessionData } = useSessionRole();
+	const { session } = sessionData;
 	return (
 		<header className="flex items-center justify-between gap-4">
 			<h1 className="font-display text-3xl text-(--text-primary) truncate">
 				{sessionData.session.title}
 			</h1>
-			{role.is(SESSION_ROLES.viewer) && (
+			{role.is(SessionRelation.Viewer) && (
 				<div className="flex items-center gap-4 shrink-0">
 					<Price price={sessionData.session.price} />
-					<Button variant="primary" csize="sm">
-						Подать заявку
-					</Button>
+					<ApplyButton
+						availability={session.availability}
+						disabled={session.freeSeats === 0}
+						isAutenticated={!!user}
+						isParticipant={role.isParticipant()}
+						sessionId={session.id}
+					/>
 				</div>
 			)}
 		</header>

@@ -35,8 +35,7 @@ export const SessionSortBy = {
 	Price: "price",
 	Title: "title",
 } as const;
-export type SessionSortBy =
-	(typeof SessionSortBy)[keyof typeof SessionSortBy];
+export type SessionSortBy = (typeof SessionSortBy)[keyof typeof SessionSortBy];
 
 export async function fetchCuratedSystems(): Promise<ISystem[]> {
 	const { data } = await sessionApi.get<ISystem[]>("/game-systems/curated");
@@ -94,12 +93,10 @@ export async function fetchSessionCards(
 	masterIds: string[],
 ): Promise<SessionCardData[]> {
 	if (masterIds.length === 0) return [];
-	const params = new URLSearchParams();
-	for (const id of masterIds) params.append("masterId", id);
 	const { data } = await sessionApi.get<SessionCardData[]>(
 		"/sessions/cards",
 		{
-			params,
+			params: { masterId: masterIds },
 		},
 	);
 	return data;
@@ -114,8 +111,9 @@ export type SessionListQuery = {
 	format?: SessionFormat;
 	type?: SessionType;
 	city?: string;
-	systemId?: string;
-	hasFreeSeats?: boolean;
+	systemIncluded?: string[];
+	systemExcluded?: string[];
+	freeSeats?: number;
 	priceMin?: number;
 	priceMax?: number;
 	dateFrom?: string;
