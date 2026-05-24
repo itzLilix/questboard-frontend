@@ -18,6 +18,9 @@ import AvatarImage from "../../components/ui/AvatarImage";
 import GMBadge from "./GMBadge";
 import { SessionProvider, useSessionRole } from "./SessionContext";
 import type { IUser } from "../../types/user";
+import Rating from "../../components/ui/UserRating";
+import TextSeparator from "../../components/ui/TextSeparator";
+import { pluralGames, pluralPartiy } from "../../utils/words";
 
 const HAS_CAMPAIGN = true;
 
@@ -251,7 +254,7 @@ function ParticipantCard({
 	return (
 		<div className="rounded-xl border border-(--border) bg-(--bg-card) p-3 h-16 flex items-center gap-3">
 			<AvatarImage src={brief.avatarUrl} alt={brief.username} size="sm" />
-			<div className="flex-1 flex flex-col gap-2 min-w-0">
+			<div className="flex-1 flex flex-col min-w-0">
 				<Link
 					className="text-(--text-primary) flex gap-1 items-end"
 					to={`/users/${brief.username}`}
@@ -261,7 +264,7 @@ function ParticipantCard({
 					</span>
 					{gm && <GMBadge />}
 				</Link>
-				{player?.character && (
+				{!gm && player?.character && (
 					<span className="text-(--text-secondary) text-sm truncate">
 						{[
 							player.character.name,
@@ -270,6 +273,14 @@ function ParticipantCard({
 						]
 							.filter(Boolean)
 							.join(" · ")}
+					</span>
+				)}
+				{gm && (
+					<span className="text-(--text-secondary) text-sm truncate">
+						<Rating rating={brief.rating} />
+						<TextSeparator />
+						{brief.hosted + " " + pluralPartiy(brief.hosted)}{" "}
+						проведено
 					</span>
 				)}
 			</div>

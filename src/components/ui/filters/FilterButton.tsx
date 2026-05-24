@@ -32,10 +32,9 @@ export default function FilterButton({
 		>
 			<Icon
 				name="filter_alt"
-				className={clsx(
-					"text-base!",
-					isActive ? "text-(--accent)!" : "text-(--text-muted)!",
-				)}
+				className={
+					isActive ? "text-(--accent)!" : "text-(--text-muted)!"
+				}
 			/>
 			<span className="text-base font-body">{label}</span>
 			{count > 0 && (

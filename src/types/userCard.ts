@@ -46,4 +46,7 @@ export type IUserBrief = {
 	username: string;
 	displayName: string;
 	avatarUrl?: string;
+	rating: number;
+	played: number;
+	hosted: number;
 };

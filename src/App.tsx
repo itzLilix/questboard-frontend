@@ -9,7 +9,7 @@ import FollowingPage from "./features/following/FollowingPage";
 import GMsPage from "./features/usersCatalog/GMsPage";
 import HomePage from "./features/home/HomePage";
 import NewSessionPage from "./features/session/NewSessionPage";
-import SessionsPage from "./features/session/SessionsPage";
+import SessionsPage from "./features/session/SessionsCatalog";
 import SessionLayout from "./features/session/SessionLayout";
 import {
 	CampaignTab,
