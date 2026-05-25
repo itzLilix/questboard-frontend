@@ -137,7 +137,7 @@ function SearchCard() {
 		const params = new URLSearchParams();
 		if (format) params.set("format", format);
 		if (type) params.set("type", type);
-		if (systemId) params.set("systemId", systemId);
+		if (systemId) params.set("systemIncluded", systemId);
 		if (priceMin) params.set("priceMin", priceMin);
 		if (priceMax) params.set("priceMax", priceMax);
 		const query = params.toString();

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import ActiveFilterChips, {
 	type ChipItem,
@@ -122,6 +122,19 @@ export default function SessionsPage() {
 	const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
 
 	const { data: curated = [] } = useCuratedSystemsQuery();
+
+	const systemInitialized = useRef(false);
+	useEffect(() => {
+		if (systemInitialized.current || curated.length === 0) return;
+		const id = searchParams.get("systemIncluded");
+		if (!id) {
+			systemInitialized.current = true;
+			return;
+		}
+		const system = curated.find((s) => s.id === id);
+		if (system) setSystems(new Map([[system, MultiSelectState.Included]]));
+		systemInitialized.current = true;
+	}, [curated]);
 
 	const [includedIds, excludedIds] = useMemo(
 		() =>
