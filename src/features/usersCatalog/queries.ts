@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { getUsersList, type UsersQuery } from "./api";
 
 export const usersCatalogKeys = {
@@ -7,8 +7,11 @@ export const usersCatalogKeys = {
 };
 
 export function useUsersCatalogQuery(params: UsersQuery) {
-	return useQuery({
+	return useInfiniteQuery({
 		queryKey: usersCatalogKeys.detail(params),
-		queryFn: () => getUsersList(params),
+		queryFn: ({ pageParam }) =>
+			getUsersList({ ...params, cursor: pageParam }),
+		initialPageParam: undefined as string | undefined,
+		getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
 	});
 }

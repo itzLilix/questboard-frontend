@@ -1,5 +1,5 @@
 import Input from "../../components/ui/inputs/Input";
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import ClearFiltersButton from "../../components/ui/filters/ClearFiltersButton";
 import Dropdown from "../../components/ui/Dropdown";
 import FilterToggle from "../../components/ui/filters/FilterToggle";
@@ -9,13 +9,16 @@ import UserCard, {
 } from "../../components/ui/cards/UserCard";
 import { SessionFormat, SessionType } from "../../types/session";
 import { type Option, options } from "../../utils/options";
-import { UserSortBy, type UsersListResponse } from "../usersCatalog/api";
+import { UserSortBy } from "../usersCatalog/api";
 import { SortOrder } from "../../types/query";
+import type { IUserCard } from "../../types/userCard";
 import { useUsersCatalogQuery } from "./queries";
 import ToggleSortOrder from "../../components/ui/filters/ToggleSortOrder";
 import ToggleView from "../../components/ui/ToggleView";
 import { FORMAT_OPTIONS, TYPE_OPTIONS } from "../../utils/words";
 import useAuth from "../../hooks/useAuth";
+import { parseEnum, useUrlSearch, useUrlState } from "../../hooks/useUrlState";
+import { useInView } from "react-intersection-observer";
 
 const SORT_OPTIONS = options([
 	{ value: UserSortBy.Rating, label: "Рейтинг" },
@@ -24,35 +27,43 @@ const SORT_OPTIONS = options([
 	{ value: UserSortBy.Sessions, label: "Игры" },
 ]) satisfies readonly Option<UserSortBy>[];
 
+const DEFAULT_SORT = UserSortBy.Rating;
+const DEFAULT_ORDER = SortOrder.Desc;
+
 export default function GMsPage() {
-	const [search, setSearch] = useState("");
-	const [debouncedSearch, setDebouncedSearch] = useState("");
-	const [format, setFormat] = useState<SessionFormat | null>(null);
-	const [type, setType] = useState<SessionType | null>(null);
-	const [highRating, setHighRating] = useState(false);
-	const [sort, setSort] = useState<UserSortBy | null>(UserSortBy.Rating);
-	const [sortOrder, setSortOrder] = useState<SortOrder>(SortOrder.Desc);
-	const [view, setView] = useState<userCardProps["view"]>("table");
+	const { params: searchParams, patch: updateParams, clear } = useUrlState();
 	const { user } = useAuth();
 
-	useEffect(() => {
-		const t = setTimeout(() => setDebouncedSearch(search), 300);
-		return () => clearTimeout(t);
-	}, [search]);
+	const format = parseEnum(searchParams.get("format"), SessionFormat);
+	const type = parseEnum(searchParams.get("type"), SessionType);
+	const highRating = searchParams.get("highRating") === "1";
 
-	const clearFilters = () => {
-		setSearch("");
-		setFormat(null);
-		setType(null);
-		setHighRating(false);
-	};
+	const sort = parseEnum(searchParams.get("sort"), UserSortBy, DEFAULT_SORT);
+	const sortOrder = parseEnum(
+		searchParams.get("order"),
+		SortOrder,
+		DEFAULT_ORDER,
+	);
+
+	const [view, setView] = useState<userCardProps["view"]>("table");
 
 	const {
-		data: rawData,
+		input: searchInput,
+		setInput: setSearchInput,
+		value: search,
+	} = useUrlSearch("search");
+
+	const clearFilters = () => clear(["sort", "order"]);
+
+	const {
+		data,
 		isLoading,
 		isError,
+		fetchNextPage,
+		hasNextPage,
+		isFetchingNextPage,
 	} = useUsersCatalogQuery({
-		search: debouncedSearch || undefined,
+		search: search || undefined,
 		format: format ?? undefined,
 		type: type ?? undefined,
 		minRating: highRating ? 4.5 : undefined,
@@ -61,13 +72,20 @@ export default function GMsPage() {
 		order: sortOrder,
 	});
 
-	const data =
-		rawData && user
-			? {
-					...rawData,
-					items: rawData.items.filter((u) => u.id !== user.id),
-				}
-			: rawData;
+	const { ref: scrollRef, inView } = useInView({ rootMargin: "300px 0px" });
+	useEffect(() => {
+		if (inView && hasNextPage && !isFetchingNextPage) {
+			fetchNextPage();
+		}
+	}, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+	const allItems = useMemo(
+		() =>
+			data?.pages
+				.flatMap((p) => p.items)
+				.filter((u) => !user || u.id !== user.id),
+		[data?.pages, user],
+	);
 
 	return (
 		<div className="max-w-1600 mx-auto px-4 py-6">
@@ -79,8 +97,8 @@ export default function GMsPage() {
 				<div className="flex gap-3 items-center">
 					<Input
 						placeholder="Поиск"
-						value={search}
-						onChange={(e) => setSearch(e.target.value)}
+						value={searchInput}
+						onChange={(e) => setSearchInput(e.target.value)}
 					/>
 					<ToggleView view={view} setView={setView} />
 					<Dropdown
@@ -89,19 +107,25 @@ export default function GMsPage() {
 						options={[...SORT_OPTIONS]}
 						value={sort}
 						onChange={(v) => {
-							if (v !== null) setSort(v as UserSortBy);
+							if (v === null) return;
+							const next = v as UserSortBy;
+							updateParams({
+								sort: next === DEFAULT_SORT ? null : next,
+							});
 						}}
 						className="shrink-0"
 					/>
 					<ToggleSortOrder
 						sortOrder={sortOrder}
-						onToggle={() =>
-							setSortOrder((o) =>
-								o === SortOrder.Asc
+						onToggle={() => {
+							const next =
+								sortOrder === SortOrder.Asc
 									? SortOrder.Desc
-									: SortOrder.Asc,
-							)
-						}
+									: SortOrder.Asc;
+							updateParams({
+								order: next === DEFAULT_ORDER ? null : next,
+							});
+						}}
 					/>
 				</div>
 				<div className="flex flex-wrap items-center gap-3">
@@ -109,13 +133,21 @@ export default function GMsPage() {
 						label="Формат"
 						options={[...FORMAT_OPTIONS]}
 						value={format}
-						onChange={(v) => setFormat(v as SessionFormat | null)}
+						onChange={(v) =>
+							updateParams({
+								format: (v as SessionFormat | null) ?? null,
+							})
+						}
 					/>
 					<Dropdown
 						label="Тип"
 						options={[...TYPE_OPTIONS]}
 						value={type}
-						onChange={(v) => setType(v as SessionType | null)}
+						onChange={(v) =>
+							updateParams({
+								type: (v as SessionType | null) ?? null,
+							})
+						}
 					/>
 					<Dropdown
 						label="Город"
@@ -127,7 +159,11 @@ export default function GMsPage() {
 					<FilterToggle
 						label="Рейтинг 4,5+"
 						isActive={highRating}
-						onChange={setHighRating}
+						onChange={(v) => {
+							updateParams({
+								highRating: v ? "1" : null,
+							});
+						}}
 					/>
 
 					<div className="ml-auto flex items-center gap-2">
@@ -142,9 +178,10 @@ export default function GMsPage() {
 			<UsersList
 				isError={isError}
 				isLoading={isLoading}
-				data={data}
+				items={allItems}
 				view={view}
 			/>
+			<div ref={scrollRef} className="h-1" />
 		</div>
 	);
 }
@@ -152,10 +189,10 @@ export default function GMsPage() {
 export type UsersListProps = {
 	isLoading: boolean;
 	isError: boolean;
-	data: UsersListResponse | undefined;
+	items?: IUserCard[];
 	view: userCardProps["view"];
 };
-export function UsersList({ isLoading, isError, data, view }: UsersListProps) {
+export function UsersList({ isLoading, isError, items, view }: UsersListProps) {
 	if (isLoading) {
 		return (
 			<div className="flex justify-center py-12">
@@ -168,7 +205,7 @@ export function UsersList({ isLoading, isError, data, view }: UsersListProps) {
 			<p className="text-(--error) text-center py-12">Ошибка загрузки</p>
 		);
 	}
-	if (data === undefined || data.items.length === 0)
+	if (!items || items.length === 0)
 		return (
 			<p className="text-(--text-muted) text-center py-12 w-full">
 				Никого нет
@@ -182,7 +219,7 @@ export function UsersList({ isLoading, isError, data, view }: UsersListProps) {
 					: `grid grid-cols-1 md:grid-cols-2 gap-4 justify-items-center`
 			}
 		>
-			{data.items.map((user) => (
+			{items.map((user) => (
 				<UserCard key={user.id} profileData={user} view={view} />
 			))}
 		</div>

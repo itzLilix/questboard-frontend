@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	useInfiniteQuery,
+	useMutation,
+	useQuery,
+	useQueryClient,
+} from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import {
 	addGameSystem,
@@ -30,9 +35,12 @@ export const sessionKeys = {
 };
 
 export function useSessionsQuery(params: SessionListQuery) {
-	return useQuery({
+	return useInfiniteQuery({
 		queryKey: sessionKeys.list(params),
-		queryFn: () => fetchSessions(params),
+		queryFn: ({ pageParam }) =>
+			fetchSessions({ ...params, cursor: pageParam }),
+		initialPageParam: undefined as string | undefined,
+		getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
 	});
 }
 

@@ -1,6 +1,5 @@
 import { Link, NavLink, Outlet, useParams } from "react-router-dom";
 import clsx from "clsx";
-import Button from "../../components/ui/Button";
 import Icon from "../../components/ui/Icon";
 import {
 	AccessLevel,
@@ -11,7 +10,7 @@ import {
 import useAuth from "../../hooks/useAuth";
 import { useFetchSessionQuery } from "./queries";
 import Loading from "../../components/ui/Loading";
-import type { IPlayer, SessionResponse } from "../../types/session";
+import type { IPlayer } from "../../types/session";
 import { ApplyButton, Price } from "../../components/ui/cards/SessionCard";
 import type { IUserBrief } from "../../types/userCard";
 import AvatarImage from "../../components/ui/AvatarImage";
@@ -20,7 +19,7 @@ import { SessionProvider, useSessionRole } from "./SessionContext";
 import type { IUser } from "../../types/user";
 import Rating from "../../components/ui/UserRating";
 import TextSeparator from "../../components/ui/TextSeparator";
-import { pluralGames, pluralPartiy } from "../../utils/words";
+import { pluralPartiy } from "../../utils/words";
 
 const HAS_CAMPAIGN = true;
 

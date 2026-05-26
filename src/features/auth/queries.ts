@@ -1,10 +1,11 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { fetchMe, login, logout, signup } from "./api";
+import type { IUser } from "../../types/user";
 
 export const authKeys = { me: ["user", "me"] as const };
 
 export function useCurrentUser() {
-	return useQuery({
+	return useQuery<IUser | null>({
 		queryKey: authKeys.me,
 		queryFn: fetchMe,
 		staleTime: Infinity,
@@ -48,6 +49,6 @@ export function useLogoutMutation() {
 	const qc = useQueryClient();
 	return useMutation({
 		mutationFn: logout,
-		onSuccess: () => qc.removeQueries({ queryKey: authKeys.me }),
+		onSuccess: () => qc.setQueryData<IUser | null>(authKeys.me, null),
 	});
 }

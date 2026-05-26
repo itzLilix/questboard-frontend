@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import ActiveFilterChips, {
 	type ChipItem,
 } from "../../components/ui/filters/ActiveFilterChips";
@@ -21,15 +20,13 @@ import { SortOrder } from "../../types/query";
 import type { ISystem, IUserBrief } from "../../types/userCard";
 import { dateKey, formatDateWeekday } from "../../utils/dateFormats";
 import { type Option, options } from "../../utils/options";
-import {
-	FORMAT_OPTIONS,
-	MultiSelectState,
-	TYPE_OPTIONS,
-} from "../../utils/words";
-import { SessionSortBy, StatusFilter } from "./api";
+import { FORMAT_OPTIONS, TYPE_OPTIONS } from "../../utils/words";
+import { SessionScope, SessionSortBy, StatusFilter } from "./api";
 import { useCuratedSystemsQuery, useSessionsQuery } from "./queries";
 import SessionGroup from "./SessionGroup";
 import SystemSearch from "./SystemSearch";
+import { parseEnum, useUrlSearch, useUrlState } from "../../hooks/useUrlState";
+import { useInView } from "react-intersection-observer";
 
 const SORT_OPTIONS = options([
 	{ value: SessionSortBy.ScheduledAt, label: "Дата проведения" },
@@ -50,6 +47,9 @@ type GroupBy =
 	| { kind: "system" }
 	| null;
 
+const DEFAULT_SORT = SessionSortBy.ScheduledAt;
+const DEFAULT_ORDER = SortOrder.Asc;
+
 function getGroupBy(sort: SessionSortBy): GroupBy {
 	if (sort in DATE_FIELD_BY_SORT) {
 		return {
@@ -61,92 +61,101 @@ function getGroupBy(sort: SessionSortBy): GroupBy {
 	return null;
 }
 
-function parseFormat(v: string | null): SessionFormat | null {
-	return v === SessionFormat.Online || v === SessionFormat.Offline ? v : null;
-}
-
-function parseType(v: string | null): SessionType | null {
-	return v === SessionType.Oneshot || v === SessionType.Campaign ? v : null;
-}
-
 export default function SessionsPage() {
-	const [searchParams] = useSearchParams();
+	const { params: searchParams, patch: updateParams, clear } = useUrlState();
 
-	const [search, setSearch] = useState(
-		() => searchParams.get("search") ?? "",
+	const format = parseEnum(searchParams.get("format"), SessionFormat);
+	const type = parseEnum(searchParams.get("type"), SessionType);
+	const includedIds = useMemo(
+		() => searchParams.getAll("systemIncluded"),
+		[searchParams],
 	);
-	const [debouncedSearch, setDebouncedSearch] = useState(
-		() => searchParams.get("search") ?? "",
+	const excludedIds = useMemo(
+		() => searchParams.getAll("systemExcluded"),
+		[searchParams],
 	);
-	const [format, setFormat] = useState<SessionFormat | null>(() =>
-		parseFormat(searchParams.get("format")),
-	);
-	const [type, setType] = useState<SessionType | null>(() =>
-		parseType(searchParams.get("type")),
-	);
-	const [systems, setSystems] = useState<Map<ISystem, MultiSelectState>>(
-		new Map(),
-	);
-	const [freeSeats, setFreeSeats] = useState("");
-	const [isFree, setIsFree] = useState(false);
-	const [hasFreeSeats, setHasFreeSeats] = useState(false);
-	const [priceMin, setPriceMin] = useState(
-		() => searchParams.get("priceMin") ?? "",
-	);
-	const [priceMax, setPriceMax] = useState(
-		() => searchParams.get("priceMax") ?? "",
-	);
-	const [dateFrom, setDateFrom] = useState("");
-	const [dateTo, setDateTo] = useState("");
-	const [sort, setSort] = useState<SessionSortBy>(SessionSortBy.ScheduledAt);
-	const [sortOrder, setSortOrder] = useState<SortOrder>(SortOrder.Asc);
+	const priceMin = searchParams.get("priceMin") ?? "";
+	const priceMax = searchParams.get("priceMax") ?? "";
+	const dateFrom = searchParams.get("dateFrom") ?? "";
+	const dateTo = searchParams.get("dateTo") ?? "";
+	const freeSeats = searchParams.get("freeSeats") ?? "";
+	const isFree = searchParams.get("isFree") === "1";
+	const hasFreeSeats = searchParams.get("hasFreeSeats") === "1";
 
-	useEffect(() => {
-		const t = setTimeout(() => setDebouncedSearch(search), 300);
-		return () => clearTimeout(t);
-	}, [search]);
+	const sort = parseEnum(
+		searchParams.get("sort"),
+		SessionSortBy,
+		DEFAULT_SORT,
+	);
+	const sortOrder = parseEnum(
+		searchParams.get("order"),
+		SortOrder,
+		DEFAULT_ORDER,
+	);
 
-	const clearFilters = () => {
-		setSearch("");
-		setFormat(null);
-		setType(null);
-		setSystems(new Map());
-		setFreeSeats("");
-		setIsFree(false);
-		setPriceMin("");
-		setPriceMax("");
-		setDateFrom("");
-		setDateTo("");
-	};
+	const {
+		input: searchInput,
+		setInput: setSearchInput,
+		value: search,
+	} = useUrlSearch("search");
 
-	const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+	const { ref: scrollRef, inView } = useInView({ rootMargin: "300px 0px" });
 
 	const { data: curated = [] } = useCuratedSystemsQuery();
 
-	const systemInitialized = useRef(false);
+	// Local cache of resolved ISystem objects (curated + ones the user added via
+	// SystemSearch). Used purely for chip name lookup — the URL is the source of
+	// truth for which IDs are filtered. Non-curated IDs loaded from a shared URL
+	// will fall back to showing the raw id until backend supports id lookup.
+	const [systemCache, setSystemCache] = useState<Map<string, ISystem>>(
+		new Map(),
+	);
 	useEffect(() => {
-		if (systemInitialized.current || curated.length === 0) return;
-		const id = searchParams.get("systemIncluded");
-		if (!id) {
-			systemInitialized.current = true;
-			return;
-		}
-		const system = curated.find((s) => s.id === id);
-		if (system) setSystems(new Map([[system, MultiSelectState.Included]]));
-		systemInitialized.current = true;
+		if (curated.length === 0) return;
+		setSystemCache((prev) => {
+			const next = new Map(prev);
+			for (const s of curated) next.set(s.id, s);
+			return next;
+		});
 	}, [curated]);
 
-	const [includedIds, excludedIds] = useMemo(
-		() =>
-			[...systems].reduce<[string[], string[]]>(
-				([inc, exc], [gs, state]) =>
-					state === MultiSelectState.Included
-						? [[...inc, gs.id], exc]
-						: [inc, [...exc, gs.id]],
-				[[], []],
-			),
-		[systems],
-	);
+	const cacheSystem = useCallback((s: ISystem) => {
+		setSystemCache((prev) => {
+			if (prev.get(s.id) === s) return prev;
+			return new Map(prev).set(s.id, s);
+		});
+	}, []);
+
+	const addSystem = (s: ISystem) => {
+		cacheSystem(s);
+		updateParams({
+			systemIncluded: includedIds.includes(s.id)
+				? includedIds
+				: [...includedIds, s.id],
+			systemExcluded: excludedIds.filter((x) => x !== s.id),
+		});
+	};
+
+	const excludeSystem = (s: ISystem) => {
+		cacheSystem(s);
+		updateParams({
+			systemIncluded: includedIds.filter((x) => x !== s.id),
+			systemExcluded: excludedIds.includes(s.id)
+				? excludedIds
+				: [...excludedIds, s.id],
+		});
+	};
+
+	const removeSystem = (id: string) => {
+		updateParams({
+			systemIncluded: includedIds.filter((x) => x !== id),
+			systemExcluded: excludedIds.filter((x) => x !== id),
+		});
+	};
+
+	const clearFilters = () => clear(["sort", "order"]);
+
+	const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
 
 	const chips = useMemo<ChipItem[]>(() => {
 		const list: ChipItem[] = [];
@@ -157,7 +166,7 @@ export default function SessionsPage() {
 				value:
 					FORMAT_OPTIONS.find((o) => o.value === format)?.label ??
 					format,
-				onRemove: () => setFormat(null),
+				onRemove: () => updateParams({ format: null }),
 			});
 		}
 		if (type) {
@@ -166,68 +175,62 @@ export default function SessionsPage() {
 				label: "Тип",
 				value:
 					TYPE_OPTIONS.find((o) => o.value === type)?.label ?? type,
-				onRemove: () => setType(null),
+				onRemove: () => updateParams({ type: null }),
 			});
 		}
-		for (const [gs, state] of systems) {
+		for (const id of includedIds) {
 			list.push({
-				key: `sys-${gs.id}`,
+				key: `sys-${id}`,
 				label: "Система",
-				value:
-					state === MultiSelectState.Excluded
-						? `не ${gs.name}`
-						: gs.name,
-				variant:
-					state === MultiSelectState.Excluded ? "danger" : "default",
-				onRemove: () =>
-					setSystems((prev) => {
-						const next = new Map(prev);
-						next.delete(gs);
-						return next;
-					}),
+				value: systemCache.get(id)?.name ?? id,
+				onRemove: () => removeSystem(id),
+			});
+		}
+		for (const id of excludedIds) {
+			list.push({
+				key: `sys-${id}`,
+				label: "Система",
+				value: `не ${systemCache.get(id)?.name ?? id}`,
+				variant: "danger",
+				onRemove: () => removeSystem(id),
 			});
 		}
 		if (priceMin || priceMax) {
-			const value = `${priceMin || "0"} – ${priceMax || "∞"} ₽`;
 			list.push({
 				key: "price",
 				label: "Цена",
-				value,
-				onRemove: () => {
-					setPriceMin("");
-					setPriceMax("");
-				},
+				value: `${priceMin || "0"} – ${priceMax || "∞"} ₽`,
+				onRemove: () =>
+					updateParams({ priceMin: null, priceMax: null }),
 			});
 		}
 		if (dateFrom || dateTo) {
-			const value = `${dateFrom || "…"} – ${dateTo || "…"}`;
 			list.push({
 				key: "date",
 				label: "Дата",
-				value,
-				onRemove: () => {
-					setDateFrom("");
-					setDateTo("");
-				},
+				value: `${dateFrom || "…"} – ${dateTo || "…"}`,
+				onRemove: () => updateParams({ dateFrom: null, dateTo: null }),
 			});
 		}
 		if (freeSeats) {
-			const value = `${freeSeats}+`;
 			list.push({
 				key: "seats",
 				label: "Места",
-				value,
-				onRemove: () => {
-					setFreeSeats("");
-				},
+				value: `${freeSeats}+`,
+				onRemove: () => updateParams({ freeSeats: null }),
 			});
 		}
 		return list;
+		// `updateParams` and the system mutators are stable enough — derived from
+		// `searchParams` via useCallback. Re-deriving chips on every searchParams
+		// change is the intent.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		format,
 		type,
-		systems,
-		curated,
+		includedIds,
+		excludedIds,
+		systemCache,
 		priceMin,
 		priceMax,
 		dateFrom,
@@ -235,10 +238,18 @@ export default function SessionsPage() {
 		freeSeats,
 	]);
 
-	const { data, isLoading, isError } = useSessionsQuery({
+	const {
+		data,
+		isLoading,
+		isError,
+		fetchNextPage,
+		hasNextPage,
+		isFetchingNextPage,
+	} = useSessionsQuery({
+		scope: SessionScope.Catalog,
 		status: StatusFilter.Public,
-		limit: 20,
-		search: debouncedSearch || undefined,
+		limit: 3,
+		search: search || undefined,
 		format: format ?? undefined,
 		type: type ?? undefined,
 		systemIncluded: includedIds.length > 0 ? includedIds : undefined,
@@ -252,6 +263,25 @@ export default function SessionsPage() {
 		order: sortOrder,
 	});
 
+	const allItems = useMemo(
+		() => data?.pages.flatMap((p) => p.items),
+		[data?.pages],
+	);
+	const allUsers = useMemo(
+		() =>
+			data?.pages.reduce<Record<string, IUserBrief>>(
+				(acc, p) => Object.assign(acc, p.users),
+				{},
+			),
+		[data?.pages],
+	);
+
+	useEffect(() => {
+		if (inView && hasNextPage && !isFetchingNextPage) {
+			fetchNextPage();
+		}
+	}, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
 	return (
 		<div className="max-w-1600 mx-auto px-4 py-6">
 			<h1 className="font-display text-3xl text-(--text-primary) mb-6">
@@ -262,8 +292,8 @@ export default function SessionsPage() {
 				<div className="flex gap-3 items-center">
 					<Input
 						placeholder="Поиск"
-						value={search}
-						onChange={(e) => setSearch(e.target.value)}
+						value={searchInput}
+						onChange={(e) => setSearchInput(e.target.value)}
 					/>
 					<Dropdown
 						label=""
@@ -271,19 +301,25 @@ export default function SessionsPage() {
 						options={[...SORT_OPTIONS]}
 						value={sort}
 						onChange={(v) => {
-							if (v !== null) setSort(v as SessionSortBy);
+							if (v === null) return;
+							const next = v as SessionSortBy;
+							updateParams({
+								sort: next === DEFAULT_SORT ? null : next,
+							});
 						}}
 						className="shrink-0"
 					/>
 					<ToggleSortOrder
 						sortOrder={sortOrder}
-						onToggle={() =>
-							setSortOrder((o) =>
-								o === SortOrder.Asc
+						onToggle={() => {
+							const next =
+								sortOrder === SortOrder.Asc
 									? SortOrder.Desc
-									: SortOrder.Asc,
-							)
-						}
+									: SortOrder.Asc;
+							updateParams({
+								order: next === DEFAULT_ORDER ? null : next,
+							});
+						}}
 					/>
 				</div>
 
@@ -296,21 +332,24 @@ export default function SessionsPage() {
 						<FilterToggle
 							label="Есть места"
 							isActive={hasFreeSeats}
-							onChange={() => {
-								setHasFreeSeats(!hasFreeSeats);
-								setFreeSeats("");
-							}}
+							onChange={() =>
+								updateParams({
+									hasFreeSeats: !hasFreeSeats ? "1" : null,
+									freeSeats: null,
+								})
+							}
 						/>
 						<FilterToggle
 							label="Бесплатно"
 							isActive={isFree}
-							onChange={(v) => {
-								setIsFree(v);
-								if (v) {
-									setPriceMin("");
-									setPriceMax("");
-								}
-							}}
+							onChange={(v) =>
+								updateParams({
+									isFree: v ? "1" : null,
+									...(v
+										? { priceMin: null, priceMax: null }
+										: {}),
+								})
+							}
 						/>
 
 						<ActiveFilterChips
@@ -324,7 +363,7 @@ export default function SessionsPage() {
 							search,
 							format,
 							type,
-							systems: [...systems.keys()],
+							systems: [...includedIds, ...excludedIds],
 							hasFreeSeats,
 							freeSeats,
 							isFree,
@@ -348,7 +387,11 @@ export default function SessionsPage() {
 						label=""
 						options={[...FORMAT_OPTIONS]}
 						value={format}
-						onChange={(v) => setFormat(v as SessionFormat | null)}
+						onChange={(v) =>
+							updateParams({
+								format: (v as SessionFormat | null) ?? null,
+							})
+						}
 						fullWidth
 					/>
 				</FilterSection>
@@ -357,7 +400,11 @@ export default function SessionsPage() {
 						label=""
 						options={[...TYPE_OPTIONS]}
 						value={type}
-						onChange={(v) => setType(v as SessionType | null)}
+						onChange={(v) =>
+							updateParams({
+								type: (v as SessionType | null) ?? null,
+							})
+						}
 						fullWidth
 					/>
 				</FilterSection>
@@ -374,16 +421,8 @@ export default function SessionsPage() {
 				<FilterSection label="Система">
 					<SystemSearch
 						multiple
-						onAdd={(s) =>
-							setSystems((prev) =>
-								new Map(prev).set(s, MultiSelectState.Included),
-							)
-						}
-						onExclude={(s) =>
-							setSystems((prev) =>
-								new Map(prev).set(s, MultiSelectState.Excluded),
-							)
-						}
+						onAdd={addSystem}
+						onExclude={excludeSystem}
 					/>
 					<ActiveFilterChips
 						chips={chips.filter((c) => c.key.startsWith("sys-", 0))}
@@ -397,8 +436,8 @@ export default function SessionsPage() {
 						type="number"
 						from={priceMin}
 						to={priceMax}
-						onFromChange={setPriceMin}
-						onToChange={setPriceMax}
+						onFromChange={(v) => updateParams({ priceMin: v })}
+						onToChange={(v) => updateParams({ priceMax: v })}
 						disabled={isFree}
 					/>
 				</FilterSection>
@@ -408,8 +447,8 @@ export default function SessionsPage() {
 						type="date"
 						from={dateFrom}
 						to={dateTo}
-						onFromChange={setDateFrom}
-						onToChange={setDateTo}
+						onFromChange={(v) => updateParams({ dateFrom: v })}
+						onToChange={(v) => updateParams({ dateTo: v })}
 					/>
 				</FilterSection>
 				<FilterSection label="Свободные места">
@@ -419,19 +458,23 @@ export default function SessionsPage() {
 						min={0}
 						max={50}
 						csize="sm"
-						onChange={(e) => setFreeSeats(e.target.value)}
+						value={freeSeats}
+						onChange={(e) =>
+							updateParams({ freeSeats: e.target.value || null })
+						}
 					></Input>
 				</FilterSection>
 			</FilterModal>
 
 			<SessionsList
-				items={data?.items}
-				users={data?.users}
+				items={allItems}
+				users={allUsers}
 				isLoading={isLoading}
 				isError={isError}
 				sort={sort}
 				curated={curated}
 			/>
+			<div ref={scrollRef} className="h-1" />
 		</div>
 	);
 }

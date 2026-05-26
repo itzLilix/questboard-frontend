@@ -1,7 +1,14 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import { NavMenu, NavMenuItem } from "../../components/ui/NavMenu";
+import { useEffect } from "react";
+import useAuth from "../../hooks/useAuth";
 
 export default function SettingsLayout() {
+	const { user } = useAuth();
+	const navigate = useNavigate();
+	useEffect(() => {
+		if (!user) navigate("/");
+	}, [user]);
 	return (
 		<main className="w-960 h-[calc(100dvh-var(--header-h))] p-4 flex flex-1 mx-auto overflow-hidden min-h-0">
 			<aside className="w-1/5 flex flex-col items-start gap-4 p-4">

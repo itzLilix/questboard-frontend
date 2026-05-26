@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Dropdown from "../../components/ui/Dropdown";
 import FilterToggle from "../../components/ui/filters/FilterToggle";
 import Input from "../../components/ui/inputs/Input";
@@ -12,46 +12,73 @@ import ClearFiltersButton from "../../components/ui/filters/ClearFiltersButton";
 import ToggleSortOrder from "../../components/ui/filters/ToggleSortOrder";
 import ToggleView from "../../components/ui/ToggleView";
 import { FORMAT_OPTIONS, TYPE_OPTIONS } from "../../utils/words";
+import { type Option, options } from "../../utils/options";
+import { parseEnum, useUrlSearch, useUrlState } from "../../hooks/useUrlState";
+import { useInView } from "react-intersection-observer";
 
-const SORT_OPTIONS = [
+const SORT_OPTIONS = options([
 	{ value: UserSortBy.Rating, label: "Рейтинг" },
 	{ value: UserSortBy.FollowedAt, label: "Дата подписки" },
 	{ value: UserSortBy.Reviews, label: "Отзывы" },
 	{ value: UserSortBy.Recent, label: "Регистрация" },
 	{ value: UserSortBy.Sessions, label: "Игры" },
-] as const satisfies readonly { value: UserSortBy; label: string }[];
+]) satisfies readonly Option<UserSortBy>[];
+
+const DEFAULT_SORT = UserSortBy.FollowedAt;
+const DEFAULT_ORDER = SortOrder.Desc;
 
 export default function FollowingPage() {
-	const [search, setSearch] = useState("");
-	const [debouncedSearch, setDebouncedSearch] = useState("");
-	const [format, setFormat] = useState<SessionFormat | null>(null);
-	const [type, setType] = useState<SessionType | null>(null);
-	const [highRating, setHighRating] = useState(false);
-	const [sort, setSort] = useState<UserSortBy | null>(UserSortBy.FollowedAt);
-	const [sortOrder, setSortOrder] = useState<SortOrder>(SortOrder.Desc);
+	const { params: searchParams, patch: updateParams, clear } = useUrlState();
+
+	const format = parseEnum(searchParams.get("format"), SessionFormat);
+	const type = parseEnum(searchParams.get("type"), SessionType);
+	const highRating = searchParams.get("highRating") === "1";
+
+	const sort = parseEnum(searchParams.get("sort"), UserSortBy, DEFAULT_SORT);
+	const sortOrder = parseEnum(
+		searchParams.get("order"),
+		SortOrder,
+		DEFAULT_ORDER,
+	);
+
 	const [view, setView] = useState<userCardProps["view"]>("table");
 
-	useEffect(() => {
-		const t = setTimeout(() => setDebouncedSearch(search), 300);
-		return () => clearTimeout(t);
-	}, [search]);
+	const {
+		input: searchInput,
+		setInput: setSearchInput,
+		value: search,
+	} = useUrlSearch("search");
 
-	const { data, isLoading, isError } = useFollowingQuery({
-		search: debouncedSearch || undefined,
+	const clearFilters = () => clear(["sort", "order"]);
+
+	const {
+		data,
+		isLoading,
+		isError,
+		fetchNextPage,
+		hasNextPage,
+		isFetchingNextPage,
+	} = useFollowingQuery({
+		search: search || undefined,
 		format: format ?? undefined,
 		type: type ?? undefined,
 		minRating: highRating ? 4.5 : undefined,
 		followedBy: "me",
-		sort: sort ?? undefined,
+		sort,
 		order: sortOrder,
 	});
 
-	const clearFilters = () => {
-		setSearch("");
-		setFormat(null);
-		setType(null);
-		setHighRating(false);
-	};
+	const { ref: scrollRef, inView } = useInView({ rootMargin: "300px 0px" });
+	useEffect(() => {
+		if (inView && hasNextPage && !isFetchingNextPage) {
+			fetchNextPage();
+		}
+	}, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+	const allItems = useMemo(
+		() => data?.pages.flatMap((p) => p.items),
+		[data?.pages],
+	);
 
 	return (
 		<div className="max-w-1600 mx-auto px-4 py-6">
@@ -63,8 +90,8 @@ export default function FollowingPage() {
 				<div className="flex gap-3 items-center">
 					<Input
 						placeholder="Поиск"
-						value={search}
-						onChange={(e) => setSearch(e.target.value)}
+						value={searchInput}
+						onChange={(e) => setSearchInput(e.target.value)}
 					/>
 					<ToggleView view={view} setView={setView} />
 					<Dropdown
@@ -73,34 +100,48 @@ export default function FollowingPage() {
 						options={[...SORT_OPTIONS]}
 						value={sort}
 						onChange={(v) => {
-							if (v !== null) setSort(v as UserSortBy);
+							if (v === null) return;
+							const next = v as UserSortBy;
+							updateParams({
+								sort: next === DEFAULT_SORT ? null : next,
+							});
 						}}
 						className="shrink-0"
 					/>
 					<ToggleSortOrder
 						sortOrder={sortOrder}
-						onToggle={() =>
-							setSortOrder((o) =>
-								o === SortOrder.Asc
+						onToggle={() => {
+							const next =
+								sortOrder === SortOrder.Asc
 									? SortOrder.Desc
-									: SortOrder.Asc,
-							)
-						}
+									: SortOrder.Asc;
+							updateParams({
+								order: next === DEFAULT_ORDER ? null : next,
+							});
+						}}
 					/>
 				</div>
 
 				<div className="flex flex-wrap items-center gap-3">
 					<Dropdown
 						label="Формат"
-						options={FORMAT_OPTIONS}
+						options={[...FORMAT_OPTIONS]}
 						value={format}
-						onChange={(v) => setFormat(v as SessionFormat | null)}
+						onChange={(v) =>
+							updateParams({
+								format: (v as SessionFormat | null) ?? null,
+							})
+						}
 					/>
 					<Dropdown
 						label="Тип"
-						options={TYPE_OPTIONS}
+						options={[...TYPE_OPTIONS]}
 						value={type}
-						onChange={(v) => setType(v as SessionType | null)}
+						onChange={(v) =>
+							updateParams({
+								type: (v as SessionType | null) ?? null,
+							})
+						}
 					/>
 					<Dropdown
 						label="Город"
@@ -112,7 +153,9 @@ export default function FollowingPage() {
 					<FilterToggle
 						label="Рейтинг 4,5+"
 						isActive={highRating}
-						onChange={setHighRating}
+						onChange={(v) =>
+							updateParams({ highRating: v ? "1" : null })
+						}
 					/>
 
 					<div className="ml-auto flex items-center gap-2">
@@ -127,9 +170,10 @@ export default function FollowingPage() {
 			<UsersList
 				isError={isError}
 				isLoading={isLoading}
-				data={data}
+				items={allItems}
 				view={view}
 			/>
+			<div ref={scrollRef} className="h-1" />
 		</div>
 	);
 }

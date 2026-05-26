@@ -1,4 +1,8 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+	useInfiniteQuery,
+	useMutation,
+	type InfiniteData,
+} from "@tanstack/react-query";
 import {
 	getUsersList,
 	type UsersListResponse,
@@ -11,14 +15,43 @@ import { profileKeys } from "../profile/queries";
 
 export const followingKeys = {
 	all: ["usersList"] as const,
+	followingAll: ["usersList", "following"] as const,
 	detail: (params: UsersQuery) => ["usersList", "following", params] as const,
 };
 
 export function useFollowingQuery(params: UsersQuery) {
-	return useQuery({
+	return useInfiniteQuery({
 		queryKey: followingKeys.detail(params),
-		queryFn: () => getUsersList(params),
+		queryFn: ({ pageParam }) =>
+			getUsersList({ ...params, cursor: pageParam }),
+		initialPageParam: undefined as string | undefined,
+		getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+		staleTime: 10 * 1000,
 	});
+}
+
+function patchUserInLists(
+	listKey: readonly unknown[],
+	username: string,
+	updater: (
+		item: UsersListResponse["items"][number],
+	) => UsersListResponse["items"][number],
+) {
+	queryClient.setQueriesData<InfiniteData<UsersListResponse>>(
+		{ queryKey: listKey },
+		(old) => {
+			if (!old) return old;
+			return {
+				...old,
+				pages: old.pages.map((page) => ({
+					...page,
+					items: page.items.map((u) =>
+						u.username === username ? updater(u) : u,
+					),
+				})),
+			};
+		},
+	);
 }
 
 export function useFollowMutation(username: string) {
@@ -41,20 +74,10 @@ export function useFollowMutation(username: string) {
 				});
 			}
 
-			qc.setQueriesData<UsersListResponse>(
-				{ queryKey: listKey },
-				(old) => {
-					if (!old) return old;
-					return {
-						...old,
-						items: old.items.map((u) =>
-							u.username === username
-								? { ...u, isFollowed: true }
-								: u,
-						),
-					};
-				},
-			);
+			patchUserInLists(listKey, username, (u) => ({
+				...u,
+				isFollowed: true,
+			}));
 
 			return { previous };
 		},
@@ -62,34 +85,32 @@ export function useFollowMutation(username: string) {
 			if (ctx?.previous) qc.setQueryData(profileKey, ctx.previous);
 			qc.invalidateQueries({ queryKey: listKey });
 		},
-		onSettled: () => qc.invalidateQueries({ queryKey: profileKey }),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: profileKey });
+			qc.invalidateQueries({ queryKey: followingKeys.followingAll });
+		},
 	});
 }
 
 export function useUnfollowMutation(username: string) {
 	const listKey = followingKeys.all;
+	const qc = queryClient;
 
 	return useMutation({
 		mutationFn: () => unfollowUser(username),
 		onSuccess: () => {
-			queryClient.invalidateQueries({
+			qc.invalidateQueries({
 				queryKey: profileKeys.detail(username),
 			});
+			qc.invalidateQueries({
+				queryKey: followingKeys.followingAll,
+				refetchType: "inactive",
+			});
 
-			queryClient.setQueriesData<UsersListResponse>(
-				{ queryKey: listKey },
-				(old) => {
-					if (!old) return old;
-					return {
-						...old,
-						items: old.items.map((u) =>
-							u.username === username
-								? { ...u, isFollowed: false }
-								: u,
-						),
-					};
-				},
-			);
+			patchUserInLists(listKey, username, (u) => ({
+				...u,
+				isFollowed: false,
+			}));
 		},
 	});
 }
