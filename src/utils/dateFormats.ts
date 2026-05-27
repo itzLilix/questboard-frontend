@@ -75,7 +75,10 @@ export function dateKey(iso: string | undefined): string {
 	return `${y}-${m}-${d}`;
 }
 
-export function splitDatetime(iso: string | undefined): {
+export function splitDatetime(
+	iso: string | undefined,
+	withTz?: boolean,
+): {
 	date: string;
 	time: string;
 } {
@@ -86,6 +89,8 @@ export function splitDatetime(iso: string | undefined): {
 	const hh = String(d.getHours()).padStart(2, "0");
 	const mm = String(d.getMinutes()).padStart(2, "0");
 	const tz = -d.getTimezoneOffset() / 60;
-	const time = `${hh}:${mm} / GMT${tz >= 0 ? "+" + tz : tz}`;
+	const time = withTz
+		? `${hh}:${mm} / GMT${tz >= 0 ? "+" + tz : tz}`
+		: `${hh}:${mm}`;
 	return { date, time };
 }

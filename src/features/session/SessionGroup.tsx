@@ -40,7 +40,11 @@ export default function SessionGroup({
 					{count} {pluralGames(count)}
 				</span>
 			</button>
-			{open && <div className="grid grid-cols-5 gap-4">{children}</div>}
+			{open && (
+				<div className="grid grid-cols-[repeat(auto-fill,minmax(18rem,1fr))] gap-4">
+					{children}
+				</div>
+			)}
 		</section>
 	);
 }

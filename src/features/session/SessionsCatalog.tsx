@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+	type ReactNode,
+} from "react";
 import ActiveFilterChips, {
 	type ChipItem,
 } from "../../components/ui/filters/ActiveFilterChips";
@@ -18,7 +24,7 @@ import ToggleSortOrder from "../../components/ui/filters/ToggleSortOrder";
 import { SessionFormat, SessionType, type ISession } from "../../types/session";
 import { SortOrder } from "../../types/query";
 import type { ISystem, IUserBrief } from "../../types/userCard";
-import { dateKey, formatDateWeekday } from "../../utils/dateFormats";
+import { formatDateWeekday } from "../../utils/dateFormats";
 import { type Option, options } from "../../utils/options";
 import { FORMAT_OPTIONS, TYPE_OPTIONS } from "../../utils/words";
 import { SessionScope, SessionSortBy, StatusFilter } from "./api";
@@ -36,29 +42,41 @@ const SORT_OPTIONS = options([
 	{ value: SessionSortBy.Title, label: "Название" },
 ]) satisfies readonly Option<SessionSortBy>[];
 
-const DATE_FIELD_BY_SORT = {
-	[SessionSortBy.ScheduledAt]: "scheduledAt",
-	[SessionSortBy.CreatedAt]: "createdAt",
-} as const satisfies Partial<Record<SessionSortBy, keyof ISession>>;
-
-type DateSort = keyof typeof DATE_FIELD_BY_SORT;
-type GroupBy =
-	| { kind: "date"; field: (typeof DATE_FIELD_BY_SORT)[DateSort] }
-	| { kind: "system" }
-	| null;
-
 const DEFAULT_SORT = SessionSortBy.ScheduledAt;
 const DEFAULT_ORDER = SortOrder.Asc;
 
-function getGroupBy(sort: SessionSortBy): GroupBy {
-	if (sort in DATE_FIELD_BY_SORT) {
-		return {
-			kind: "date",
-			field: DATE_FIELD_BY_SORT[sort as DateSort],
-		};
-	}
-	if (sort === SessionSortBy.System) return { kind: "system" };
-	return null;
+type Grouper = {
+	key: (s: ISession) => string;
+	title: (key: string, items: ISession[]) => ReactNode;
+};
+
+const GROUPERS = {
+	[SessionSortBy.ScheduledAt]: {
+		key: (s) => formatDateWeekday(s.scheduledAt),
+		title: (k) => k,
+	},
+	[SessionSortBy.CreatedAt]: {
+		key: (s) => formatDateWeekday(s.createdAt),
+		title: (k) => k,
+	},
+	[SessionSortBy.System]: {
+		key: (s) => s.system.id,
+		title: (_, items) => <SystemBadge system={items[0].system} />,
+	},
+	[SessionSortBy.Title]: {
+		key: (s) => titleKey(s.title),
+		title: (k) => k,
+	},
+} satisfies Partial<Record<SessionSortBy, Grouper>>;
+
+function getGrouper(sort: SessionSortBy): Grouper | undefined {
+	return (GROUPERS as Partial<Record<SessionSortBy, Grouper>>)[sort];
+}
+
+function titleKey(title: string): string {
+	const ch = title.trim()[0];
+	if (!ch) return "#";
+	return /\p{L}/u.test(ch) ? ch.toUpperCase() : "#";
 }
 
 export default function SessionsPage() {
@@ -472,7 +490,6 @@ export default function SessionsPage() {
 				isLoading={isLoading}
 				isError={isError}
 				sort={sort}
-				curated={curated}
 			/>
 			<div ref={scrollRef} className="h-1" />
 		</div>
@@ -485,14 +502,12 @@ export function SessionsList({
 	isLoading,
 	isError,
 	sort,
-	curated,
 }: {
 	items?: ISession[];
 	users?: Record<string, IUserBrief>;
 	isLoading: boolean;
 	isError: boolean;
 	sort: SessionSortBy;
-	curated: ISystem[];
 }) {
 	if (isLoading) {
 		return (
@@ -514,10 +529,10 @@ export function SessionsList({
 		);
 	}
 
-	const groupBy = getGroupBy(sort);
-	if (!groupBy) {
+	const grouper = getGrouper(sort);
+	if (!grouper) {
 		return (
-			<div className="grid grid-cols-5 gap-4">
+			<div className="flex flex-col gap-4">
 				{items.map((s) => (
 					<SessionCard
 						key={s.id}
@@ -529,29 +544,14 @@ export function SessionsList({
 		);
 	}
 
-	const groups = groupSessions(items, groupBy);
-
-	function renderSystemGroup(
-		systemId: string,
-		curated: ISystem[],
-		items: ISession[],
-	) {
-		const system =
-			items[0]?.system ?? curated.find((s) => s.id === systemId);
-		if (!system) return systemId;
-		return <SystemBadge system={system} />;
-	}
+	const groups = groupSessions(items, grouper);
 
 	return (
 		<div className="flex flex-col gap-6">
 			{groups.map((g) => (
 				<SessionGroup
 					key={g.key}
-					title={
-						groupBy.kind === "date"
-							? formatDateWeekday(g.key)
-							: renderSystemGroup(g.key, curated, g.items)
-					}
+					title={grouper.title(g.key, g.items)}
 					count={g.items.length}
 				>
 					{g.items.map((s) => (
@@ -569,17 +569,11 @@ export function SessionsList({
 
 type Group = { key: string; items: ISession[] };
 
-function groupSessions(
-	items: ISession[],
-	groupBy: NonNullable<GroupBy>,
-): Group[] {
+function groupSessions(items: ISession[], grouper: Grouper): Group[] {
 	const order: string[] = [];
 	const map = new Map<string, ISession[]>();
 	for (const s of items) {
-		const key =
-			groupBy.kind === "date"
-				? dateKey(s[groupBy.field] as string | undefined)
-				: s.system.id;
+		const key = grouper.key(s);
 		if (!map.has(key)) {
 			map.set(key, []);
 			order.push(key);

@@ -285,7 +285,7 @@ function ClosestSessionsRow() {
 		order: SortOrder.Asc,
 		limit: 4,
 	});
-	const items = data?.items ?? [];
+	const items = data?.pages[0].items ?? [];
 
 	return (
 		<RowSection
@@ -298,7 +298,7 @@ function ClosestSessionsRow() {
 				<SessionCard
 					key={s.id}
 					sessionData={s}
-					master={data?.users?.[s.masterId]}
+					master={data?.pages[0].users?.[s.masterId]}
 				/>
 			))}
 			<ViewAllCard
@@ -317,7 +317,7 @@ function TopGMsRow() {
 		order: SortOrder.Desc,
 		limit: 5,
 	});
-	const items = data?.items ?? [];
+	const items = data?.pages[0].items ?? [];
 
 	return (
 		<RowSection
@@ -341,7 +341,7 @@ function TopGMsRow() {
 export default function HomePage() {
 	return (
 		<>
-			<section className="relative h-[80dvh] min-h-200 p-[1/8]">
+			<section className="relative min-h-[80dvh] p-[1/8]">
 				<div
 					className="absolute inset-0 pointer-events-none"
 					style={{
@@ -377,7 +377,7 @@ export default function HomePage() {
 				/>
 				<div className="absolute bottom-0 left-0 right-0 h-px bg-(--border)" />
 
-				<div className="relative max-w-1600 mx-auto px-6 py-32 flex flex-wrap items-center justify-center gap-16 lg:gap-32">
+				<div className="relative max-w-1600 mx-auto px-6 py-32 flex flex-wrap items-center justify-center gap-16">
 					<div className="flex flex-col gap-16 shrink-0">
 						<h1 className="font-display text-4xl leading-tight">
 							<span className="block text-(--text-primary)">
