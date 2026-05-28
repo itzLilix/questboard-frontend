@@ -36,7 +36,7 @@ export function ProfileInfo({ profile, isOwner }: ProfileInfoProps) {
 	const isFollowed = profile.isFollowed;
 
 	return (
-		<div className="w-full flex flex-col items-start gap-4 p-6">
+		<div className="w-full flex flex-col items-start gap-4">
 			<div className="w-full gap-3 flex items-center">
 				<AvatarImage
 					src={profile.avatarUrl}

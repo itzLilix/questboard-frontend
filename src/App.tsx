@@ -22,8 +22,11 @@ import {
 import { InfoTab } from "./features/session/sessionTabs/InfoTab";
 import { useCuratedSystemsQuery } from "./features/session/queries";
 import SettingsLayout from "./features/settings/SettingsLayout";
-import ProfileLayout from "./features/profile/ProfileLayout";
+import ProfileLayout, {
+	ProfileSessionsList,
+} from "./features/profile/ProfileLayout";
 import MySessionsLayout from "./features/session/MySessions";
+import { SessionScope } from "./features/session/api";
 
 function App() {
 	useCuratedSystemsQuery();
@@ -32,7 +35,24 @@ function App() {
 		<Routes>
 			<Route element={<RootLayout />}>
 				<Route index element={<HomePage />} />
-				<Route path="/users/:username" element={<ProfileLayout />} />
+				<Route path="/users/:username" element={<ProfileLayout />}>
+					<Route index element={<Navigate to="hosted" replace />} />
+					<Route
+						path="hosted"
+						element={
+							<ProfileSessionsList
+								scope={SessionScope.Mastering}
+							/>
+						}
+					></Route>
+					<Route
+						path="played"
+						element={
+							<ProfileSessionsList scope={SessionScope.Playing} />
+						}
+					></Route>
+					<Route path="reviews"></Route>
+				</Route>
 				<Route path="/game-masters" element={<GMsPage />} />
 				<Route path="/sessions" element={<SessionsPage />} />
 				<Route path="/sessions/:id" element={<SessionLayout />}>

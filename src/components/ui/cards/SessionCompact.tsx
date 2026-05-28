@@ -1,6 +1,5 @@
 import clsx from "clsx";
 import { SessionFormat, type ISession } from "../../../types/session";
-import type { IUserBrief } from "../../../types/userCard";
 import TextSeparator from "../TextSeparator";
 import { splitDatetime } from "../../../utils/dateFormats";
 import { FORMAT_LABEL } from "../../../utils/words";
@@ -8,14 +7,12 @@ import { SystemBadge } from "../SystemBadge";
 
 export type SessionCardProps = {
 	sessionData: ISession;
-	master: IUserBrief | undefined;
 	className?: string;
 	isUpcoming?: boolean;
 };
 
 export default function SessionCardCompact({
 	sessionData,
-	master,
 	className,
 	isUpcoming = false,
 }: SessionCardProps) {
@@ -25,6 +22,7 @@ export default function SessionCardCompact({
 			className={clsx(
 				"rounded-2xl bg-(--bg-surface) border flex p-4 items-center font-body text-base text-(--text-secondary)",
 				isUpcoming ? "border-(--accent)" : "border-(--border)",
+				className,
 			)}
 		>
 			<div className="flex flex-col gap-1">

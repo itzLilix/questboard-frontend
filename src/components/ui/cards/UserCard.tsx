@@ -10,6 +10,8 @@ import SystemBadgesRow from "./SystemBadgesRow";
 import { formatDateRelative } from "../../../utils/dateFormats";
 import { FORMAT_LABEL, pluralPartiy, TYPE_LABEL } from "../../../utils/words";
 import { CardLine } from "./CardLine";
+import useAuth from "../../../hooks/useAuth";
+import Button from "../Button";
 
 export type userCardProps = {
 	profileData: IUserCard;
@@ -29,11 +31,20 @@ const userCardVariants = cva(
 );
 
 export default function UserCard({ profileData, view }: userCardProps) {
-	if (view === "table") return <TableCard profileData={profileData} />;
-	return <GridCard profileData={profileData} />;
+	const { user } = useAuth();
+	const isViewer = user?.id === profileData.id;
+	if (view === "table")
+		return <TableCard profileData={profileData} isViewer={isViewer} />;
+	return <GridCard profileData={profileData} isViewer={isViewer} />;
 }
 
-function TableCard({ profileData }: { profileData: IUserCard }) {
+function TableCard({
+	profileData,
+	isViewer,
+}: {
+	profileData: IUserCard;
+	isViewer: boolean;
+}) {
 	return (
 		<div className={userCardVariants({ view: "table" })}>
 			<Link
@@ -76,18 +87,28 @@ function TableCard({ profileData }: { profileData: IUserCard }) {
 					nextSession={profileData.nextSession}
 					layout="row"
 				/>
-				<FollowButton
-					isFollowed={profileData.isFollowed}
-					isOwner={false}
-					username={profileData.username}
-					className="relative z-1"
-				/>
+				{isViewer ? (
+					<Button disabled>Вы</Button>
+				) : (
+					<FollowButton
+						isFollowed={profileData.isFollowed}
+						isOwner={false}
+						username={profileData.username}
+						className="relative z-1 mt-auto w-full"
+					/>
+				)}
 			</div>
 		</div>
 	);
 }
 
-function GridCard({ profileData }: { profileData: IUserCard }) {
+function GridCard({
+	profileData,
+	isViewer,
+}: {
+	profileData: IUserCard;
+	isViewer: boolean;
+}) {
 	return (
 		<div className={userCardVariants({ view: "card" })}>
 			<Link
@@ -134,12 +155,16 @@ function GridCard({ profileData }: { profileData: IUserCard }) {
 				layout="inline"
 			/>
 
-			<FollowButton
-				isFollowed={profileData.isFollowed}
-				isOwner={false}
-				username={profileData.username}
-				className="relative z-1 mt-auto w-full"
-			/>
+			{isViewer ? (
+				<Button disabled>Вы</Button>
+			) : (
+				<FollowButton
+					isFollowed={profileData.isFollowed}
+					isOwner={false}
+					username={profileData.username}
+					className="relative z-1 mt-auto w-full"
+				/>
+			)}
 		</div>
 	);
 }
