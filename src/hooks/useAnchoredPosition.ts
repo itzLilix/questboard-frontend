@@ -72,8 +72,8 @@ export default function useAnchoredPosition(
 				horizontal.left = left;
 			}
 
-			const maxHeight = Math.max(
-				0,
+			const maxHeight = Math.min(
+				400,
 				(placeBelow ? spaceBelow : spaceAbove) - GAP,
 			);
 

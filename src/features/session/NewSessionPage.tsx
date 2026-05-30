@@ -11,7 +11,6 @@ import TextField from "../../components/ui/TextField";
 import {
 	SessionAvailability,
 	SessionFormat,
-	type Campaign,
 	type ILocation,
 } from "../../types/session";
 import type { ISystem } from "../../types/userCard";
@@ -32,6 +31,7 @@ import SessionFactsList from "./SessionFactsList";
 import { formatDate, timeAddTz } from "../../utils/dateFormats";
 import useAuth from "../../hooks/useAuth";
 import { AVAILABILITY_OPTIONS, FORMAT_OPTIONS } from "../../utils/words";
+import type { ICampaign } from "../../types/campaign";
 
 export interface CreateSessionInput {
 	campaignId: string | null;
@@ -129,7 +129,7 @@ export default function NewSessionPage() {
 
 	const navigate = useNavigate();
 	const createSession = useCreateSessionMutation();
-	const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+	const [campaigns, setCampaigns] = useState<ICampaign[]>([]);
 	const [newCampaignMenu, toggleNewCampaign] = useState(false);
 	const [submitError, setSubmitError] = useState<string | null>(null);
 	// const { data: campaigns = [] } = useCampaignsQuery();
@@ -143,7 +143,7 @@ export default function NewSessionPage() {
 				description: "",
 				image: null,
 				system: null,
-				format: "offline",
+				format: SessionFormat.Offline,
 				location: null,
 				scheduledAt: "",
 				startTime: "",
@@ -151,7 +151,7 @@ export default function NewSessionPage() {
 				maxSeats: 4,
 				price: "",
 				isFree: false,
-				availability: "open",
+				availability: SessionAvailability.Open,
 			},
 		});
 
@@ -164,7 +164,7 @@ export default function NewSessionPage() {
 
 	const campaignOptions = [
 		{ value: "", label: "Одиночная сессия" },
-		...campaigns.map((c: Campaign) => ({ value: c.id, label: c.title })),
+		...campaigns.map((c: ICampaign) => ({ value: c.id, label: c.title })),
 	];
 
 	if (!user) {
@@ -295,7 +295,7 @@ export default function NewSessionPage() {
 								<div className="flex flex-col gap-4">
 									<span>{campaign.title}</span>
 									<p>{campaign.description}</p>
-									<span>{campaign.system.name}</span>
+									<span>{campaign.system?.name}</span>
 								</div>
 							)}
 						</LabeledInput>
