@@ -68,7 +68,6 @@ export type CreateSessionPayload = {
 	price?: number;
 	availability?: SessionAvailability;
 	previewUrl?: string;
-	masterNotes?: string;
 };
 
 export async function createSession(

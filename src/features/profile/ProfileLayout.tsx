@@ -15,7 +15,7 @@ import { useSessionsQuery } from "../session/queries";
 import { SessionScope, SessionSortBy, StatusFilter } from "../session/api";
 import { SortOrder } from "../../types/query";
 import SessionCardCompact from "../../components/ui/cards/SessionCompact";
-import { SessionStatus } from "../../types/session";
+import { SessionStatus, SessionType } from "../../types/session";
 
 const TAB_OPTIONS = options([
 	{ value: "hosted", label: "Партии мастера" },
@@ -69,6 +69,7 @@ export function ProfileSessionsList({ ...props }: ProfileSessionsListProps) {
 		status: StatusFilter.Public,
 		masterId: props.scope === SessionScope.Mastering ? id : undefined,
 		playerId: props.scope === SessionScope.Playing ? id : undefined,
+		type: SessionType.Oneshot,
 		sort: SessionSortBy.ScheduledAt,
 		order: SortOrder.Desc,
 		limit: 20,
@@ -80,5 +81,13 @@ export function ProfileSessionsList({ ...props }: ProfileSessionsListProps) {
 			</div>
 		);
 	}
-	return <div className="flex flex-col w-full"></div>;
+	return (
+		<div className="flex flex-col w-full">
+			<span className="text-(--text-secondary) text-base">
+				Предстоящие
+			</span>
+			<span className="text-(--text-secondary) text-base">Кампании</span>
+			<span className="text-(--text-secondary) text-base">Ваншоты</span>
+		</div>
+	);
 }
