@@ -29,15 +29,6 @@ export const SessionType = {
 } as const;
 export type SessionType = (typeof SessionType)[keyof typeof SessionType];
 
-export const CampaignStatus = {
-	Active: "active",
-	Completed: "completed",
-	Cancelled: "cancelled",
-	Paused: "paused",
-} as const;
-export type CampaignStatus =
-	(typeof CampaignStatus)[keyof typeof CampaignStatus];
-
 export const PlayerStatus = {
 	Active: "active",
 	Kicked: "kicked",
@@ -71,14 +62,6 @@ export type ILocation = {
 	address: string;
 	lat: number;
 	lng: number;
-};
-
-export type Campaign = {
-	id: string;
-	title: string;
-	description: string;
-	system: ISystem;
-	status: CampaignStatus;
 };
 
 export type ICharacter = {

@@ -7,11 +7,15 @@ import { LabeledInput } from "../../components/ui/inputs/InputLabel";
 import { Controller } from "react-hook-form";
 import type { ISystem } from "../../types/userCard";
 import SystemSearch from "./SystemSearch";
+import { CampaignAvailability } from "../../types/campaign";
+import { options } from "../../utils/options";
+import Dropdown from "../../components/ui/Dropdown";
 
 export interface CreateCampaignInput {
 	title: string;
 	description: string;
 	system: ISystem | null;
+	availability: CampaignAvailability;
 }
 
 type NewCampaignPopoverProps = {
@@ -25,13 +29,23 @@ const titleRules = {
 	maxLength: { value: 120, message: "Максимум 120 символов" },
 };
 
+const AVAILABILITY_OPTIONS = options([
+	{ value: CampaignAvailability.Open, label: "Публичный" },
+	{ value: CampaignAvailability.Private, label: "Приватный" },
+]);
+
 export default function NewCampaignPopover({
 	onConfirm,
 	onClose,
 }: NewCampaignPopoverProps) {
 	const { control, handleSubmit, reset } = useForm<CreateCampaignInput>({
 		mode: "onSubmit",
-		defaultValues: { title: "", description: "", system: null },
+		defaultValues: {
+			title: "",
+			description: "",
+			system: null,
+			availability: CampaignAvailability.Open,
+		},
 	});
 
 	const onSubmit = (data: CreateCampaignInput) => {
@@ -47,22 +61,43 @@ export default function NewCampaignPopover({
 					Новый кампейн
 				</h3>
 
-				<Field
-					name="title"
-					control={control}
-					rules={titleRules}
-					label="Название"
-				>
-					{(field) => (
-						<Input
-							{...field}
-							type="text"
-							className="w-full"
-							maxLength={120}
-							autoFocus
+				<div className="grid grid-cols-2 gap-4">
+					<Field
+						name="title"
+						control={control}
+						rules={titleRules}
+						label="Название"
+					>
+						{(field) => (
+							<Input
+								{...field}
+								type="text"
+								className="w-full"
+								maxLength={120}
+								autoFocus
+							/>
+						)}
+					</Field>
+					<LabeledInput label="Доступность">
+						<Controller
+							name="availability"
+							control={control}
+							render={({ field }) => (
+								<Dropdown
+									label=""
+									options={AVAILABILITY_OPTIONS}
+									value={field.value}
+									onChange={(v) =>
+										field.onChange(
+											v ?? CampaignAvailability.Open,
+										)
+									}
+									fullWidth
+								/>
+							)}
 						/>
-					)}
-				</Field>
+					</LabeledInput>
+				</div>
 
 				<Field name="description" control={control} label="Описание">
 					{(field) => (
