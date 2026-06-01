@@ -25,13 +25,18 @@ import SystemSearch from "./SystemSearch";
 import NewCampaignPopover, {
 	type CreateCampaignInput,
 } from "./NewCampaignPopover";
-import { useCreateSessionMutation } from "./queries";
+import {
+	useCampaignsQuery,
+	useCreateCampaignMutation,
+	useCreateSessionMutation,
+} from "./queries";
 import type { CreateSessionPayload } from "./api";
 import SessionFactsList from "./SessionFactsList";
 import { formatDate, timeAddTz } from "../../utils/dateFormats";
 import useAuth from "../../hooks/useAuth";
 import { AVAILABILITY_OPTIONS, FORMAT_OPTIONS } from "../../utils/words";
-import type { ICampaign } from "../../types/campaign";
+import { CampaignStatus, type ICampaign } from "../../types/campaign";
+import { SystemBadge } from "../../components/ui/SystemBadge";
 
 export interface CreateSessionInput {
 	campaignId: string | null;
@@ -66,7 +71,13 @@ const seatsRules = {
 	max: { value: 50, message: "Максимум 50 мест" },
 };
 
-function SessionPreview({ values }: { values: Partial<CreateSessionInput> }) {
+function SessionPreview({
+	values,
+	campaign,
+}: {
+	values: Partial<CreateSessionInput>;
+	campaign?: ICampaign;
+}) {
 	const date = formatDate(values.scheduledAt);
 	const time = timeAddTz(values.startTime);
 
@@ -74,8 +85,13 @@ function SessionPreview({ values }: { values: Partial<CreateSessionInput> }) {
 
 	return (
 		<>
-			<p className="text-2xl font-display text-(--text-primary) leading-tight min-h-8">
+			<p className="text-2xl font-display text-(--text-primary) leading-tight min-h-8 inline-flex gap-3 items-baseline">
 				{values.title || "Название"}
+				{campaign && (
+					<span className="text-(--text-secondary) text-xl">
+						#{campaign.sessionCount + 1} в {campaign.title}
+					</span>
+				)}
 			</p>
 
 			<div className="w-full aspect-video rounded-lg bg-(--bg-elevated) overflow-hidden flex items-center justify-center">
@@ -109,7 +125,10 @@ function SessionPreview({ values }: { values: Partial<CreateSessionInput> }) {
 						value: values.startTime ? time : null,
 					},
 					{ label: "Адрес:", value: values.location?.address },
-					{ label: "Система:", value: values.system?.name },
+					{
+						label: "Система:",
+						value: campaign?.system?.name ?? values.system?.name,
+					},
 					{
 						label: "Доступность:",
 						value: values.availability
@@ -129,10 +148,15 @@ export default function NewSessionPage() {
 
 	const navigate = useNavigate();
 	const createSession = useCreateSessionMutation();
-	const [campaigns, setCampaigns] = useState<ICampaign[]>([]);
+	const createCampaign = useCreateCampaignMutation();
+	const campaignsQuery = useCampaignsQuery(
+		{ masterId: user?.id, status: CampaignStatus.Active },
+		{ enabled: !!user },
+	);
+	const campaigns = campaignsQuery.data?.pages.flatMap((p) => p.items) ?? [];
 	const [newCampaignMenu, toggleNewCampaign] = useState(false);
+	const [campaignDraftDirty, setCampaignDraftDirty] = useState(false);
 	const [submitError, setSubmitError] = useState<string | null>(null);
-	// const { data: campaigns = [] } = useCampaignsQuery();
 
 	const { control, handleSubmit, register, setValue, watch } =
 		useForm<CreateSessionInput>({
@@ -220,10 +244,21 @@ export default function NewSessionPage() {
 		(publish: boolean): SubmitHandler<CreateSessionInput> =>
 		(data) => {
 			setSubmitError(null);
+			if (newCampaignMenu && campaignDraftDirty) {
+				setSubmitError(
+					"Завершите создание нового кампейна или очистите его поля перед сохранением сессии.",
+				);
+				return;
+			}
 			const payload = buildPayload(data);
 			if (!payload) return;
 			createSession.mutate(
-				{ payload, publish, gmUsername: user.username },
+				{
+					payload,
+					publish,
+					gmUsername: user.username,
+					campaignId: data.campaignId ?? undefined,
+				},
 				{
 					onSuccess: (data) => navigate(`/sessions/${data.id}`),
 					onError: () =>
@@ -234,13 +269,16 @@ export default function NewSessionPage() {
 			);
 		};
 
-	// When a campaign with a preset system is created, propagate the system
-	// to the session form — but only if the user hasn't already chosen one.
-	const handleCampaignCreated = (data: CreateCampaignInput) => {
-		// TODO: call createCampaign mutation, get back the new campaign id,
-		// append to campaigns list, and set campaignId in the form.
-		if (data.system && !watch("system")) {
-			setValue("system", data.system, { shouldDirty: true });
+	const handleCampaignCreated = async (data: CreateCampaignInput) => {
+		const campaign = await createCampaign.mutateAsync({
+			title: data.title.trim(),
+			description: data.description?.trim() || undefined,
+			availability: data.availability,
+			systemId: data.system?.id || undefined,
+		});
+		setValue("campaignId", campaign.id, { shouldDirty: true });
+		if (campaign.system && !watch("system")) {
+			setValue("system", campaign.system, { shouldDirty: true });
 		}
 	};
 
@@ -271,6 +309,14 @@ export default function NewSessionPage() {
 											placeholder="Одиночная сессия"
 											fullWidth
 											className="flex-1"
+											onEndReached={() => {
+												if (
+													campaignsQuery.hasNextPage &&
+													!campaignsQuery.isFetchingNextPage
+												) {
+													campaignsQuery.fetchNextPage();
+												}
+											}}
 										/>
 									)}
 								/>
@@ -288,14 +334,25 @@ export default function NewSessionPage() {
 								<NewCampaignPopover
 									onConfirm={handleCampaignCreated}
 									onClose={() => toggleNewCampaign((o) => !o)}
+									onDirtyChange={setCampaignDraftDirty}
 								/>
 							)}
 
 							{campaign && !newCampaignMenu && (
-								<div className="flex flex-col gap-4">
-									<span>{campaign.title}</span>
-									<p>{campaign.description}</p>
-									<span>{campaign.system?.name}</span>
+								<div className="flex flex-col gap-4 mt-4">
+									<div className="inline-flex gap-3 items-center">
+										<span className="text-2xl font-display text-(--text-primary)">
+											{campaign.title}
+										</span>
+										{campaign.system && (
+											<SystemBadge
+												system={campaign.system}
+											/>
+										)}
+									</div>
+									<p className="text-(--text-secondary) text-base">
+										{campaign.description ?? "Нет описания"}
+									</p>
 								</div>
 							)}
 						</LabeledInput>
@@ -510,6 +567,7 @@ export default function NewSessionPage() {
 							values={
 								watchedValues as Partial<CreateSessionInput>
 							}
+							campaign={campaign}
 						/>
 					</TextField>
 					{submitError && (

@@ -1,6 +1,7 @@
 import clsx from "clsx";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useInView } from "react-intersection-observer";
 import useAnchoredPosition from "../../hooks/useAnchoredPosition";
 import useClickOutside from "../../hooks/useClickOutside";
 import Icon from "./Icon";
@@ -31,6 +32,7 @@ type DropdownProps = {
 	className?: string;
 	disabled?: boolean;
 	fullWidth?: boolean;
+	onEndReached?: () => void;
 } & (SingleSelectProps | MultiSelectProps);
 
 function getDisplayText(props: DropdownProps): string {
@@ -139,6 +141,13 @@ export default function Dropdown(props: DropdownProps) {
 	useClickOutside(containerRef, isOpen, close, listRef);
 	const pos = useAnchoredPosition(triggerRef, isOpen);
 
+	const { ref: endRef, inView } = useInView({ rootMargin: "120px 0px" });
+	const onEndReachedRef = useRef(props.onEndReached);
+	onEndReachedRef.current = props.onEndReached;
+	useEffect(() => {
+		if (inView) onEndReachedRef.current?.();
+	}, [inView]);
+
 	const displayOptions = props.multiple
 		? [...options].sort(
 				(a, b) =>
@@ -231,13 +240,18 @@ export default function Dropdown(props: DropdownProps) {
 									<SingleOption
 										key={option.value}
 										option={option}
-										isSelected={props.value === option.value}
+										isSelected={
+											props.value === option.value
+										}
 										onSelect={(v) => {
 											props.onChange(v);
 											setIsOpen(false);
 										}}
 									/>
 								))}
+						{props.onEndReached && (
+							<div ref={endRef} className="h-px" />
+						)}
 					</div>,
 					document.body,
 				)}

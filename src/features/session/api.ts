@@ -14,6 +14,11 @@ import type {
 	SessionCardData,
 } from "../../types/userCard";
 import type { SortOrder } from "../../types/query";
+import type {
+	CampaignAvailability,
+	CampaignStatus,
+	ICampaign,
+} from "../../types/campaign";
 
 export const SessionScope = {
 	Catalog: "catalog",
@@ -145,4 +150,64 @@ export async function fetchSessions(
 export async function fetchSession(id: string): Promise<SessionResponse> {
 	const { data } = await sessionApi.get<SessionResponse>(`/sessions/${id}`);
 	return data;
+}
+
+export type CreateCampaignPayload = {
+	title: string;
+	description?: string;
+	availability: CampaignAvailability;
+	systemId?: string;
+};
+
+export async function createCampaign(
+	payload: CreateCampaignPayload,
+): Promise<ICampaign> {
+	const { data } = await sessionApi.post<ICampaign>("/campaigns", payload);
+	return data;
+}
+
+export const CampaignSortBy = {
+	CreatedAt: "created_at",
+	Title: "title",
+	Status: "status",
+} as const;
+export type CampaignSortBy =
+	(typeof CampaignSortBy)[keyof typeof CampaignSortBy];
+
+export type CampaignListQuery = {
+	search?: string;
+	masterId?: string;
+	systemId?: string;
+	status?: CampaignStatus;
+	sort?: CampaignSortBy;
+	order?: SortOrder;
+	cursor?: string;
+	limit?: number;
+};
+
+export type CampaignsListResponse = {
+	items: ICampaign[];
+	nextCursor: string | null;
+};
+
+export async function fetchCampaigns(
+	params: CampaignListQuery,
+): Promise<CampaignsListResponse> {
+	const { data } = await sessionApi.get<CampaignsListResponse>("/campaigns", {
+		params,
+	});
+	return {
+		items: data.items ?? [],
+		nextCursor: data.nextCursor ?? null,
+	};
+}
+
+export type TieSessionQuery = {
+	sessionId: string;
+	orderIndex?: number;
+	briefDescription?: string;
+};
+
+export async function tieSession(campaignId: string, payload: TieSessionQuery) {
+	await sessionApi.post(`/campaigns/${campaignId}/sessions`, payload);
 }

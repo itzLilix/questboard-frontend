@@ -10,7 +10,11 @@ import {
 import useAuth from "../../hooks/useAuth";
 import { useFetchSessionQuery } from "./queries";
 import Loading from "../../components/ui/Loading";
-import type { IPlayer } from "../../types/session";
+import {
+	SessionType,
+	type IPlayer,
+	type SessionResponse,
+} from "../../types/session";
 import { ApplyButton, Price } from "../../components/ui/cards/SessionCard";
 import type { IUserBrief } from "../../types/userCard";
 import AvatarImage from "../../components/ui/AvatarImage";
@@ -21,14 +25,12 @@ import Rating from "../../components/ui/UserRating";
 import TextSeparator from "../../components/ui/TextSeparator";
 import { pluralPartiy } from "../../utils/words";
 
-const HAS_CAMPAIGN = true;
-
 type TabDef = {
 	to: string;
 	label: string;
 	icon: string;
 	minAccess: AccessLevel;
-	available?: () => boolean;
+	available?: (sessionData: SessionResponse) => boolean;
 };
 
 const TABS: TabDef[] = [
@@ -55,7 +57,7 @@ const TABS: TabDef[] = [
 		label: "Кампейн",
 		icon: "history_2",
 		minAccess: AccessLevel.View,
-		available: () => HAS_CAMPAIGN,
+		available: (s) => s.session.type === SessionType.Campaign,
 	},
 	{
 		to: "notes",
@@ -72,9 +74,9 @@ const TABS: TabDef[] = [
 	{ to: "vtt", label: "VTT", icon: "map", minAccess: AccessLevel.Access },
 ];
 
-function visibleFor(role: SessionRole): TabDef[] {
+function visibleFor(role: SessionRole, sessionData: SessionResponse): TabDef[] {
 	return TABS.filter(
-		(t) => role.can(t.minAccess) && (t.available?.() ?? true),
+		(t) => role.can(t.minAccess) && (t.available?.(sessionData) ?? true),
 	);
 }
 
@@ -108,7 +110,7 @@ export default function SessionLayout() {
 	}
 
 	const role = roleFor(user, sessionData);
-	const visibleTabs = visibleFor(role);
+	const visibleTabs = visibleFor(role, sessionData);
 
 	return (
 		<SessionProvider role={role} sessionData={sessionData}>
@@ -163,12 +165,19 @@ function TabRail({ tabs }: { tabs: TabDef[] }) {
 
 function SessionHeader({ user }: { user: IUser | null }) {
 	const { role, sessionData } = useSessionRole();
-	const { session } = sessionData;
+	const { session, campaign } = sessionData;
 	return (
 		<header className="flex items-center justify-between gap-4">
-			<h1 className="font-display text-3xl text-(--text-primary) truncate">
-				{sessionData.session.title}
-			</h1>
+			<div className="min-w-0 flex flex-col">
+				<h1 className="font-display text-3xl text-(--text-primary) truncate inline-flex gap-3 items-baseline">
+					{sessionData.session.title}
+					{campaign && (
+						<span className="text-(--text-secondary) text-xl truncate">
+							#{campaign.index} в {campaign.title}
+						</span>
+					)}
+				</h1>
+			</div>
 			{role.is(SessionRelation.Viewer) && (
 				<div className="flex items-center gap-4 shrink-0">
 					<Price price={sessionData.session.price} />

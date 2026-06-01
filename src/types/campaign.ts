@@ -10,13 +10,15 @@ export type CampaignAvailability =
 export interface ICampaign {
 	id: string;
 	title: string;
-	description: string | null;
-	system: ISystem | null;
+	description?: string;
+	system?: ISystem;
 	availability: CampaignAvailability;
 	masterId: string;
 	status: CampaignStatus;
 	createdAt: string;
 	updatedAt: string;
+	sessionCount: number;
+	sessions: CampaignSessionTie[];
 }
 
 export const CampaignStatus = {
@@ -28,3 +30,12 @@ export const CampaignStatus = {
 
 export type CampaignStatus =
 	(typeof CampaignStatus)[keyof typeof CampaignStatus];
+
+type CampaignSessionTie = {
+	campaignId: string;
+	sessionId: string;
+	orderIndex: number;
+	cachedTitle: string;
+	cachedScheduledAt: string;
+	briefDescription: string;
+};

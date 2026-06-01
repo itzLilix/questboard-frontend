@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import Button from "../../components/ui/Button";
 import Field from "../../components/ui/inputs/Field";
@@ -10,6 +11,7 @@ import SystemSearch from "./SystemSearch";
 import { CampaignAvailability } from "../../types/campaign";
 import { options } from "../../utils/options";
 import Dropdown from "../../components/ui/Dropdown";
+import ErrorMessage from "../../components/ui/inputs/ErrorMessage";
 
 export interface CreateCampaignInput {
 	title: string;
@@ -19,8 +21,9 @@ export interface CreateCampaignInput {
 }
 
 type NewCampaignPopoverProps = {
-	onConfirm: (data: CreateCampaignInput) => void;
+	onConfirm: (data: CreateCampaignInput) => Promise<void>;
 	onClose: () => void;
+	onDirtyChange?: (dirty: boolean) => void;
 	className?: string;
 };
 
@@ -37,21 +40,42 @@ const AVAILABILITY_OPTIONS = options([
 export default function NewCampaignPopover({
 	onConfirm,
 	onClose,
+	onDirtyChange,
 }: NewCampaignPopoverProps) {
-	const { control, handleSubmit, reset } = useForm<CreateCampaignInput>({
-		mode: "onSubmit",
-		defaultValues: {
-			title: "",
-			description: "",
-			system: null,
-			availability: CampaignAvailability.Open,
-		},
-	});
+	const { control, handleSubmit, reset, formState } =
+		useForm<CreateCampaignInput>({
+			mode: "onSubmit",
+			defaultValues: {
+				title: "",
+				description: "",
+				system: null,
+				availability: CampaignAvailability.Open,
+			},
+		});
 
-	const onSubmit = (data: CreateCampaignInput) => {
-		onConfirm(data);
-		reset();
-		onClose();
+	const { isDirty } = formState;
+
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [submitError, setSubmitError] = useState<string | null>(null);
+
+	useEffect(() => {
+		onDirtyChange?.(isDirty);
+	}, [isDirty, onDirtyChange]);
+
+	useEffect(() => () => onDirtyChange?.(false), [onDirtyChange]);
+
+	const onSubmit = async (data: CreateCampaignInput) => {
+		setSubmitError(null);
+		setIsSubmitting(true);
+		try {
+			await onConfirm(data);
+			reset();
+			onClose();
+		} catch {
+			setSubmitError("Не удалось создать кампейн. Попробуйте ещё раз.");
+		} finally {
+			setIsSubmitting(false);
+		}
 	};
 
 	return (
@@ -116,20 +140,32 @@ export default function NewCampaignPopover({
 					<Controller
 						name="system"
 						control={control}
-						render={({ field }) => (
-							<SystemSearch
-								value={field.value}
-								onChange={field.onChange}
-							/>
+						render={({ field, fieldState }) => (
+							<div className="relative pb-5">
+								<SystemSearch
+									value={field.value}
+									onChange={field.onChange}
+								/>
+								<ErrorMessage
+									errMsg={fieldState.error?.message}
+								/>
+							</div>
 						)}
 					/>
 				</LabeledInput>
+
+				{submitError && (
+					<p className="text-sm text-(--error) text-center">
+						{submitError}
+					</p>
+				)}
 
 				<div className="flex gap-2 justify-end pt-1">
 					<Button
 						type="button"
 						variant="secondary"
 						csize="sm"
+						disabled={isSubmitting}
 						onClick={() => {
 							reset();
 							onClose();
@@ -141,9 +177,10 @@ export default function NewCampaignPopover({
 						type="button"
 						variant="primary"
 						csize="sm"
+						disabled={isSubmitting}
 						onClick={handleSubmit(onSubmit)}
 					>
-						Создать
+						{isSubmitting ? "Создание..." : "Создать"}
 					</Button>
 				</div>
 			</div>
