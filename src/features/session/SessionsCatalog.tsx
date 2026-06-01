@@ -17,7 +17,8 @@ import FilterModal, {
 import RangeField from "../../components/ui/filters/FilterRange";
 import FilterToggle from "../../components/ui/filters/FilterToggle";
 import Input from "../../components/ui/inputs/Input";
-import Loading from "../../components/ui/Loading";
+import ListLoading from "../../components/ui/ListLoading";
+import EmptyState from "../../components/ui/EmptyState";
 import SessionCard from "../../components/ui/cards/SessionCard";
 import { SystemBadge } from "../../components/ui/SystemBadge";
 import ToggleSortOrder from "../../components/ui/filters/ToggleSortOrder";
@@ -509,25 +510,13 @@ export function SessionsList({
 	isError: boolean;
 	sort: SessionSortBy;
 }) {
-	if (isLoading) {
-		return (
-			<div className="flex justify-center py-12">
-				<Loading />
-			</div>
-		);
-	}
+	if (isLoading) return <ListLoading />;
 	if (isError) {
 		return (
 			<p className="text-(--error) text-center py-12">Ошибка загрузки</p>
 		);
 	}
-	if (!items || items.length === 0) {
-		return (
-			<p className="text-(--text-muted) text-center py-12 w-full">
-				Сессий нет
-			</p>
-		);
-	}
+	if (!items || items.length === 0) return <EmptyState text="Сессий нет" />;
 
 	const grouper = getGrouper(sort);
 	if (!grouper) {

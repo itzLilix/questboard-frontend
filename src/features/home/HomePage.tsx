@@ -11,7 +11,8 @@ import Dropdown from "../../components/ui/Dropdown";
 import FilterToggle from "../../components/ui/filters/FilterToggle";
 import Icon from "../../components/ui/Icon";
 import Input from "../../components/ui/inputs/Input";
-import Loading from "../../components/ui/Loading";
+import ListLoading from "../../components/ui/ListLoading";
+import EmptyState from "../../components/ui/EmptyState";
 import OrDivider from "../../components/ui/OrDivider";
 import SessionCard from "../../components/ui/cards/SessionCard";
 import UserCard from "../../components/ui/cards/UserCard";
@@ -264,13 +265,9 @@ function RowSection({
 				</Link>
 			</div>
 			{isLoading ? (
-				<div className="flex justify-center py-12">
-					<Loading />
-				</div>
+				<ListLoading />
 			) : isEmpty ? (
-				<p className="text-(--text-muted) text-center py-12">
-					Пока пусто
-				</p>
+				<EmptyState text="Пока пусто" />
 			) : (
 				<div className="flex flex-wrap gap-4">{children}</div>
 			)}

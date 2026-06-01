@@ -12,6 +12,7 @@ import {
 	createCampaign,
 	createSession,
 	fetchCampaigns,
+	fetchCampaignSessions,
 	fetchCuratedSystems,
 	fetchSession,
 	fetchSessions,
@@ -25,6 +26,7 @@ import {
 } from "./api";
 import { usersCatalogKeys } from "../usersCatalog/queries";
 import { profileKeys } from "../profile/queries";
+import type { CampaignRef } from "../../types/session";
 
 const DAY_MS = 1000 * 60 * 60 * 24;
 
@@ -44,7 +46,19 @@ export const sessionKeys = {
 export const campaignKeys = {
 	all: ["campaigns"] as const,
 	list: (params: CampaignListQuery) => ["campaigns", "list", params] as const,
+	sessions: (id: string) => ["campaigns", id, "sessions"] as const,
 };
+
+export function useCampaignSessionsQuery(
+	campaignId: string,
+	options?: { enabled?: boolean },
+) {
+	return useQuery({
+		queryKey: campaignKeys.sessions(campaignId),
+		queryFn: () => fetchCampaignSessions(campaignId),
+		enabled: options?.enabled,
+	});
+}
 
 export function useCampaignsQuery(
 	params: CampaignListQuery = {},
@@ -92,6 +106,17 @@ export function useSessionsQuery(params: SessionListQuery) {
 		initialPageParam: undefined as string | undefined,
 		getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
 	});
+}
+
+export function collectCampaigns(
+	pages: { campaigns?: Record<string, CampaignRef> }[] | undefined,
+): Record<string, CampaignRef> {
+	return (
+		pages?.reduce<Record<string, CampaignRef>>(
+			(acc, page) => Object.assign(acc, page.campaigns),
+			{},
+		) ?? {}
+	);
 }
 
 export function useCuratedSystemsQuery() {

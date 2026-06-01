@@ -32,7 +32,6 @@ export type CampaignStatus =
 	(typeof CampaignStatus)[keyof typeof CampaignStatus];
 
 type CampaignSessionTie = {
-	campaignId: string;
 	sessionId: string;
 	orderIndex: number;
 	cachedTitle: string;

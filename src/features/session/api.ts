@@ -1,6 +1,7 @@
 import { sessionApi } from "../../api/axios";
 import {
 	SessionStatus,
+	type CampaignRef,
 	type ILocation,
 	type ISession,
 	type SessionAvailability,
@@ -132,6 +133,7 @@ export type SessionsListResponse = {
 	items: ISession[];
 	nextCursor: string | null;
 	users: Record<string, IUserBrief>;
+	campaigns?: Record<string, CampaignRef>;
 };
 
 export async function fetchSessions(
@@ -144,6 +146,7 @@ export async function fetchSessions(
 		items: data.items ?? [],
 		nextCursor: data.nextCursor ?? null,
 		users: data.users ?? {},
+		campaigns: data.campaigns ?? {},
 	};
 }
 
@@ -200,6 +203,15 @@ export async function fetchCampaigns(
 		items: data.items ?? [],
 		nextCursor: data.nextCursor ?? null,
 	};
+}
+
+export async function fetchCampaignSessions(
+	campaignId: string,
+): Promise<ISession[]> {
+	const { data } = await sessionApi.get<ISession[] | { items?: ISession[] }>(
+		`/campaigns/${campaignId}/sessions`,
+	);
+	return Array.isArray(data) ? data : (data.items ?? []);
 }
 
 export type TieSessionQuery = {

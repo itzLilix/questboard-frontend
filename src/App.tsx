@@ -25,7 +25,12 @@ import SettingsLayout from "./features/settings/SettingsLayout";
 import ProfileLayout, {
 	ProfileSessionsList,
 } from "./features/profile/ProfileLayout";
-import MySessionsLayout from "./features/session/MySessions";
+import MySessionsLayout, {
+	CancelledTab,
+	DraftsTab,
+	MasteringTab,
+	PlayingTab,
+} from "./features/session/MySessions";
 import { SessionScope } from "./features/session/api";
 
 function App() {
@@ -86,10 +91,10 @@ function App() {
 							index
 							element={<Navigate to="mastering" replace />}
 						/>
-						<Route path="mastering"></Route>
-						<Route path="playing"></Route>
-						<Route path="cancelled"></Route>
-						<Route path="drafts"></Route>
+						<Route path="mastering" element={<MasteringTab />} />
+						<Route path="playing" element={<PlayingTab />} />
+						<Route path="drafts" element={<DraftsTab />} />
+						<Route path="cancelled" element={<CancelledTab />} />
 					</Route>
 				</Route>
 			</Route>

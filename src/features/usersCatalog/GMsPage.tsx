@@ -3,7 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import ClearFiltersButton from "../../components/ui/filters/ClearFiltersButton";
 import Dropdown from "../../components/ui/Dropdown";
 import FilterToggle from "../../components/ui/filters/FilterToggle";
-import Loading from "../../components/ui/Loading";
+import ListLoading from "../../components/ui/ListLoading";
+import EmptyState from "../../components/ui/EmptyState";
 import UserCard, {
 	type userCardProps,
 } from "../../components/ui/cards/UserCard";
@@ -193,24 +194,13 @@ export type UsersListProps = {
 	view: userCardProps["view"];
 };
 export function UsersList({ isLoading, isError, items, view }: UsersListProps) {
-	if (isLoading) {
-		return (
-			<div className="flex justify-center py-12">
-				<Loading />
-			</div>
-		);
-	}
+	if (isLoading) return <ListLoading />;
 	if (isError) {
 		return (
 			<p className="text-(--error) text-center py-12">Ошибка загрузки</p>
 		);
 	}
-	if (!items || items.length === 0)
-		return (
-			<p className="text-(--text-muted) text-center py-12 w-full">
-				Никого нет
-			</p>
-		);
+	if (!items || items.length === 0) return <EmptyState text="Никого нет" />;
 	return (
 		<div
 			className={

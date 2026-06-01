@@ -1,3 +1,4 @@
+import { CampaignStatus } from "../types/campaign";
 import {
 	SessionAvailability,
 	SessionFormat,
@@ -81,6 +82,13 @@ export const FORMAT_LABEL: Record<SessionFormat, string> = {
 export const TYPE_LABEL: Record<SessionType, string> = {
 	[SessionType.Oneshot]: "Ваншот",
 	[SessionType.Campaign]: "Кампания",
+};
+
+export const CAMPAIGN_STATUS_LABEL: Record<CampaignStatus, string> = {
+	[CampaignStatus.Active]: "активен",
+	[CampaignStatus.Paused]: "приостановлен",
+	[CampaignStatus.Completed]: "завершен",
+	[CampaignStatus.Cancelled]: "отменён",
 };
 
 export const AVAILABILITY_LABEL: Record<SessionAvailability, string> = {

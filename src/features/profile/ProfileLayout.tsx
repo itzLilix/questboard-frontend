@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import {
 	Outlet,
 	useLocation,
@@ -6,16 +7,27 @@ import {
 	useParams,
 } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
+import { useUrlSearch } from "../../hooks/useUrlState";
+import Input from "../../components/ui/inputs/Input";
 import ProfileHeader from "../../features/profile/ProfileHeader";
 import { useProfileQuery } from "../../features/profile/queries";
 import Loading from "../../components/ui/Loading";
 import Tab from "../../components/ui/Tab";
 import { options } from "../../utils/options";
-import { useSessionsQuery } from "../session/queries";
+import {
+	collectCampaigns,
+	useCampaignsQuery,
+	useSessionsQuery,
+} from "../session/queries";
 import { SessionScope, SessionSortBy, StatusFilter } from "../session/api";
 import { SortOrder } from "../../types/query";
-import SessionCardCompact from "../../components/ui/cards/SessionCompact";
-import { SessionStatus, SessionType } from "../../types/session";
+import CampaignAccordion from "../../components/ui/cards/CampaignAccordion";
+import CollapsibleSection from "../../components/ui/CollapsibleSection";
+import { SessionType } from "../../types/session";
+import ListLoading from "../../components/ui/ListLoading";
+import EmptyState from "../../components/ui/EmptyState";
+import { useInfiniteScroll } from "../../hooks/useInfiniteScroll";
+import { SessionList } from "../session/sessionList";
 
 const TAB_OPTIONS = options([
 	{ value: "hosted", label: "Партии мастера" },
@@ -62,32 +74,185 @@ type ProfileSessionsListProps = {
 	scope: Omit<SessionScope, "catalog">;
 };
 
-export function ProfileSessionsList({ ...props }: ProfileSessionsListProps) {
+export function ProfileSessionsList({ scope }: ProfileSessionsListProps) {
 	const [id] = useOutletContext<[string]>();
-	const { data, isLoading } = useSessionsQuery({
-		scope: props.scope as SessionScope,
+	const { input, setInput, value: search } = useUrlSearch("search");
+	return (
+		<div className="flex flex-col gap-4 w-full">
+			<Input
+				placeholder="Поиск партий"
+				value={input}
+				onChange={(e) => setInput(e.target.value)}
+			/>
+			{scope === SessionScope.Mastering ? (
+				<MasterSessionsList masterId={id} search={search} />
+			) : (
+				<PlayerSessionsList playerId={id} search={search} />
+			)}
+		</div>
+	);
+}
+
+function MasterSessionsList({
+	masterId,
+	search,
+}: {
+	masterId: string;
+	search: string;
+}) {
+	const now = useMemo(() => new Date().toISOString(), []);
+	const campaignsQuery = useCampaignsQuery({
+		masterId,
+		search: search || undefined,
+	});
+	const upcomingQuery = useSessionsQuery({
+		scope: SessionScope.Mastering,
+		masterId,
 		status: StatusFilter.Public,
-		masterId: props.scope === SessionScope.Mastering ? id : undefined,
-		playerId: props.scope === SessionScope.Playing ? id : undefined,
-		type: SessionType.Oneshot,
+		search: search || undefined,
+		dateFrom: now,
+		sort: SessionSortBy.ScheduledAt,
+		order: SortOrder.Asc,
+		limit: 20,
+	});
+	const oneshotsQuery = useSessionsQuery({
+		scope: SessionScope.Mastering,
+		masterId,
+		status: StatusFilter.Public,
+		search: search || undefined,
+		type: search ? undefined : SessionType.Oneshot,
+		dateTo: now,
 		sort: SessionSortBy.ScheduledAt,
 		order: SortOrder.Desc,
 		limit: 20,
 	});
-	if (isLoading) {
+	const upcomingSentinel = useInfiniteScroll(upcomingQuery);
+	const campaignsSentinel = useInfiniteScroll(campaignsQuery);
+	const oneshotsSentinel = useInfiniteScroll(oneshotsQuery);
+
+	if (
+		campaignsQuery.isLoading ||
+		upcomingQuery.isLoading ||
+		oneshotsQuery.isLoading
+	) {
+		return <ListLoading />;
+	}
+
+	const campaigns = campaignsQuery.data?.pages.flatMap((p) => p.items) ?? [];
+	const upcoming = upcomingQuery.data?.pages.flatMap((p) => p.items) ?? [];
+	const oneshots = oneshotsQuery.data?.pages.flatMap((p) => p.items) ?? [];
+	const upcomingCampaigns = collectCampaigns(upcomingQuery.data?.pages);
+	const searchCampaigns = collectCampaigns(oneshotsQuery.data?.pages);
+
+	if (
+		campaigns.length === 0 &&
+		upcoming.length === 0 &&
+		oneshots.length === 0
+	) {
 		return (
-			<div className="flex justify-center py-12">
-				<Loading />
-			</div>
+			<EmptyState
+				text={search ? "Ничего не найдено" : "Партий пока нет"}
+			/>
 		);
 	}
+
 	return (
-		<div className="flex flex-col w-full">
-			<span className="text-(--text-secondary) text-base">
-				Предстоящие
-			</span>
-			<span className="text-(--text-secondary) text-base">Кампании</span>
-			<span className="text-(--text-secondary) text-base">Ваншоты</span>
+		<div className="flex flex-col gap-6 w-full">
+			<SessionList
+				title="Предстоящие"
+				isUpcoming
+				sessions={upcoming}
+				sentinelRef={upcomingSentinel}
+				isFetchingNextPage={upcomingQuery.isFetchingNextPage}
+				campaigns={upcomingCampaigns}
+			/>
+			{campaigns.length > 0 && (
+				<CollapsibleSection title="Кампании">
+					{campaigns.map((campaign) => (
+						<CampaignAccordion
+							key={campaign.id}
+							campaign={campaign}
+						/>
+					))}
+					<div ref={campaignsSentinel} className="h-1" />
+					{campaignsQuery.isFetchingNextPage && <ListLoading />}
+				</CollapsibleSection>
+			)}
+			<SessionList
+				title="Партии"
+				sessions={oneshots}
+				sentinelRef={oneshotsSentinel}
+				isFetchingNextPage={oneshotsQuery.isFetchingNextPage}
+				campaigns={searchCampaigns}
+			/>
 		</div>
 	);
 }
+
+function PlayerSessionsList({
+	playerId,
+	search,
+}: {
+	playerId: string;
+	search: string;
+}) {
+	const now = useMemo(() => new Date().toISOString(), []);
+	const upcomingQuery = useSessionsQuery({
+		scope: SessionScope.Playing,
+		playerId,
+		status: StatusFilter.Public,
+		search: search || undefined,
+		dateFrom: now,
+		sort: SessionSortBy.ScheduledAt,
+		order: SortOrder.Asc,
+		limit: 20,
+	});
+	const pastQuery = useSessionsQuery({
+		scope: SessionScope.Playing,
+		playerId,
+		status: StatusFilter.Public,
+		search: search || undefined,
+		dateTo: now,
+		sort: SessionSortBy.ScheduledAt,
+		order: SortOrder.Desc,
+		limit: 20,
+	});
+	const upcomingSentinel = useInfiniteScroll(upcomingQuery);
+	const pastSentinel = useInfiniteScroll(pastQuery);
+
+	if (upcomingQuery.isLoading || pastQuery.isLoading) return <ListLoading />;
+
+	const upcoming = upcomingQuery.data?.pages.flatMap((p) => p.items) ?? [];
+	const past = pastQuery.data?.pages.flatMap((p) => p.items) ?? [];
+	const upcomingCampaigns = collectCampaigns(upcomingQuery.data?.pages);
+	const pastCampaigns = collectCampaigns(pastQuery.data?.pages);
+
+	if (upcoming.length === 0 && past.length === 0) {
+		return (
+			<EmptyState
+				text={search ? "Ничего не найдено" : "Партий пока нет"}
+			/>
+		);
+	}
+
+	return (
+		<div className="flex flex-col gap-6 w-full">
+			<SessionList
+				title="Предстоящие"
+				isUpcoming
+				sessions={upcoming}
+				sentinelRef={upcomingSentinel}
+				isFetchingNextPage={upcomingQuery.isFetchingNextPage}
+				campaigns={upcomingCampaigns}
+			/>
+			<SessionList
+				title="Прошедшие"
+				sessions={past}
+				sentinelRef={pastSentinel}
+				isFetchingNextPage={pastQuery.isFetchingNextPage}
+				campaigns={pastCampaigns}
+			/>
+		</div>
+	);
+}
+

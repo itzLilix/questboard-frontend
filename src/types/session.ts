@@ -89,7 +89,7 @@ export type SessionResponse = {
 	session: ISession;
 	players: IPlayer[];
 	users: Record<string, IUserBrief>;
-	campaign: CampaignRef | null;
+	campaign?: CampaignRef;
 };
 
 export type CampaignRef = {
