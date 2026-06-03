@@ -1,9 +1,6 @@
 import { useOutletContext } from "react-router-dom";
 import TextField from "../../../components/ui/TextField";
-import {
-	SessionFormat,
-	type SessionResponse,
-} from "../../../types/session";
+import { SessionFormat, type SessionResponse } from "../../../types/session";
 import SessionFactsList from "../SessionFactsList";
 import { splitDatetime } from "../../../utils/dateFormats";
 import { AVAILABILITY_LABEL, FORMAT_LABEL } from "../../../utils/words";
@@ -24,7 +21,7 @@ export function InfoTab() {
 							className="rounded-2xl h-full max-w-[40%] object-cover"
 						/>
 					)}
-					<p className="ml-4 text-(--text-primary)">
+					<p className="ml-4 text-(--text-primary) wrap-break-word min-w-0">
 						{session.description || "Описание отсутствует"}
 					</p>
 				</div>

@@ -8,7 +8,7 @@ export default function Icon({
 }) {
 	return (
 		<span
-			className={`material-symbols-outlined select-none ${className || ""}`}
+			className={`material-symbols-outlined select-none leading-none ${className || ""}`}
 		>
 			{name}
 		</span>

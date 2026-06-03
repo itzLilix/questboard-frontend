@@ -42,7 +42,9 @@ export default function TextField({
 				</h2>
 			)}
 			{isExpanded && (
-				<div className="p-4 gap-4 flex flex-col">{children}</div>
+				<div className="p-4 gap-4 flex flex-col wrap-break-word min-w-0 text-base">
+					{children}
+				</div>
 			)}
 		</div>
 	);

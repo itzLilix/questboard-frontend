@@ -53,17 +53,17 @@ const TABS: TabDef[] = [
 		minAccess: AccessLevel.Access,
 	},
 	{
+		to: "notes",
+		label: "Заметки",
+		icon: "edit_note",
+		minAccess: AccessLevel.Access,
+	},
+	{
 		to: "campaign",
 		label: "Кампейн",
 		icon: "history_2",
 		minAccess: AccessLevel.View,
 		available: (s) => s.session.type === SessionType.Campaign,
-	},
-	{
-		to: "notes",
-		label: "Заметки",
-		icon: "edit_note",
-		minAccess: AccessLevel.Access,
 	},
 	{
 		to: "edit",
@@ -89,6 +89,13 @@ export default function SessionLayout() {
 		isError,
 	} = useFetchSessionQuery(sessionId);
 
+	if (sessionId && (sessionLoading || userLoading)) {
+		return (
+			<div className="flex justify-center py-12">
+				<Loading />
+			</div>
+		);
+	}
 	if (isError) {
 		return (
 			<p className="text-(--error) text-center py-12">Ошибка загрузки</p>
@@ -98,13 +105,6 @@ export default function SessionLayout() {
 		return (
 			<div className="flex justify-center py-12">
 				<p className="text-(--text-muted)">Сессия не найдена</p>
-			</div>
-		);
-	}
-	if (sessionLoading || userLoading) {
-		return (
-			<div className="flex justify-center py-12">
-				<Loading />
 			</div>
 		);
 	}

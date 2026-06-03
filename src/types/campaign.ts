@@ -31,7 +31,7 @@ export const CampaignStatus = {
 export type CampaignStatus =
 	(typeof CampaignStatus)[keyof typeof CampaignStatus];
 
-type CampaignSessionTie = {
+export type CampaignSessionTie = {
 	sessionId: string;
 	orderIndex: number;
 	cachedTitle: string;

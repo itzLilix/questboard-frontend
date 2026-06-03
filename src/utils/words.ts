@@ -1,7 +1,8 @@
-import { CampaignStatus } from "../types/campaign";
+import { CampaignAvailability, CampaignStatus } from "../types/campaign";
 import {
 	SessionAvailability,
 	SessionFormat,
+	SessionStatus,
 	SessionType,
 } from "../types/session";
 import { options, type Option } from "./options";
@@ -96,6 +97,27 @@ export const AVAILABILITY_LABEL: Record<SessionAvailability, string> = {
 	[SessionAvailability.Application]: "По заявкам",
 	[SessionAvailability.Private]: "Закрытая",
 };
+export const CAMPAIGN_AVAILABILITY_LABEL: Record<CampaignAvailability, string> =
+	{
+		[CampaignAvailability.Open]: "Публичный",
+		[CampaignAvailability.Private]: "Приватный",
+	};
+
+export const SESSION_STATUS_LABEL: Record<SessionStatus, string> = {
+	[SessionStatus.Draft]: "Черновик",
+	[SessionStatus.Published]: "Опубликована",
+	[SessionStatus.Ongoing]: "Идёт",
+	[SessionStatus.Completed]: "Завершена",
+	[SessionStatus.Cancelled]: "Отменена",
+};
+
+export const SESSION_STATUS_OPTIONS = options([
+	{ value: SessionStatus.Draft, label: SESSION_STATUS_LABEL.draft },
+	{ value: SessionStatus.Published, label: SESSION_STATUS_LABEL.published },
+	{ value: SessionStatus.Ongoing, label: SESSION_STATUS_LABEL.ongoing },
+	{ value: SessionStatus.Completed, label: SESSION_STATUS_LABEL.completed },
+	{ value: SessionStatus.Cancelled, label: SESSION_STATUS_LABEL.cancelled },
+]) satisfies readonly Option<SessionStatus>[];
 
 export const AVAILABILITY_OPTIONS: {
 	value: SessionAvailability;

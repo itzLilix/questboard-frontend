@@ -8,25 +8,37 @@ import {
 import { isAxiosError } from "axios";
 import {
 	addGameSystem,
+	changeCampaignStatus,
 	changeSessionStatus,
 	createCampaign,
 	createSession,
+	deleteCampaign,
+	deleteSession,
+	editTie,
+	fetchCampaign,
 	fetchCampaigns,
 	fetchCampaignSessions,
 	fetchCuratedSystems,
 	fetchSession,
 	fetchSessions,
+	reorderCampaignSessions,
 	searchSystems,
 	tieSession,
+	untieSession,
+	updateCampaign,
+	updateSession,
 	type CampaignListQuery,
 	type CampaignsListResponse,
 	type CreateSessionPayload,
 	type SessionListQuery,
 	type TieSessionQuery,
+	type UpdateCampaignPayload,
+	type UpdateSessionPayload,
 } from "./api";
 import { usersCatalogKeys } from "../usersCatalog/queries";
 import { profileKeys } from "../profile/queries";
-import type { CampaignRef } from "../../types/session";
+import type { CampaignRef, SessionStatus } from "../../types/session";
+import type { CampaignStatus } from "../../types/campaign";
 
 const DAY_MS = 1000 * 60 * 60 * 24;
 
@@ -45,7 +57,9 @@ export const sessionKeys = {
 
 export const campaignKeys = {
 	all: ["campaigns"] as const,
+	lists: ["campaigns", "list"] as const,
 	list: (params: CampaignListQuery) => ["campaigns", "list", params] as const,
+	detail: (id: string | undefined) => ["campaigns", id] as const,
 	sessions: (id: string) => ["campaigns", id, "sessions"] as const,
 };
 
@@ -74,13 +88,21 @@ export function useCampaignsQuery(
 	});
 }
 
+export function useCampaignDetailQuery(campaignId: string | undefined) {
+	return useQuery({
+		queryKey: campaignKeys.detail(campaignId),
+		queryFn: () => fetchCampaign(campaignId!),
+		enabled: !!campaignId,
+	});
+}
+
 export function useCreateCampaignMutation() {
 	const qc = useQueryClient();
 	return useMutation({
 		mutationFn: createCampaign,
 		onSuccess: (campaign) => {
 			qc.setQueriesData<InfiniteData<CampaignsListResponse>>(
-				{ queryKey: campaignKeys.all },
+				{ queryKey: campaignKeys.lists },
 				(old) => {
 					if (!old || old.pages.length === 0) return old;
 					const [first, ...rest] = old.pages;
@@ -94,6 +116,59 @@ export function useCreateCampaignMutation() {
 				},
 			);
 			qc.invalidateQueries({ queryKey: campaignKeys.all });
+		},
+	});
+}
+
+export function useSaveCampaignMutation() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: async (input: {
+			campaignId: string;
+			unties: string[];
+			reorder?: string[];
+			briefEdits: { sessionId: string; briefDescription: string }[];
+			campaignPatch?: UpdateCampaignPayload;
+			status?: CampaignStatus;
+		}) => {
+			for (const sessionId of input.unties) {
+				await untieSession(input.campaignId, sessionId);
+			}
+			if (input.reorder) {
+				await reorderCampaignSessions(input.campaignId, input.reorder);
+			}
+			for (const edit of input.briefEdits) {
+				await editTie(input.campaignId, edit.sessionId, {
+					briefDescription: edit.briefDescription,
+				});
+			}
+			if (
+				input.campaignPatch &&
+				Object.keys(input.campaignPatch).length > 0
+			) {
+				await updateCampaign(input.campaignId, input.campaignPatch);
+			}
+			if (input.status) {
+				await changeCampaignStatus(input.campaignId, input.status);
+			}
+		},
+		onSuccess: (_, variables) => {
+			qc.invalidateQueries({
+				queryKey: campaignKeys.detail(variables.campaignId),
+			});
+			qc.invalidateQueries({ queryKey: campaignKeys.all });
+			qc.invalidateQueries({ queryKey: sessionKeys.all });
+		},
+	});
+}
+
+export function useDeleteCampaignMutation() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: (campaignId: string) => deleteCampaign(campaignId),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: campaignKeys.all });
+			qc.invalidateQueries({ queryKey: sessionKeys.all });
 		},
 	});
 }
@@ -181,6 +256,62 @@ export function useCreateSessionMutation() {
 					queryKey: profileKeys.detail(variables.gmUsername),
 				});
 			}
+		},
+	});
+}
+
+export function useSaveSessionMutation() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: async (input: {
+			sessionId: string;
+			gmUsername: string;
+			patch?: UpdateSessionPayload;
+			status?: SessionStatus;
+			campaignChange?: { from: string | null; to: string | null };
+		}) => {
+			if (input.patch && Object.keys(input.patch).length > 0) {
+				await updateSession(input.sessionId, input.patch);
+			}
+			if (input.status) {
+				await changeSessionStatus(input.sessionId, input.status);
+			}
+			const change = input.campaignChange;
+			if (change && change.from !== change.to) {
+				if (change.from) {
+					await untieSession(change.from, input.sessionId);
+				}
+				if (change.to) {
+					await tieSession(change.to, { sessionId: input.sessionId });
+				}
+			}
+		},
+		onSuccess: (_, variables) => {
+			qc.invalidateQueries({
+				queryKey: sessionKeys.detail(variables.sessionId),
+			});
+			qc.invalidateQueries({ queryKey: sessionKeys.all });
+			qc.invalidateQueries({ queryKey: campaignKeys.all });
+			qc.invalidateQueries({ queryKey: usersCatalogKeys.all });
+			qc.invalidateQueries({
+				queryKey: profileKeys.detail(variables.gmUsername),
+			});
+		},
+	});
+}
+
+export function useDeleteSessionMutation() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: (input: { sessionId: string; gmUsername: string }) =>
+			deleteSession(input.sessionId),
+		onSuccess: (_, variables) => {
+			qc.invalidateQueries({ queryKey: sessionKeys.all });
+			qc.invalidateQueries({ queryKey: campaignKeys.all });
+			qc.invalidateQueries({ queryKey: usersCatalogKeys.all });
+			qc.invalidateQueries({
+				queryKey: profileKeys.detail(variables.gmUsername),
+			});
 		},
 	});
 }

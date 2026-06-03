@@ -1,81 +1,29 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-	Controller,
-	useForm,
-	useWatch,
-	type SubmitHandler,
-} from "react-hook-form";
+import { useForm, useWatch, type SubmitHandler } from "react-hook-form";
 import Button from "../../components/ui/Button";
 import TextField from "../../components/ui/TextField";
 import {
-	SessionAvailability,
 	SessionFormat,
 	type ILocation,
 } from "../../types/session";
-import type { ISystem } from "../../types/userCard";
-import Input from "../../components/ui/inputs/Input";
-import Field from "../../components/ui/inputs/Field";
-import InputText from "../../components/ui/inputs/InputText";
-import { LabeledInput } from "../../components/ui/inputs/InputLabel";
-import ImageUploader from "../settings/ImageUploader";
-import Dropdown from "../../components/ui/Dropdown";
-import FilterToggle from "../../components/ui/filters/FilterToggle";
-import SystemSearch from "./SystemSearch";
-import NewCampaignPopover, {
-	type CreateCampaignInput,
-} from "./NewCampaignPopover";
-import {
-	useCampaignsQuery,
-	useCreateCampaignMutation,
-	useCreateSessionMutation,
-} from "./queries";
+import { useCampaignsQuery, useCreateCampaignMutation, useCreateSessionMutation } from "./queries";
 import type { CreateSessionPayload } from "./api";
+import type { CreateCampaignInput } from "./NewCampaignPopover";
 import SessionFactsList from "./SessionFactsList";
+import SessionFormFields from "./SessionFormFields";
+import CampaignTieField from "./CampaignTieField";
+import { sessionFormDefaults, type SessionFormValues } from "./sessionForm";
 import { formatDate, timeAddTz } from "../../utils/dateFormats";
 import useAuth from "../../hooks/useAuth";
 import { AVAILABILITY_OPTIONS, FORMAT_OPTIONS } from "../../utils/words";
 import { CampaignStatus, type ICampaign } from "../../types/campaign";
-import { SystemBadge } from "../../components/ui/SystemBadge";
-
-export interface CreateSessionInput {
-	campaignId: string | null;
-	title: string;
-	description: string;
-	image: File | null;
-	system: ISystem | null;
-	format: SessionFormat;
-	location: ILocation | null;
-	scheduledAt: string;
-	startTime: string;
-	durationHours: number;
-	maxSeats: number;
-	price: string;
-	isFree: boolean;
-	availability: SessionAvailability;
-}
-
-const titleRules = {
-	required: "Название обязательно",
-	minLength: { value: 3, message: "Минимум 3 символа" },
-	maxLength: { value: 255, message: "Максимум 255 символов" },
-};
-
-const descriptionRules = {
-	maxLength: { value: 2000, message: "Максимум 2000 символов" },
-};
-
-const seatsRules = {
-	required: "Укажите количество мест",
-	min: { value: 1, message: "Минимум 1 место" },
-	max: { value: 50, message: "Максимум 50 мест" },
-};
 
 function SessionPreview({
 	values,
 	campaign,
 }: {
-	values: Partial<CreateSessionInput>;
+	values: Partial<SessionFormValues>;
 	campaign?: ICampaign;
 }) {
 	const date = formatDate(values.scheduledAt);
@@ -124,7 +72,7 @@ function SessionPreview({
 						label: "Время:",
 						value: values.startTime ? time : null,
 					},
-					{ label: "Адрес:", value: values.location?.address },
+					{ label: "Адрес:", value: values.location || null },
 					{
 						label: "Система:",
 						value: campaign?.system?.name ?? values.system?.name,
@@ -159,30 +107,12 @@ export default function NewSessionPage() {
 	const [submitError, setSubmitError] = useState<string | null>(null);
 
 	const { control, handleSubmit, register, setValue, watch } =
-		useForm<CreateSessionInput>({
+		useForm<SessionFormValues>({
 			mode: "onTouched",
-			defaultValues: {
-				campaignId: null,
-				title: "",
-				description: "",
-				image: null,
-				system: null,
-				format: SessionFormat.Offline,
-				location: null,
-				scheduledAt: "",
-				startTime: "",
-				durationHours: 4,
-				maxSeats: 4,
-				price: "",
-				isFree: false,
-				availability: SessionAvailability.Open,
-			},
+			defaultValues: sessionFormDefaults,
 		});
 
 	const watchedValues = useWatch({ control });
-	const isFree = watch("isFree");
-	const availability = watch("availability");
-	const format = watch("format");
 	const campaignId = watch("campaignId");
 	const campaign = campaigns.find((c) => c.id === campaignId);
 
@@ -196,7 +126,7 @@ export default function NewSessionPage() {
 	}
 
 	const buildPayload = (
-		data: CreateSessionInput,
+		data: SessionFormValues,
 	): CreateSessionPayload | null => {
 		const system = campaign?.system ?? data.system;
 		if (!system) {
@@ -211,10 +141,7 @@ export default function NewSessionPage() {
 			if (!isNaN(local.getTime())) scheduledAt = local.toISOString();
 		}
 
-		// `register("location")` writes a plain address string into the
-		// `location` field, so the runtime value isn't an ILocation object.
-		const addressRaw = data.location as unknown;
-		const address = typeof addressRaw === "string" ? addressRaw.trim() : "";
+		const address = data.location.trim();
 		const location: ILocation | undefined =
 			data.format === SessionFormat.Offline && address
 				? { address, lat: 0, lng: 0 }
@@ -241,7 +168,7 @@ export default function NewSessionPage() {
 	};
 
 	const submit =
-		(publish: boolean): SubmitHandler<CreateSessionInput> =>
+		(publish: boolean): SubmitHandler<SessionFormValues> =>
 		(data) => {
 			setSubmitError(null);
 			if (newCampaignMenu && campaignDraftDirty) {
@@ -270,15 +197,15 @@ export default function NewSessionPage() {
 		};
 
 	const handleCampaignCreated = async (data: CreateCampaignInput) => {
-		const campaign = await createCampaign.mutateAsync({
+		const created = await createCampaign.mutateAsync({
 			title: data.title.trim(),
 			description: data.description?.trim() || undefined,
 			availability: data.availability,
 			systemId: data.system?.id || undefined,
 		});
-		setValue("campaignId", campaign.id, { shouldDirty: true });
-		if (campaign.system && !watch("system")) {
-			setValue("system", campaign.system, { shouldDirty: true });
+		setValue("campaignId", created.id, { shouldDirty: true });
+		if (created.system && !watch("system")) {
+			setValue("system", created.system, { shouldDirty: true });
 		}
 	};
 
@@ -288,285 +215,35 @@ export default function NewSessionPage() {
 				Создать сессию
 			</h1>
 			<form className="flex w-full gap-6">
-				<section className="flex flex-1 flex-col gap-4">
-					<TextField title="Кампейн" isShrinkable={false}>
-						<LabeledInput label="Привязать к кампейну">
-							<div className="flex gap-4">
-								<Controller
-									name="campaignId"
-									control={control}
-									render={({ field }) => (
-										<Dropdown
-											label=""
-											options={campaignOptions}
-											value={field.value ?? ""}
-											onChange={(v) =>
-												field.onChange(
-													v === "" ? null : v,
-												)
-											}
-											disabled={newCampaignMenu}
-											placeholder="Одиночная сессия"
-											fullWidth
-											className="flex-1"
-											onEndReached={() => {
-												if (
-													campaignsQuery.hasNextPage &&
-													!campaignsQuery.isFetchingNextPage
-												) {
-													campaignsQuery.fetchNextPage();
-												}
-											}}
-										/>
-									)}
-								/>
-
-								<Button
-									type="button"
-									variant="secondary"
-									onClick={() => toggleNewCampaign((o) => !o)}
-								>
-									+ Новый кампейн
-								</Button>
-							</div>
-
-							{newCampaignMenu && (
-								<NewCampaignPopover
-									onConfirm={handleCampaignCreated}
-									onClose={() => toggleNewCampaign((o) => !o)}
-									onDirtyChange={setCampaignDraftDirty}
-								/>
-							)}
-
-							{campaign && !newCampaignMenu && (
-								<div className="flex flex-col gap-4 mt-4">
-									<div className="inline-flex gap-3 items-center">
-										<span className="text-2xl font-display text-(--text-primary)">
-											{campaign.title}
-										</span>
-										{campaign.system && (
-											<SystemBadge
-												system={campaign.system}
-											/>
-										)}
-									</div>
-									<p className="text-(--text-secondary) text-base">
-										{campaign.description ?? "Нет описания"}
-									</p>
-								</div>
-							)}
-						</LabeledInput>
-					</TextField>
-					<TextField title="Основное" isShrinkable={false}>
-						<LabeledInput label="Система">
-							<Controller
-								name="system"
-								control={control}
-								render={({ field }) => (
-									<SystemSearch
-										value={campaign?.system ?? field.value}
-										onChange={field.onChange}
-										disabled={
-											campaign !== undefined &&
-											campaign?.system !== null
-										}
-									/>
-								)}
-							/>
-						</LabeledInput>
-
-						<Field
-							name="title"
-							control={control}
-							rules={titleRules}
-							label="Название"
-						>
-							{(field) => (
-								<Input
-									{...field}
-									type="text"
-									className="w-full"
-									maxLength={titleRules.maxLength.value}
-								/>
-							)}
-						</Field>
-
-						<Field
-							name="description"
-							control={control}
-							rules={descriptionRules}
-							label="Описание"
-						>
-							{(field) => (
-								<InputText
-									{...field}
-									className="w-full"
-									maxLength={descriptionRules.maxLength.value}
-								/>
-							)}
-						</Field>
-
-						<LabeledInput label="Изображение">
-							<Controller
-								name="image"
-								control={control}
-								render={({ field }) => (
-									<ImageUploader
-										currentUrl={undefined}
-										file={field.value}
-										onChange={(f) => {
-											field.onChange(f);
-										}}
-										variant="free"
-									/>
-								)}
-							/>
-						</LabeledInput>
-					</TextField>
-					<TextField title="Время и место" isShrinkable={false}>
-						<div className="grid grid-cols-2 gap-4">
-							<LabeledInput label="Формат">
-								<Controller
-									name="format"
-									control={control}
-									render={({ field }) => (
-										<Dropdown
-											label=""
-											options={FORMAT_OPTIONS}
-											value={field.value}
-											onChange={(v) =>
-												field.onChange(
-													v ?? SessionFormat.Offline,
-												)
-											}
-											fullWidth
-										/>
-									)}
-								/>
-							</LabeledInput>
-							<LabeledInput label="Адрес">
-								<Input
-									{...register("location")}
-									type="text"
-									placeholder="Город, улица, дом"
-									className="w-full"
-									disabled={format === SessionFormat.Online}
-								/>
-							</LabeledInput>
-						</div>
-						<div className="grid grid-cols-3 gap-4">
-							<LabeledInput label="Дата">
-								<Input
-									{...register("scheduledAt")}
-									type="date"
-									className="w-full"
-								/>
-							</LabeledInput>
-							<LabeledInput label="Время начала">
-								<Input
-									{...register("startTime")}
-									type="time"
-									className="w-full"
-									placeholder="19:00"
-								/>
-							</LabeledInput>
-							<LabeledInput label="Длительность">
-								<Input
-									{...register("durationHours", {
-										valueAsNumber: true,
-									})}
-									type="number"
-									min={1}
-									max={24}
-									step={0.5}
-									placeholder="4 часа"
-									className="w-full"
-								/>
-							</LabeledInput>
-						</div>
-					</TextField>
-					<TextField title="Бронь" isShrinkable={false}>
-						<Field
-							name="maxSeats"
-							control={control}
-							rules={seatsRules}
-							label="Количество мест"
-						>
-							{(field) => (
-								<Input
-									{...field}
-									type="number"
-									min={seatsRules.min.value}
-									max={seatsRules.max.value}
-									className="w-full"
-									onChange={(e) =>
-										field.onChange(Number(e.target.value))
-									}
-								/>
-							)}
-						</Field>
-						<LabeledInput label="Цена">
-							<div className="flex items-center gap-4">
-								<Input
-									{...register("price")}
-									type="number"
-									min={0}
-									placeholder="1000"
-									className="flex-1"
-									disabled={isFree}
-								/>
-								<label className="flex items-center gap-2 text-base text-(--text-primary) cursor-pointer select-none">
-									<input
-										type="checkbox"
-										{...register("isFree")}
-										onChange={(e) => {
-											setValue(
-												"isFree",
-												e.target.checked,
-												{ shouldDirty: true },
-											);
-											if (e.target.checked)
-												setValue("price", "");
-										}}
-										className="accent-(--accent) w-4 h-4"
-									/>
-									Бесплатно
-								</label>
-							</div>
-						</LabeledInput>
-						<LabeledInput label="Доступность">
-							<div className="grid grid-cols-3 gap-2">
-								{AVAILABILITY_OPTIONS.map((opt) => (
-									<FilterToggle
-										key={opt.value}
-										label={opt.label}
-										isActive={opt.value === availability}
-										onChange={() =>
-											setValue(
-												"availability",
-												opt.value,
-												{ shouldDirty: true },
-											)
-										}
-									/>
-								))}
-							</div>
-							<p className="mt-2 text-sm text-(--text-muted) text-center">
-								{
-									AVAILABILITY_OPTIONS.find(
-										(o) => o.value === availability,
-									)?.hint
-								}
-							</p>
-						</LabeledInput>
-					</TextField>
+				<section className="flex flex-1 flex-col gap-4 min-w-0">
+					<CampaignTieField
+						control={control}
+						options={campaignOptions}
+						selectedCampaign={campaign}
+						newCampaignMenu={newCampaignMenu}
+						onToggleNewCampaign={() => toggleNewCampaign((o) => !o)}
+						onCampaignCreated={handleCampaignCreated}
+						onDraftDirtyChange={setCampaignDraftDirty}
+						onEndReached={() => {
+							if (
+								campaignsQuery.hasNextPage &&
+								!campaignsQuery.isFetchingNextPage
+							) {
+								campaignsQuery.fetchNextPage();
+							}
+						}}
+					/>
+					<SessionFormFields
+						control={control}
+						register={register}
+						setValue={setValue}
+						lockedSystem={campaign?.system ?? null}
+					/>
 				</section>
 				<section className="flex w-2/5 flex-col gap-4 sticky top-(--header-h) pt-6 self-start">
 					<TextField title="Предпросмотр" isShrinkable={false}>
 						<SessionPreview
-							values={
-								watchedValues as Partial<CreateSessionInput>
-							}
+							values={watchedValues as Partial<SessionFormValues>}
 							campaign={campaign}
 						/>
 					</TextField>

@@ -33,6 +33,11 @@ type DropdownProps = {
 	disabled?: boolean;
 	fullWidth?: boolean;
 	onEndReached?: () => void;
+	renderTrigger?: (args: {
+		isOpen: boolean;
+		toggle: () => void;
+		displayText: string;
+	}) => React.ReactNode;
 } & (SingleSelectProps | MultiSelectProps);
 
 function getDisplayText(props: DropdownProps): string {
@@ -134,16 +139,21 @@ export default function Dropdown(props: DropdownProps) {
 	const { label, labelIcon, options, className, disabled } = props;
 	const [isOpen, setIsOpen] = useState(false);
 	const containerRef = useRef<HTMLDivElement>(null);
-	const triggerRef = useRef<HTMLButtonElement>(null);
+	const anchorRef = useRef<HTMLElement | null>(null);
+	const setAnchor = useCallback((el: HTMLElement | null) => {
+		anchorRef.current = el;
+	}, []);
 	const listRef = useRef<HTMLDivElement>(null);
 
 	const close = useCallback(() => setIsOpen(false), []);
 	useClickOutside(containerRef, isOpen, close, listRef);
-	const pos = useAnchoredPosition(triggerRef, isOpen);
+	const pos = useAnchoredPosition(anchorRef, isOpen);
 
 	const { ref: endRef, inView } = useInView({ rootMargin: "120px 0px" });
 	const onEndReachedRef = useRef(props.onEndReached);
-	onEndReachedRef.current = props.onEndReached;
+	useEffect(() => {
+		onEndReachedRef.current = props.onEndReached;
+	});
 	useEffect(() => {
 		if (inView) onEndReachedRef.current?.();
 	}, [inView]);
@@ -170,46 +180,60 @@ export default function Dropdown(props: DropdownProps) {
 		props.onChange(next);
 	}
 
+	const toggle = () => setIsOpen((o) => !o);
+
 	return (
 		<div ref={containerRef} className={clsx("relative", className)}>
-			<button
-				ref={triggerRef}
-				type="button"
-				className={clsx(
-					props.fullWidth && "w-full justify-center h-12",
-					"inline-flex items-center gap-2 h-10 rounded-xl border border-(--border) px-4 bg-(--bg-surface) cursor-pointer transition-colors duration-200 hover:bg-(--bg-elevated) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--accent) focus-visible:ring-offset-2 focus-visible:ring-offset-(--bg-base) disabled:opacity-50 disabled:pointer-events-none",
-				)}
-				disabled={disabled}
-				onClick={() => setIsOpen((o) => !o)}
-				onKeyDown={(e) => {
-					if (e.key === "Escape" && isOpen) {
-						e.stopPropagation();
-						setIsOpen(false);
-					}
-				}}
-			>
-				{labelIcon && (
-					<Icon name={labelIcon} className="text-(--accent)" />
-				)}
-				{label !== "" && (
-					<span className="text-base font-body uppercase text-(--text-muted)">
-						{label + ":"}
-					</span>
-				)}
-				<span className="grid text-base font-body text-(--text-secondary) *:col-start-1 *:row-start-1 max-w-40 overflow-hidden">
-					<span className="invisible truncate">
-						{props.placeholder ?? "Все"}
-					</span>
-					<span className="truncate">{getDisplayText(props)}</span>
+			{props.renderTrigger ? (
+				<span ref={setAnchor} className="inline-flex">
+					{props.renderTrigger({
+						isOpen,
+						toggle,
+						displayText: getDisplayText(props),
+					})}
 				</span>
-				<Icon
-					name="expand_more"
+			) : (
+				<button
+					ref={setAnchor}
+					type="button"
 					className={clsx(
-						"text-lg! text-(--text-muted)! transition-transform duration-200",
-						isOpen && "rotate-180",
+						props.fullWidth && "w-full justify-center h-12",
+						"inline-flex items-center gap-2 h-10 rounded-xl border border-(--border) px-4 bg-(--bg-surface) cursor-pointer transition-colors duration-200 hover:bg-(--bg-elevated) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--accent) focus-visible:ring-offset-2 focus-visible:ring-offset-(--bg-base) disabled:opacity-50 disabled:pointer-events-none",
 					)}
-				/>
-			</button>
+					disabled={disabled}
+					onClick={toggle}
+					onKeyDown={(e) => {
+						if (e.key === "Escape" && isOpen) {
+							e.stopPropagation();
+							setIsOpen(false);
+						}
+					}}
+				>
+					{labelIcon && (
+						<Icon name={labelIcon} className="text-(--accent)" />
+					)}
+					{label !== "" && (
+						<span className="text-base font-body uppercase text-(--text-muted)">
+							{label + ":"}
+						</span>
+					)}
+					<span className="grid text-base font-body text-(--text-secondary) *:col-start-1 *:row-start-1 max-w-40 overflow-hidden">
+						<span className="invisible truncate">
+							{props.placeholder ?? "Все"}
+						</span>
+						<span className="truncate">
+							{getDisplayText(props)}
+						</span>
+					</span>
+					<Icon
+						name="expand_more"
+						className={clsx(
+							"text-lg! text-(--text-muted)! transition-transform duration-200",
+							isOpen && "rotate-180",
+						)}
+					/>
+				</button>
+			)}
 
 			{isOpen &&
 				pos &&

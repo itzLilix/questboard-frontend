@@ -12,14 +12,13 @@ import NewSessionPage from "./features/session/NewSessionPage";
 import SessionsPage from "./features/session/SessionsCatalog";
 import SessionLayout from "./features/session/SessionLayout";
 import {
-	CampaignTab,
 	ChatTab,
-	EditTab,
 	NotesTab,
 	PlayTab,
 	VTTTab,
 } from "./features/session/sessionTabs/sessionTabs";
 import { InfoTab } from "./features/session/sessionTabs/InfoTab";
+import { EditTab } from "./features/session/sessionTabs/EditTab";
 import { useCuratedSystemsQuery } from "./features/session/queries";
 import SettingsLayout from "./features/settings/SettingsLayout";
 import ProfileLayout, {
@@ -32,6 +31,7 @@ import MySessionsLayout, {
 	PlayingTab,
 } from "./features/session/MySessions";
 import { SessionScope } from "./features/session/api";
+import { CampaignTab } from "./features/session/sessionTabs/campaignTab";
 
 function App() {
 	useCuratedSystemsQuery();

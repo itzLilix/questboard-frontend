@@ -64,7 +64,6 @@ export function MasteringTab() {
 	);
 	const upcomingQuery = useSessionsQuery({
 		scope: SessionScope.Mastering,
-		type: SessionType.Oneshot,
 		status: StatusFilter.Public,
 		dateFrom: now,
 		sort: SessionSortBy.ScheduledAt,

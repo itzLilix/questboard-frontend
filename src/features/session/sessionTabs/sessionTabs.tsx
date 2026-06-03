@@ -15,15 +15,6 @@ function Placeholder({ title, hint }: PlaceholderProps) {
 	);
 }
 
-export function CampaignTab() {
-	return (
-		<Placeholder
-			title="Кампейн"
-			hint="Контекст кампейна и связанных сессий. Видно всем, если сессия принадлежит кампейну."
-		/>
-	);
-}
-
 export function ChatTab() {
 	return (
 		<Placeholder
@@ -60,11 +51,3 @@ export function NotesTab() {
 	);
 }
 
-export function EditTab() {
-	return (
-		<Placeholder
-			title="Изменить сессию"
-			hint="Форма редактирования. Доступно только мастеру."
-		/>
-	);
-}

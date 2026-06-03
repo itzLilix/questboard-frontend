@@ -83,6 +83,36 @@ export async function createSession(
 	return data;
 }
 
+export type UpdateSessionPayload = {
+	title?: string;
+	description?: string;
+	address?: string;
+	format?: SessionFormat;
+	availability?: SessionAvailability;
+	systemId?: string;
+	scheduledAt?: string;
+	durationHours?: number;
+	lat?: number;
+	lng?: number;
+	maxSeats?: number;
+	price?: number;
+};
+
+export async function updateSession(
+	id: string,
+	payload: UpdateSessionPayload,
+): Promise<ISession> {
+	const { data } = await sessionApi.patch<ISession>(
+		`/sessions/${id}`,
+		payload,
+	);
+	return data;
+}
+
+export async function deleteSession(id: string): Promise<void> {
+	await sessionApi.delete(`/sessions/${id}`);
+}
+
 export async function changeSessionStatus(
 	id: string,
 	status: SessionStatus,
@@ -193,6 +223,44 @@ export type CampaignsListResponse = {
 	nextCursor: string | null;
 };
 
+export async function fetchCampaign(id: string): Promise<ICampaign> {
+	const { data } = await sessionApi.get<ICampaign>(`/campaigns/${id}`);
+	return data;
+}
+
+export type UpdateCampaignPayload = {
+	title?: string;
+	description?: string;
+	availability?: CampaignAvailability;
+	systemId?: string;
+};
+
+export async function updateCampaign(
+	id: string,
+	payload: UpdateCampaignPayload,
+): Promise<ICampaign> {
+	const { data } = await sessionApi.patch<ICampaign>(
+		`/campaigns/${id}`,
+		payload,
+	);
+	return data;
+}
+
+export async function changeCampaignStatus(
+	id: string,
+	status: CampaignStatus,
+): Promise<ICampaign> {
+	const { data } = await sessionApi.patch<ICampaign>(
+		`/campaigns/${id}/status`,
+		{ status },
+	);
+	return data;
+}
+
+export async function deleteCampaign(id: string): Promise<void> {
+	await sessionApi.delete(`/campaigns/${id}`);
+}
+
 export async function fetchCampaigns(
 	params: CampaignListQuery,
 ): Promise<CampaignsListResponse> {
@@ -222,4 +290,33 @@ export type TieSessionQuery = {
 
 export async function tieSession(campaignId: string, payload: TieSessionQuery) {
 	await sessionApi.post(`/campaigns/${campaignId}/sessions`, payload);
+}
+
+export type EditTiePayload = {
+	briefDescription?: string;
+};
+
+export async function editTie(
+	campaignId: string,
+	sessionId: string,
+	payload: EditTiePayload,
+) {
+	await sessionApi.patch(
+		`/campaigns/${campaignId}/sessions/${sessionId}`,
+		payload,
+	);
+}
+
+export async function untieSession(campaignId: string, sessionId: string) {
+	await sessionApi.delete(`/campaigns/${campaignId}/sessions/${sessionId}`);
+}
+
+export async function reorderCampaignSessions(
+	campaignId: string,
+	orderedSessionIds: string[],
+) {
+	await sessionApi.put(
+		`/campaigns/${campaignId}/sessions/order`,
+		orderedSessionIds,
+	);
 }

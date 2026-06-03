@@ -94,7 +94,7 @@ function TableCard({
 						isFollowed={profileData.isFollowed}
 						isOwner={false}
 						username={profileData.username}
-						className="relative z-1 mt-auto w-full"
+						className="relative z-1 w-full"
 					/>
 				)}
 			</div>

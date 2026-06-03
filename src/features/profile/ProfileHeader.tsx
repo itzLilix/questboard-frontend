@@ -88,7 +88,7 @@ export function ProfileInfo({ profile, isOwner }: ProfileInfoProps) {
 			</div>
 			<TextField title="О себе" isShrinkable={true}>
 				{
-					<p className="text-base font-body text-(--text-primary)">
+					<p className="text-base font-body text-(--text-primary) wrap-break-word min-w-0">
 						{profile.bio ||
 							"Пользователь не указал информацию о себе."}
 					</p>

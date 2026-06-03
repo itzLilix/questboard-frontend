@@ -75,6 +75,15 @@ export function dateKey(iso: string | undefined): string {
 	return `${y}-${m}-${d}`;
 }
 
+export function combineDateTime(
+	date: string | undefined,
+	time: string | undefined,
+): string | undefined {
+	if (!date) return undefined;
+	const local = new Date(`${date}T${time || "00:00"}:00`);
+	return isNaN(local.getTime()) ? undefined : local.toISOString();
+}
+
 export function splitDatetime(
 	iso: string | undefined,
 	withTz?: boolean,
