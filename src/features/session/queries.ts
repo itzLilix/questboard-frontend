@@ -21,6 +21,7 @@ import {
 	fetchCuratedSystems,
 	fetchSession,
 	fetchSessions,
+	joinSession,
 	reorderCampaignSessions,
 	searchSystems,
 	tieSession,
@@ -335,5 +336,16 @@ export function useFetchSessionQuery(id: string | undefined) {
 		queryKey: sessionKeys.detail(id ?? ""),
 		queryFn: () => fetchSession(id!),
 		enabled: !!id,
+	});
+}
+
+export function useJoinSessionMutation() {
+	const qc = useQueryClient();
+
+	return useMutation({
+		mutationFn: (sessionId: string) => joinSession(sessionId),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: sessionKeys.all });
+		},
 	});
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import TextField from "../../../components/ui/TextField";
@@ -28,8 +28,6 @@ import {
 	splitDatetime,
 } from "../../../utils/dateFormats";
 import { SESSION_STATUS_OPTIONS } from "../../../utils/words";
-import { AccessLevel } from "../access";
-import { useSessionRole } from "../SessionContext";
 
 function EditTabForm({ sessionData }: { sessionData: SessionResponse }) {
 	const { session, campaign: tied } = sessionData;
@@ -52,20 +50,10 @@ function EditTabForm({ sessionData }: { sessionData: SessionResponse }) {
 	const [confirmingDelete, setConfirmingDelete] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
-	const { time } = splitDatetime(session.scheduledAt);
-	const dk = dateKey(session.scheduledAt);
-
-	const {
-		control,
-		handleSubmit,
-		register,
-		setValue,
-		watch,
-		reset,
-		formState,
-	} = useForm<SessionFormValues>({
-		mode: "onTouched",
-		defaultValues: {
+	const defaultValues = useMemo<SessionFormValues>(() => {
+		const { time } = splitDatetime(session.scheduledAt);
+		const dk = dateKey(session.scheduledAt);
+		return {
 			campaignId: tied?.campaignId ?? null,
 			title: session.title,
 			description: session.description ?? "",
@@ -80,7 +68,20 @@ function EditTabForm({ sessionData }: { sessionData: SessionResponse }) {
 			price: session.price === 0 ? "" : String(session.price),
 			isFree: session.price === 0,
 			availability: session.availability,
-		},
+		};
+	}, [session, tied]);
+
+	const {
+		control,
+		handleSubmit,
+		register,
+		setValue,
+		watch,
+		reset,
+		formState,
+	} = useForm<SessionFormValues>({
+		mode: "onTouched",
+		defaultValues,
 	});
 
 	const campaignId = watch("campaignId");
@@ -181,6 +182,7 @@ function EditTabForm({ sessionData }: { sessionData: SessionResponse }) {
 					setError(
 						"Не удалось сохранить изменения. Попробуйте ещё раз.",
 					),
+				onSuccess: () => reset(v),
 			},
 		);
 	};
@@ -211,7 +213,7 @@ function EditTabForm({ sessionData }: { sessionData: SessionResponse }) {
 	};
 
 	const onCancel = () => {
-		reset();
+		reset(defaultValues);
 		setStatus(session.status);
 		setError(null);
 		setConfirmingDelete(false);
@@ -257,74 +259,67 @@ function EditTabForm({ sessionData }: { sessionData: SessionResponse }) {
 				lockedSystem={lockedSystem}
 			/>
 
-			{error && (
-				<p className="text-sm text-(--error) text-center">{error}</p>
-			)}
-
-			<div className="flex items-center justify-between gap-3">
-				{confirmingDelete ? (
-					<div className="flex items-center gap-3">
-						<span className="text-sm text-(--text-secondary)">
-							Удалить сессию?
-						</span>
+			<nav className="sticky bottom-0 bg-(--bg-base) pt-4 px-6 transform border-t border-(--border)">
+				<div className="flex items-center justify-between gap-3">
+					{confirmingDelete ? (
+						<div className="flex items-center gap-3">
+							<span className="text-sm text-(--text-secondary)">
+								Удалить сессию?
+							</span>
+							<Button
+								onClick={() => setConfirmingDelete(false)}
+								disabled={deleting}
+							>
+								Нет
+							</Button>
+							<Button
+								variant="primary"
+								className="bg-(--error)! hover:bg-(--error)!"
+								onClick={onDelete}
+								disabled={deleting}
+							>
+								{deleting ? "Удаление..." : "Да, удалить"}
+							</Button>
+						</div>
+					) : (
 						<Button
-							onClick={() => setConfirmingDelete(false)}
-							disabled={deleting}
+							className="text-(--error)!"
+							onClick={() => setConfirmingDelete(true)}
+							disabled={saving}
 						>
-							Нет
+							<Icon name="delete" className="text-base! pr-2" />
+							Удалить
+						</Button>
+					)}
+
+					<div className="flex items-center gap-3">
+						<Button
+							onClick={onCancel}
+							disabled={!isDirty || saving}
+						>
+							Отмена
 						</Button>
 						<Button
 							variant="primary"
-							className="bg-(--error)! hover:bg-(--error)!"
-							onClick={onDelete}
-							disabled={deleting}
+							onClick={handleSubmit(onSave)}
+							disabled={!isDirty || saving}
 						>
-							{deleting ? "Удаление..." : "Да, удалить"}
+							{saving ? "Сохранение..." : "Сохранить"}
 						</Button>
 					</div>
-				) : (
-					<Button
-						className="text-(--error)!"
-						onClick={() => setConfirmingDelete(true)}
-						disabled={saving}
-					>
-						<Icon name="delete" className="text-base! pr-2" />
-						Удалить
-					</Button>
-				)}
-
-				<div className="flex items-center gap-3">
-					<Button onClick={onCancel} disabled={!isDirty || saving}>
-						Отмена
-					</Button>
-					<Button
-						variant="primary"
-						onClick={handleSubmit(onSave)}
-						disabled={!isDirty || saving}
-					>
-						{saving ? "Сохранение..." : "Сохранить"}
-					</Button>
 				</div>
-			</div>
+				{error && (
+					<p className="text-sm text-(--error) text-center">
+						{error}
+					</p>
+				)}
+			</nav>
 		</form>
 	);
 }
 
 export function EditTab() {
 	const [sessionData] = useOutletContext<[SessionResponse]>();
-	const { role } = useSessionRole();
-	const navigate = useNavigate();
-	const canEdit = role.can(AccessLevel.Edit);
-
-	useEffect(() => {
-		if (!canEdit) {
-			navigate(`/sessions/${sessionData.session.id}/info`, {
-				replace: true,
-			});
-		}
-	}, [canEdit, navigate, sessionData.session.id]);
-
-	if (!canEdit) return null;
 
 	return <EditTabForm sessionData={sessionData} />;
 }

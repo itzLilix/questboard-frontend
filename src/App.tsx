@@ -12,7 +12,7 @@ import NewSessionPage from "./features/session/NewSessionPage";
 import SessionsPage from "./features/session/SessionsCatalog";
 import SessionLayout from "./features/session/SessionLayout";
 import {
-	ChatTab,
+	ApplicationsTab,
 	NotesTab,
 	PlayTab,
 	VTTTab,
@@ -31,7 +31,8 @@ import MySessionsLayout, {
 	PlayingTab,
 } from "./features/session/MySessions";
 import { SessionScope } from "./features/session/api";
-import { CampaignTab } from "./features/session/sessionTabs/campaignTab";
+import { CampaignTab } from "./features/session/sessionTabs/CampaignTab";
+import { ChatTab } from "./features/session/sessionTabs/ChatsTab";
 
 function App() {
 	useCuratedSystemsQuery();
@@ -62,6 +63,7 @@ function App() {
 				<Route path="/sessions" element={<SessionsPage />} />
 				<Route path="/sessions/:id" element={<SessionLayout />}>
 					<Route index element={<Navigate to="info" replace />} />
+					<Route path="*" element={<Navigate to="info" replace />} />
 					<Route path="info" element={<InfoTab />} />
 					<Route path="campaign" element={<CampaignTab />} />
 					<Route path="chat" element={<ChatTab />} />
@@ -69,6 +71,7 @@ function App() {
 					<Route path="vtt" element={<VTTTab />} />
 					<Route path="notes" element={<NotesTab />} />
 					<Route path="edit" element={<EditTab />} />
+					<Route path="applications" element={<ApplicationsTab />} />
 				</Route>
 				<Route element={<RequireAuth />}>
 					<Route path="/sessions/new" element={<NewSessionPage />} />

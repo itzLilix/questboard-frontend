@@ -1,16 +1,18 @@
-import { Link, NavLink, Outlet, useParams } from "react-router-dom";
+import {
+	Link,
+	Navigate,
+	NavLink,
+	Outlet,
+	useLocation,
+	useParams,
+} from "react-router-dom";
 import clsx from "clsx";
 import Icon from "../../components/ui/Icon";
-import {
-	AccessLevel,
-	roleFor,
-	SessionRelation,
-	type SessionRole,
-} from "./access";
+import { AccessLevel, roleFor, SessionRelation, SessionRole } from "./access";
 import useAuth from "../../hooks/useAuth";
 import { useFetchSessionQuery } from "./queries";
-import Loading from "../../components/ui/Loading";
 import {
+	SessionAvailability,
 	SessionType,
 	type IPlayer,
 	type SessionResponse,
@@ -24,12 +26,15 @@ import type { IUser } from "../../types/user";
 import Rating from "../../components/ui/UserRating";
 import TextSeparator from "../../components/ui/TextSeparator";
 import { pluralPartiy } from "../../utils/words";
+import EmptyState from "../../components/ui/EmptyState";
+import ListLoading from "../../components/ui/ListLoading";
 
 type TabDef = {
 	to: string;
 	label: string;
 	icon: string;
 	minAccess: AccessLevel;
+	canAsAdmin?: boolean;
 	available?: (sessionData: SessionResponse) => boolean;
 };
 
@@ -39,6 +44,7 @@ const TABS: TabDef[] = [
 		label: "Инфо",
 		icon: "menu_book",
 		minAccess: AccessLevel.View,
+		canAsAdmin: true,
 	},
 	{
 		to: "chat",
@@ -66,18 +72,44 @@ const TABS: TabDef[] = [
 		available: (s) => s.session.type === SessionType.Campaign,
 	},
 	{
+		to: "applications",
+		label: "Заявки",
+		icon: "assignment",
+		minAccess: AccessLevel.Edit,
+		available: (s) =>
+			s.session.availability === SessionAvailability.Application,
+	},
+	{
 		to: "edit",
 		label: "Изменить",
 		icon: "settings",
 		minAccess: AccessLevel.Edit,
+		canAsAdmin: true,
 	},
 	{ to: "vtt", label: "VTT", icon: "map", minAccess: AccessLevel.Access },
 ];
 
-function visibleFor(role: SessionRole, sessionData: SessionResponse): TabDef[] {
-	return TABS.filter(
-		(t) => role.can(t.minAccess) && (t.available?.(sessionData) ?? true),
+function canSeeTab(
+	tab: TabDef,
+	role: SessionRole,
+	sessionData: SessionResponse,
+): boolean {
+	return (
+		role.can(tab.minAccess, tab.canAsAdmin) &&
+		(tab.available?.(sessionData) ?? true)
 	);
+}
+
+export function AccessGate({ children }: { children: React.ReactNode }) {
+	const { role, sessionData } = useSessionRole();
+	const { pathname } = useLocation();
+	const last = pathname.split("/").at(-1);
+	const activeTab = TABS.find((t) => t.to === last);
+
+	const allowed = activeTab && canSeeTab(activeTab, role, sessionData);
+
+	if (!allowed) return <Navigate to="info" replace />;
+	return <>{children}</>;
 }
 
 export default function SessionLayout() {
@@ -90,11 +122,7 @@ export default function SessionLayout() {
 	} = useFetchSessionQuery(sessionId);
 
 	if (sessionId && (sessionLoading || userLoading)) {
-		return (
-			<div className="flex justify-center py-12">
-				<Loading />
-			</div>
-		);
+		return <ListLoading />;
 	}
 	if (isError) {
 		return (
@@ -102,26 +130,24 @@ export default function SessionLayout() {
 		);
 	}
 	if (!sessionId || !sessionData) {
-		return (
-			<div className="flex justify-center py-12">
-				<p className="text-(--text-muted)">Сессия не найдена</p>
-			</div>
-		);
+		return <EmptyState text="Сессия не найдена" />;
 	}
 
 	const role = roleFor(user, sessionData);
-	const visibleTabs = visibleFor(role, sessionData);
+	const visibleTabs = TABS.filter((t) => canSeeTab(t, role, sessionData));
 
 	return (
 		<SessionProvider role={role} sessionData={sessionData}>
-			<main className="max-w-1600 mx-auto px-4 py-6 flex gap-4 items-start">
+			<main className="max-w-1600 mx-auto px-4 py-6 flex gap-4 h-[calc(100dvh-var(--header-h))]">
 				<TabRail tabs={visibleTabs} />
 
-				<section className="flex-1 min-w-0 flex flex-col gap-4">
-					<SessionHeader user={user} />
-					<div className="p-6 min-h-96">
-						<Outlet context={[sessionData]} />
-					</div>
+				<section className="flex-1 min-w-0 min-h-0 overflow-y-auto flex flex-col gap-4">
+					<AccessGate>
+						<SessionHeader user={user} />
+						<div className="px-4 flex-1 min-h-0">
+							<Outlet context={[sessionData]} />
+						</div>
+					</AccessGate>
 				</section>
 
 				<RightRail
@@ -141,7 +167,7 @@ export default function SessionLayout() {
 
 function TabRail({ tabs }: { tabs: TabDef[] }) {
 	return (
-		<aside className="w-24 shrink-0 flex flex-col gap-3 sticky top-[calc(var(--header-h)+1rem)]">
+		<aside className="w-24 shrink-0 min-h-0 overflow-y-auto flex flex-col gap-3">
 			{tabs.map((t) => (
 				<NavLink
 					key={t.to}
@@ -213,7 +239,7 @@ function RightRail({
 	const occupied = seats.max - seats.free;
 
 	return (
-		<aside className="w-80 shrink-0 flex flex-col gap-6 sticky top-[calc(var(--header-h)+1rem)]">
+		<aside className="w-80 shrink-0 min-h-0 overflow-y-auto flex flex-col gap-6">
 			<RailSection title="Мастер">
 				<ParticipantCard
 					key={masterId}
@@ -292,7 +318,7 @@ function ParticipantCard({
 					</span>
 				)}
 			</div>
-			{role.can(AccessLevel.Access) && !isViewer && (
+			{role.isParticipant() && !isViewer && (
 				<Icon name="chat" className="text-(--accent)!" />
 			)}
 		</div>

@@ -26,6 +26,7 @@ export default function Input({
 			`}
 			disabled={disabled}
 			{...props}
+			onWheel={(e) => (e.currentTarget as HTMLInputElement).blur()}
 		/>
 	);
 }

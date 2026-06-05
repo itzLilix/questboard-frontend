@@ -47,7 +47,6 @@ export default function SystemSearch(props: SystemSearchProps) {
 	const anchorRef = useRef<HTMLDivElement>(null);
 	const listRef = useRef<HTMLDivElement>(null);
 
-	// Sync input with externally changed single value
 	const singleValue = !isMulti ? props.value : null;
 	const [prevSingle, setPrevSingle] = useState(singleValue);
 	if (!isMulti && prevSingle !== singleValue) {

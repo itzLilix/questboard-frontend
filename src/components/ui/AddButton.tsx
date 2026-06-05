@@ -16,7 +16,7 @@ export default function AddButton({
 			onClick={onClick}
 			className={`rounded-full 
                 w-12 h-12 
-                bg-(--surface) p-3 
+                bg-(--bg-surface) p-3 
                 border border-(--border) 
                 cursor-pointer 
                 hover:bg-(--bg-elevated) 

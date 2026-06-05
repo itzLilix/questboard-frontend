@@ -1,11 +1,11 @@
-import { Link, useNavigate, useOutletContext } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
 	useCampaignDetailQuery,
 	useDeleteCampaignMutation,
 	useSaveCampaignMutation,
 } from "../queries";
 import ListLoading from "../../../components/ui/ListLoading";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { Controller, useForm, type Control } from "react-hook-form";
 import { formatDate } from "../../../utils/dateFormats";
 import CollapsibleSection from "../../../components/ui/CollapsibleSection";
@@ -25,7 +25,6 @@ import { useSessionRole } from "../SessionContext";
 import Button from "../../../components/ui/Button";
 import Dropdown from "../../../components/ui/Dropdown";
 import { AccessLevel } from "../access";
-import type { SessionResponse } from "../../../types/session";
 import type { UpdateCampaignPayload } from "../api";
 import InlineTextArea from "../../../components/ui/inputs/InlineTextArea";
 import InlineInput from "../../../components/ui/inputs/InlineInput";
@@ -54,7 +53,6 @@ const AVAILABILITY_OPTIONS = Object.values(CampaignAvailability).map(
 	}),
 );
 
-// Locks dragging to the vertical axis (x is fixed).
 class RestrictToVerticalAxis extends Modifier {
 	apply({ transform }: DragOperation) {
 		return { ...transform, x: 0 };
@@ -62,8 +60,7 @@ class RestrictToVerticalAxis extends Modifier {
 }
 
 export function CampaignTab() {
-	const [sessionData] = useOutletContext<[SessionResponse]>();
-	const { role } = useSessionRole();
+	const { role, sessionData } = useSessionRole();
 	const { session, campaign } = sessionData;
 	const { data, isLoading } = useCampaignDetailQuery(campaign?.campaignId);
 	const navigate = useNavigate();
@@ -87,13 +84,7 @@ export function CampaignTab() {
 	const [confirmingDelete, setConfirmingDelete] = useState(false);
 	const [orderedIds, setOrderedIds] = useState<string[]>([]);
 
-	const canEdit = role.can(AccessLevel.Edit);
-
-	useEffect(() => {
-		if (!campaign) {
-			navigate(`/sessions/${session.id}/info`);
-		}
-	}, [campaign, session.id, navigate]);
+	const canEdit = role.can(AccessLevel.Edit, true);
 
 	const orderedSessions = useMemo(() => {
 		const sorted = [...(data?.sessions ?? [])].sort(
@@ -234,7 +225,7 @@ export function CampaignTab() {
 		if (!campaign?.campaignId) return;
 		try {
 			await deleteMutation.mutateAsync(campaign.campaignId);
-			navigate(`/sessions/${session.id}/info`);
+			navigate(`/sessions/${session.id}/info`, { replace: true });
 		} catch {
 			// surfaced via deleteMutation.isError below
 		}

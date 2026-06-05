@@ -13,6 +13,7 @@ import {
 import useAuth from "../../../hooks/useAuth";
 import { useAuthModal } from "../../../features/auth/authModalStore";
 import { formatDatetime } from "../../../utils/dateFormats";
+import { useJoinSessionMutation } from "../../../features/session/queries";
 
 const DEFAULT_BADGE_COLOR = "var(--border)";
 
@@ -177,6 +178,9 @@ export function ApplyButton({
 	isParticipant: boolean;
 	sessionId: string;
 }) {
+	const { open: openAuthModal } = useAuthModal();
+	const join = useJoinSessionMutation();
+
 	if (isParticipant) {
 		return (
 			<Button
@@ -198,7 +202,7 @@ export function ApplyButton({
 				disabled={disabled}
 				onClick={() => {
 					if (!isAutenticated) {
-						useAuthModal().open("login");
+						openAuthModal("login");
 						return;
 					}
 					// apply
@@ -218,10 +222,12 @@ export function ApplyButton({
 			disabled={disabled}
 			onClick={() => {
 				if (!isAutenticated) {
-					useAuthModal().open("login");
+					openAuthModal("login");
 					return;
 				}
-				// join
+
+				console.log("click");
+				join.mutate(sessionId);
 			}}
 		>
 			Вступить

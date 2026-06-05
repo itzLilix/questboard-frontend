@@ -35,14 +35,13 @@ export class SessionRole {
 	}
 
 	get level(): AccessLevel {
-		const base = RELATION_LEVEL[this.relation];
-		return this.isAdmin && AccessLevel.Edit > base
-			? AccessLevel.Edit
-			: base;
+		return RELATION_LEVEL[this.relation];
 	}
 
-	can(required: AccessLevel): boolean {
-		return this.level >= required;
+	can(required: AccessLevel, canAsAdmin?: boolean): boolean {
+		return canAsAdmin
+			? this.isAdmin || this.level >= required
+			: this.level >= required;
 	}
 
 	is(relation: SessionRelation): boolean {

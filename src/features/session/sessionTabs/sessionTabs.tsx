@@ -15,15 +15,6 @@ function Placeholder({ title, hint }: PlaceholderProps) {
 	);
 }
 
-export function ChatTab() {
-	return (
-		<Placeholder
-			title="Чат"
-			hint="Переписка участников сессии. Доступно мастеру и игрокам."
-		/>
-	);
-}
-
 export function PlayTab() {
 	return (
 		<Placeholder
@@ -51,3 +42,11 @@ export function NotesTab() {
 	);
 }
 
+export function ApplicationsTab() {
+	return (
+		<Placeholder
+			title="Заявки"
+			hint="Заявки на участие в сессии. Доступно мастеру и игрокам."
+		/>
+	);
+}

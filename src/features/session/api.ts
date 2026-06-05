@@ -320,3 +320,7 @@ export async function reorderCampaignSessions(
 		orderedSessionIds,
 	);
 }
+
+export async function joinSession(sessionId: string) {
+	await sessionApi.post(`/sessions/${sessionId}/join`);
+}
