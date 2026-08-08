@@ -8,12 +8,13 @@ import type { IUserBrief } from "../../../types/userCard";
 import {
 	SessionAvailability,
 	SessionFormat,
+	SessionMembership,
 	type ISession,
 } from "../../../types/session";
-import useAuth from "../../../hooks/useAuth";
 import { useAuthModal } from "../../../features/auth/authModalStore";
 import { formatDatetime } from "../../../utils/dateFormats";
 import { useJoinSessionMutation } from "../../../features/session/queries";
+import useAuth from "../../../features/auth/AuthProvider";
 
 const DEFAULT_BADGE_COLOR = "var(--border)";
 
@@ -21,17 +22,20 @@ export type SessionCardProps = {
 	sessionData: ISession;
 	master: IUserBrief | undefined;
 	className?: string;
+	membership?: SessionMembership;
 };
 
 export default function SessionCard({
 	sessionData,
 	master,
 	className,
+	membership,
 }: SessionCardProps) {
 	const navigate = useNavigate();
 	const fallbackBg = sessionData.system.badgeColor || DEFAULT_BADGE_COLOR;
 	const occupied = Math.max(0, sessionData.maxSeats - sessionData.freeSeats);
-
+	//const authUser = null;
+	//const authLoading = false;
 	const { user: authUser, isLoading: authLoading } = useAuth();
 
 	return (
@@ -142,7 +146,7 @@ export default function SessionCard({
 							authLoading || occupied >= sessionData.maxSeats
 						}
 						isAutenticated={!!authUser}
-						isParticipant={authUser?.id === sessionData.masterId}
+						membership={membership}
 						sessionId={sessionData.id}
 					/>
 				</div>
@@ -169,19 +173,22 @@ export function ApplyButton({
 	availability,
 	disabled,
 	isAutenticated,
-	isParticipant,
+	membership,
 	sessionId,
 }: {
 	availability: SessionAvailability;
 	disabled: boolean;
 	isAutenticated: boolean;
-	isParticipant: boolean;
+	membership?: SessionMembership;
 	sessionId: string;
 }) {
 	const { open: openAuthModal } = useAuthModal();
 	const join = useJoinSessionMutation();
 
-	if (isParticipant) {
+	if (
+		membership === SessionMembership.Player ||
+		membership === SessionMembership.Master
+	) {
 		return (
 			<Button
 				variant="secondary"

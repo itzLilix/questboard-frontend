@@ -1,4 +1,4 @@
-import { PlayerStatus, type SessionResponse } from "../../types/session";
+import { SessionMembership, type SessionResponse } from "../../types/session";
 import { type IUser, UserRole } from "../../types/user";
 
 export const AccessLevel = {
@@ -10,19 +10,19 @@ export const AccessLevel = {
 export type AccessLevel = (typeof AccessLevel)[keyof typeof AccessLevel];
 
 export const SessionRelation = {
+	...SessionMembership,
 	Viewer: "viewer",
-	Player: "player",
-	GM: "gm",
-} as const;
+};
 export type SessionRelation =
 	(typeof SessionRelation)[keyof typeof SessionRelation];
 
-const ACTIVE_STATUSES: PlayerStatus[] = [PlayerStatus.Active];
-
 const RELATION_LEVEL: Record<SessionRelation, AccessLevel> = {
 	[SessionRelation.Viewer]: AccessLevel.View,
+	[SessionRelation.Left]: AccessLevel.View,
+	[SessionRelation.Applicant]: AccessLevel.View,
 	[SessionRelation.Player]: AccessLevel.Access,
-	[SessionRelation.GM]: AccessLevel.Edit,
+	[SessionRelation.Master]: AccessLevel.Edit,
+	[SessionRelation.Kicked]: AccessLevel.None,
 };
 
 export class SessionRole {
@@ -53,7 +53,7 @@ export class SessionRole {
 	}
 
 	isParticipant(): boolean {
-		return this.in([SessionRelation.Player, SessionRelation.GM]);
+		return this.in([SessionRelation.Player, SessionRelation.Master]);
 	}
 }
 
@@ -65,15 +65,7 @@ export function roleFor(
 		return new SessionRole(SessionRelation.Viewer, false);
 	}
 	const isAdmin = user.role === UserRole.Admin;
-	if (sessionData.session.masterId === user.id) {
-		return new SessionRole(SessionRelation.GM, isAdmin);
-	}
-	if (sessionData.players.some(isActiveParticipant(user.id))) {
-		return new SessionRole(SessionRelation.Player, isAdmin);
-	}
-	return new SessionRole(SessionRelation.Viewer, isAdmin);
+	const relation = (sessionData.membership ||
+		SessionRelation.Viewer) as SessionRelation;
+	return new SessionRole(relation, isAdmin);
 }
-
-const isActiveParticipant =
-	(userId: string) => (p: SessionResponse["players"][number]) =>
-		p.playerId === userId && ACTIVE_STATUSES.includes(p.status);

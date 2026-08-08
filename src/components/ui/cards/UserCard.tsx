@@ -10,8 +10,8 @@ import SystemBadgesRow from "./SystemBadgesRow";
 import { formatDateRelative } from "../../../utils/dateFormats";
 import { FORMAT_LABEL, pluralPartiy, TYPE_LABEL } from "../../../utils/words";
 import { CardLine } from "./CardLine";
-import useAuth from "../../../hooks/useAuth";
 import Button from "../Button";
+import useAuth from "../../../features/auth/AuthProvider";
 
 export type userCardProps = {
 	profileData: IUserCard;

@@ -1,7 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import Button from "../ui/Button";
 import Input from "../ui/inputs/Input";
-import useAuth from "../../hooks/useAuth";
 import NotificationBell from "../../features/notifications/NotificationBell";
 import Loading from "../ui/Loading";
 import AvatarImage from "../ui/AvatarImage";
@@ -12,6 +11,7 @@ import type { IUser } from "../../types/user";
 import { useLogoutMutation } from "../../features/auth/queries";
 import { useAuthModal } from "../../features/auth/authModalStore";
 import Logo from "../ui/Logo";
+import useAuth from "../../features/auth/AuthProvider";
 
 type ProfileMenuProps = {
 	user: IUser;

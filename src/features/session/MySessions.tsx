@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import Tab from "../../components/ui/Tab";
 import { options, type Option } from "../../utils/options";
-import useAuth from "../../hooks/useAuth";
 import {
 	collectCampaigns,
 	useCampaignsQuery,
@@ -18,6 +17,7 @@ import ListLoading from "../../components/ui/ListLoading";
 import EmptyState from "../../components/ui/EmptyState";
 import { useInfiniteScroll } from "../../hooks/useInfiniteScroll";
 import { SessionList } from "./sessionList";
+import useAuth from "../auth/AuthProvider";
 
 const TAB_OPTIONS = options([
 	{ value: "mastering", label: "Мастер" },

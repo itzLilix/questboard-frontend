@@ -32,7 +32,7 @@ import MySessionsLayout, {
 } from "./features/session/MySessions";
 import { SessionScope } from "./features/session/api";
 import { CampaignTab } from "./features/session/sessionTabs/CampaignTab";
-import { ChatTab } from "./features/session/sessionTabs/ChatsTab";
+import { ChatTab } from "./features/session/sessionTabs/chatsTab/ChatsTab";
 
 function App() {
 	useCuratedSystemsQuery();

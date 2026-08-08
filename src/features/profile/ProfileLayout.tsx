@@ -6,7 +6,6 @@ import {
 	useOutletContext,
 	useParams,
 } from "react-router-dom";
-import useAuth from "../../hooks/useAuth";
 import { useUrlSearch } from "../../hooks/useUrlState";
 import Input from "../../components/ui/inputs/Input";
 import ProfileHeader from "../../features/profile/ProfileHeader";
@@ -28,6 +27,7 @@ import ListLoading from "../../components/ui/ListLoading";
 import EmptyState from "../../components/ui/EmptyState";
 import { useInfiniteScroll } from "../../hooks/useInfiniteScroll";
 import { SessionList } from "../session/sessionList";
+import useAuth from "../auth/AuthProvider";
 
 const TAB_OPTIONS = options([
 	{ value: "hosted", label: "Партии мастера" },
@@ -255,4 +255,3 @@ function PlayerSessionsList({
 		</div>
 	);
 }
-

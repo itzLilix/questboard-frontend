@@ -9,7 +9,6 @@ import {
 import clsx from "clsx";
 import Icon from "../../components/ui/Icon";
 import { AccessLevel, roleFor, SessionRelation, SessionRole } from "./access";
-import useAuth from "../../hooks/useAuth";
 import { useFetchSessionQuery } from "./queries";
 import {
 	SessionAvailability,
@@ -28,6 +27,7 @@ import TextSeparator from "../../components/ui/TextSeparator";
 import { pluralPartiy } from "../../utils/words";
 import EmptyState from "../../components/ui/EmptyState";
 import ListLoading from "../../components/ui/ListLoading";
+import useAuth from "../auth/AuthProvider";
 
 type TabDef = {
 	to: string;
@@ -211,7 +211,7 @@ function SessionHeader({ user }: { user: IUser | null }) {
 						availability={session.availability}
 						disabled={session.freeSeats === 0}
 						isAutenticated={!!user}
-						isParticipant={role.isParticipant()}
+						membership={sessionData.membership}
 						sessionId={session.id}
 					/>
 				</div>

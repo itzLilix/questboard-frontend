@@ -10,7 +10,6 @@ import {
 } from "react-hook-form";
 import Button from "../../components/ui/Button";
 import ImageUploader from "./ImageUploader";
-import useAuth from "../../hooks/useAuth";
 import { LabeledInput } from "../../components/ui/inputs/InputLabel";
 import Input from "../../components/ui/inputs/Input";
 import InputText from "../../components/ui/inputs/InputText";
@@ -27,6 +26,7 @@ import {
 import { useUpdateProfileMutation, type UpdateProfileInput } from "./queries";
 import { detectPlatform } from "../socials/platforms";
 import genericIcon from "../../assets/socials/generic.png";
+import useAuth from "../auth/AuthProvider";
 
 type FormInput = UpdateProfileInput & {
 	avatar: File | null;

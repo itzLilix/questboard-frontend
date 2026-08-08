@@ -1,7 +1,7 @@
 import { Outlet, useNavigate } from "react-router-dom";
 import { NavMenu, NavMenuItem } from "../../components/ui/NavMenu";
 import { useEffect } from "react";
-import useAuth from "../../hooks/useAuth";
+import useAuth from "../auth/AuthProvider";
 
 export default function SettingsLayout() {
 	const { user } = useAuth();

@@ -36,6 +36,16 @@ export const PlayerStatus = {
 } as const;
 export type PlayerStatus = (typeof PlayerStatus)[keyof typeof PlayerStatus];
 
+export const SessionMembership = {
+	Player: "player",
+	Kicked: "kicked",
+	Left: "left",
+	Master: "master",
+	Applicant: "applicant",
+} as const;
+export type SessionMembership =
+	(typeof SessionMembership)[keyof typeof SessionMembership];
+
 export interface ISession {
 	id: string;
 	title: string;
@@ -90,6 +100,15 @@ export type SessionResponse = {
 	players: IPlayer[];
 	users: Record<string, IUserBrief>;
 	campaign?: CampaignRef;
+	membership: SessionMembership;
+};
+
+export type SessionsListResponse = {
+	items: ISession[];
+	nextCursor: string | null;
+	users: Record<string, IUserBrief>;
+	campaigns?: Record<string, CampaignRef>;
+	membership: Record<string, SessionMembership>;
 };
 
 export type CampaignRef = {

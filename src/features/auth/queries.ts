@@ -13,6 +13,12 @@ export function useCurrentUser() {
 	});
 }
 
+// Everything except the "me" entry is viewer-dependent (visibility, follow
+// flags), so any cache built under the previous identity must be refetched.
+function invalidateViewerData(qc: ReturnType<typeof useQueryClient>) {
+	qc.invalidateQueries({ predicate: (q) => q.queryKey[0] !== "user" });
+}
+
 export function useLoginMutation() {
 	const qc = useQueryClient();
 	return useMutation({
@@ -23,7 +29,10 @@ export function useLoginMutation() {
 			email: string;
 			password: string;
 		}) => login(email, password),
-		onSuccess: (user) => qc.setQueryData(authKeys.me, user),
+		onSuccess: (user) => {
+			qc.setQueryData(authKeys.me, user);
+			invalidateViewerData(qc);
+		},
 	});
 }
 
@@ -41,7 +50,10 @@ export function useSignupMutation() {
 			password: string;
 			displayName: string;
 		}) => signup({ email, username, password, displayName }),
-		onSuccess: (user) => qc.setQueryData(authKeys.me, user),
+		onSuccess: (user) => {
+			qc.setQueryData(authKeys.me, user);
+			invalidateViewerData(qc);
+		},
 	});
 }
 
@@ -49,6 +61,9 @@ export function useLogoutMutation() {
 	const qc = useQueryClient();
 	return useMutation({
 		mutationFn: logout,
-		onSuccess: () => qc.setQueryData<IUser | null>(authKeys.me, null),
+		onSuccess: () => {
+			qc.setQueryData<IUser | null>(authKeys.me, null);
+			invalidateViewerData(qc);
+		},
 	});
 }

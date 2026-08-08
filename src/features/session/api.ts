@@ -1,19 +1,15 @@
 import { sessionApi } from "../../api/axios";
 import {
 	SessionStatus,
-	type CampaignRef,
 	type ILocation,
 	type ISession,
 	type SessionAvailability,
 	type SessionFormat,
 	type SessionResponse,
+	type SessionsListResponse,
 	type SessionType,
 } from "../../types/session";
-import type {
-	IUserBrief,
-	ISystem,
-	SessionCardData,
-} from "../../types/userCard";
+import type { ISystem, SessionCardData } from "../../types/userCard";
 import type { SortOrder } from "../../types/query";
 import type {
 	CampaignAvailability,
@@ -159,13 +155,6 @@ export type SessionListQuery = {
 	limit?: number;
 };
 
-export type SessionsListResponse = {
-	items: ISession[];
-	nextCursor: string | null;
-	users: Record<string, IUserBrief>;
-	campaigns?: Record<string, CampaignRef>;
-};
-
 export async function fetchSessions(
 	params: SessionListQuery,
 ): Promise<SessionsListResponse> {
@@ -177,6 +166,7 @@ export async function fetchSessions(
 		nextCursor: data.nextCursor ?? null,
 		users: data.users ?? {},
 		campaigns: data.campaigns ?? {},
+		membership: data.membership ?? {},
 	};
 }
 

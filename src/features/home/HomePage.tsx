@@ -296,6 +296,7 @@ function ClosestSessionsRow() {
 					key={s.id}
 					sessionData={s}
 					master={data?.pages[0].users?.[s.masterId]}
+					membership={data?.pages[0].membership[s.id]}
 				/>
 			))}
 			<ViewAllCard

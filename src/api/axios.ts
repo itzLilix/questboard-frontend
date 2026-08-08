@@ -1,12 +1,15 @@
 import axios, { type AxiosResponse } from "axios";
 
+// Defaults assume a reverse proxy (Vite dev proxy now, nginx/Caddy in prod)
+// mapping /api/<service>/* onto the service roots. Set the env vars to hit
+// the services directly (e.g. VITE_PROFILE_API_URL=http://localhost:3000/v1).
 export const profileApi = axios.create({
-	baseURL: "http://localhost:3000/v1",
+	baseURL: import.meta.env.VITE_PROFILE_API_URL ?? "/api/profile/v1",
 	withCredentials: true,
 });
 
 export const sessionApi = axios.create({
-	baseURL: "http://localhost:3001/v1",
+	baseURL: import.meta.env.VITE_SESSION_API_URL ?? "/api/sessions/v1",
 	withCredentials: true,
 	paramsSerializer: (params) => {
 		const sp = new URLSearchParams();
@@ -26,7 +29,7 @@ let refreshPromise: Promise<AxiosResponse> | null = null;
 
 export function refreshTokens() {
 	if (!refreshPromise) {
-		refreshPromise = profileApi.get("/auth/refresh").finally(() => {
+		refreshPromise = profileApi.post("/auth/refresh").finally(() => {
 			refreshPromise = null;
 		});
 	}
@@ -52,10 +55,12 @@ function attach401Interceptor(instance: ReturnType<typeof axios.create>) {
 				originalRequest._retry = true;
 				try {
 					await refreshTokens();
-					return instance(originalRequest);
 				} catch {
-					return Promise.reject(error);
+					// Refresh failed and the server cleared the dead cookies.
+					// Fall through and retry anonymously: Optional endpoints
+					// succeed, Protected endpoints 401 into the login flow.
 				}
+				return instance(originalRequest);
 			}
 
 			return Promise.reject(error);

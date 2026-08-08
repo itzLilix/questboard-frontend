@@ -22,7 +22,12 @@ import EmptyState from "../../components/ui/EmptyState";
 import SessionCard from "../../components/ui/cards/SessionCard";
 import { SystemBadge } from "../../components/ui/SystemBadge";
 import ToggleSortOrder from "../../components/ui/filters/ToggleSortOrder";
-import { SessionFormat, SessionType, type ISession } from "../../types/session";
+import {
+	SessionFormat,
+	SessionMembership,
+	SessionType,
+	type ISession,
+} from "../../types/session";
 import { SortOrder } from "../../types/query";
 import type { ISystem, IUserBrief } from "../../types/userCard";
 import { formatDateWeekday } from "../../utils/dateFormats";
@@ -294,6 +299,14 @@ export default function SessionsPage() {
 			),
 		[data?.pages],
 	);
+	const allMembership = useMemo(
+		() =>
+			data?.pages.reduce<Record<string, SessionMembership>>(
+				(acc, p) => Object.assign(acc, p.membership),
+				{},
+			),
+		[data?.pages],
+	);
 
 	useEffect(() => {
 		if (inView && hasNextPage && !isFetchingNextPage) {
@@ -488,6 +501,7 @@ export default function SessionsPage() {
 			<SessionsList
 				items={allItems}
 				users={allUsers}
+				membership={allMembership ?? {}}
 				isLoading={isLoading}
 				isError={isError}
 				sort={sort}
@@ -500,12 +514,14 @@ export default function SessionsPage() {
 export function SessionsList({
 	items,
 	users,
+	membership,
 	isLoading,
 	isError,
 	sort,
 }: {
 	items?: ISession[];
 	users?: Record<string, IUserBrief>;
+	membership: Record<string, SessionMembership>;
 	isLoading: boolean;
 	isError: boolean;
 	sort: SessionSortBy;
@@ -527,6 +543,7 @@ export function SessionsList({
 						key={s.id}
 						sessionData={s}
 						master={users?.[s.masterId]}
+						membership={membership[s.id]}
 					/>
 				))}
 			</div>
@@ -548,6 +565,7 @@ export function SessionsList({
 							key={s.id}
 							sessionData={s}
 							master={users?.[s.masterId]}
+							membership={membership[s.id]}
 						/>
 					))}
 				</SessionGroup>

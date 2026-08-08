@@ -8,216 +8,217 @@ import {
 } from "react";
 import { useSearchParams } from "react-router-dom";
 import clsx from "clsx";
-import AddButton from "../../../components/ui/AddButton";
-import AvatarImage from "../../../components/ui/AvatarImage";
-import Icon from "../../../components/ui/Icon";
-import { useSessionRole } from "../SessionContext";
-import useAuth from "../../../hooks/useAuth";
-import type { IUserBrief } from "../../../types/userCard";
+import AddButton from "../../../../components/ui/AddButton";
+import AvatarImage from "../../../../components/ui/AvatarImage";
+import Icon from "../../../../components/ui/Icon";
+import { useSessionRole } from "../../SessionContext";
+import type { IUserBrief } from "../../../../types/userCard";
+import {
+	ChatKind,
+	getChatTitle,
+	type ChatSummary,
+	type ChatMessage,
+} from "../../../../types/chat";
+import { useFetchChatsListQuery } from "./queries";
+import useAuth from "../../../auth/AuthProvider";
 
-type ChatMessage = {
-	id: string;
-	chatId: string;
-	senderId: string;
-	body: string;
-	replyToId: string | null;
-	createdAt: string;
-	editedAt: string | null;
-	deletedAt: string | null;
-};
+// type ChatMessage = {
+// 	id: string;
+// 	chatId: string;
+// 	senderId: string;
+// 	body: string;
+// 	replyToId: string | null;
+// 	createdAt: string;
+// 	editedAt: string | null;
+// 	deletedAt: string | null;
+// };
 
-type ChatSummary = {
-	id: string;
-	title: string;
-	memberIds: string[];
-	groupIcon?: string;
-};
+// type MockSummary = {
+// 	id: string;
+// 	title: string;
+// };
 
-const CHAT_IDS = {
-	general: "0192b000-0000-7000-8000-000000000001",
-	dm: "0192b000-0000-7000-8000-000000000002",
-	party: "0192b000-0000-7000-8000-000000000003",
-} as const;
+// const CHAT_IDS = {
+// 	general: "0192b000-0000-7000-8000-000000000001",
+// 	dm: "0192b000-0000-7000-8000-000000000002",
+// 	party: "0192b000-0000-7000-8000-000000000003",
+// } as const;
 
-const LOREM =
-	"Лорем Ипсум — это тип текста-заполнителя, обычно используемый в дизайне и издательском деле для заполнения пространства на странице и создания впечатления о том, как будет выглядеть конечный контент. Лорем Ипсум на русском языке происходит от латинского текста римского философа Цицерона и используется с 1960-х годов. Текст бессмысленный и не несёт никакого конкретного смысла, позволяя дизайнерам сосредоточиться на макете и визуальных элементах, не отвлекаясь на значимый контент.";
+// const LOREM =
+// 	"Лорем Ипсум — это тип текста-заполнителя, обычно используемый в дизайне и издательском деле для заполнения пространства на странице и создания впечатления о том, как будет выглядеть конечный контент. Лорем Ипсум на русском языке происходит от латинского текста римского философа Цицерона и используется с 1960-х годов. Текст бессмысленный и не несёт никакого конкретного смысла, позволяя дизайнерам сосредоточиться на макете и визуальных элементах, не отвлекаясь на значимый контент.";
 
-function buildMock(
-	selfId: string | undefined,
-	memberIds: string[],
-	users: Record<string, IUserBrief>,
-): { chats: ChatSummary[]; messages: ChatMessage[] } {
-	const others = memberIds.filter((id) => id !== selfId);
-	const peerA = others[0];
-	const peerB = others[1];
-	const uname = (id: string) => users[id]?.displayName ?? "user";
+// function buildMock(
+// 	selfId: string | undefined,
+// 	memberIds: string[],
+// 	users: Record<string, IUserBrief>,
+// ): { chats: MockSummary[]; messages: ChatMessage[] } {
+// 	const others = memberIds.filter((id) => id !== selfId);
+// 	const peerA = others[0];
+// 	const peerB = others[1];
+// 	const uname = (id: string) => users[id]?.displayName ?? "user";
 
-	const chats: ChatSummary[] = [
-		{
-			id: CHAT_IDS.general,
-			title: "Общий чат",
-			memberIds,
-			groupIcon: "groups",
-		},
-	];
-	const messages: ChatMessage[] = [];
+// 	const chats: MockSummary[] = [
+// 		{
+// 			id: CHAT_IDS.general,
+// 			title: "Общий чат",
+// 		},
+// 	];
+// 	const messages: ChatMessage[] = [];
 
-	const generalSpeaker = peerA ?? selfId;
-	if (generalSpeaker) {
-		messages.push({
-			id: "0192c000-0000-7000-8000-000000000001",
-			chatId: CHAT_IDS.general,
-			senderId: generalSpeaker,
-			body: LOREM,
-			replyToId: null,
-			createdAt: "2026-03-21T12:02:00",
-			editedAt: null,
-			deletedAt: null,
-		});
-		messages.push({
-			id: "0192c000-0000-7000-8000-000000000002",
-			chatId: CHAT_IDS.general,
-			senderId: generalSpeaker,
-			body: "Когда партия соберётся?",
-			replyToId: null,
-			createdAt: "2026-03-21T12:02:00",
-			editedAt: null,
-			deletedAt: null,
-		});
-		messages.push({
-			id: "0192c000-0000-7000-8000-000000000003",
-			chatId: CHAT_IDS.general,
-			senderId: generalSpeaker,
-			body: "Когда партия соберётся?",
-			replyToId: null,
-			createdAt: "2026-03-21T12:02:00",
-			editedAt: null,
-			deletedAt: null,
-		});
-		messages.push({
-			id: "0192c000-0000-7000-8000-000000000004",
-			chatId: CHAT_IDS.general,
-			senderId: generalSpeaker,
-			body: "Когда партия соберётся?",
-			replyToId: null,
-			createdAt: "2026-03-21T12:02:00",
-			editedAt: null,
-			deletedAt: null,
-		});
-		messages.push({
-			id: "0192c000-0000-7000-8000-000000000005",
-			chatId: CHAT_IDS.general,
-			senderId: generalSpeaker,
-			body: "Когда партия соберётся?",
-			replyToId: null,
-			createdAt: "2026-03-21T12:02:00",
-			editedAt: null,
-			deletedAt: null,
-		});
-		messages.push({
-			id: "0192c000-0000-7000-8000-000000000006",
-			chatId: CHAT_IDS.general,
-			senderId: generalSpeaker,
-			body: "Когда партия соберётся?",
-			replyToId: null,
-			createdAt: "2026-03-21T12:02:00",
-			editedAt: null,
-			deletedAt: null,
-		});
-		messages.push({
-			id: "0192c000-0000-7000-8000-000000000007",
-			chatId: CHAT_IDS.general,
-			senderId: generalSpeaker,
-			body: "Когда партия соберётся?",
-			replyToId: null,
-			createdAt: "2026-03-21T12:02:00",
-			editedAt: null,
-			deletedAt: null,
-		});
-		messages.push({
-			id: "0192c000-0000-7000-8000-000000000008",
-			chatId: CHAT_IDS.general,
-			senderId: generalSpeaker,
-			body: LOREM,
-			replyToId: "0192c000-0000-7000-8000-000000000001",
-			createdAt: "2026-03-21T12:02:00",
-			editedAt: null,
-			deletedAt: null,
-		});
-	}
+// 	const generalSpeaker = peerA ?? selfId;
+// 	if (generalSpeaker) {
+// 		messages.push({
+// 			id: "0192c000-0000-7000-8000-000000000001",
+// 			chatId: CHAT_IDS.general,
+// 			senderId: generalSpeaker,
+// 			body: LOREM,
+// 			replyToId: null,
+// 			createdAt: "2026-03-21T12:02:00",
+// 			editedAt: null,
+// 			deletedAt: null,
+// 		});
+// 		messages.push({
+// 			id: "0192c000-0000-7000-8000-000000000002",
+// 			chatId: CHAT_IDS.general,
+// 			senderId: generalSpeaker,
+// 			body: "Когда партия соберётся?",
+// 			replyToId: null,
+// 			createdAt: "2026-03-21T12:02:00",
+// 			editedAt: null,
+// 			deletedAt: null,
+// 		});
+// 		messages.push({
+// 			id: "0192c000-0000-7000-8000-000000000003",
+// 			chatId: CHAT_IDS.general,
+// 			senderId: generalSpeaker,
+// 			body: "Когда партия соберётся?",
+// 			replyToId: null,
+// 			createdAt: "2026-03-21T12:02:00",
+// 			editedAt: null,
+// 			deletedAt: null,
+// 		});
+// 		messages.push({
+// 			id: "0192c000-0000-7000-8000-000000000004",
+// 			chatId: CHAT_IDS.general,
+// 			senderId: generalSpeaker,
+// 			body: "Когда партия соберётся?",
+// 			replyToId: null,
+// 			createdAt: "2026-03-21T12:02:00",
+// 			editedAt: null,
+// 			deletedAt: null,
+// 		});
+// 		messages.push({
+// 			id: "0192c000-0000-7000-8000-000000000005",
+// 			chatId: CHAT_IDS.general,
+// 			senderId: generalSpeaker,
+// 			body: "Когда партия соберётся?",
+// 			replyToId: null,
+// 			createdAt: "2026-03-21T12:02:00",
+// 			editedAt: null,
+// 			deletedAt: null,
+// 		});
+// 		messages.push({
+// 			id: "0192c000-0000-7000-8000-000000000006",
+// 			chatId: CHAT_IDS.general,
+// 			senderId: generalSpeaker,
+// 			body: "Когда партия соберётся?",
+// 			replyToId: null,
+// 			createdAt: "2026-03-21T12:02:00",
+// 			editedAt: null,
+// 			deletedAt: null,
+// 		});
+// 		messages.push({
+// 			id: "0192c000-0000-7000-8000-000000000007",
+// 			chatId: CHAT_IDS.general,
+// 			senderId: generalSpeaker,
+// 			body: "Когда партия соберётся?",
+// 			replyToId: null,
+// 			createdAt: "2026-03-21T12:02:00",
+// 			editedAt: null,
+// 			deletedAt: null,
+// 		});
+// 		messages.push({
+// 			id: "0192c000-0000-7000-8000-000000000008",
+// 			chatId: CHAT_IDS.general,
+// 			senderId: generalSpeaker,
+// 			body: LOREM,
+// 			replyToId: "0192c000-0000-7000-8000-000000000001",
+// 			createdAt: "2026-03-21T12:02:00",
+// 			editedAt: null,
+// 			deletedAt: null,
+// 		});
+// 	}
 
-	if (peerA) {
-		chats.push({
-			id: CHAT_IDS.dm,
-			title: uname(peerA),
-			memberIds: [peerA],
-		});
-		messages.push({
-			id: "0192c000-0000-7000-8000-000000000002",
-			chatId: CHAT_IDS.dm,
-			senderId: peerA,
-			body: LOREM,
-			replyToId: null,
-			createdAt: "2026-03-21T15:30:00",
-			editedAt: null,
-			deletedAt: null,
-		});
-	}
+// 	if (peerA) {
+// 		chats.push({
+// 			id: CHAT_IDS.dm,
+// 			title: uname(peerA),
+// 		});
+// 		messages.push({
+// 			id: "0192c000-0000-7000-8000-000000000002",
+// 			chatId: CHAT_IDS.dm,
+// 			senderId: peerA,
+// 			body: LOREM,
+// 			replyToId: null,
+// 			createdAt: "2026-03-21T15:30:00",
+// 			editedAt: null,
+// 			deletedAt: null,
+// 		});
+// 	}
 
-	if (peerA && peerB) {
-		chats.push({
-			id: CHAT_IDS.party,
-			title: `${uname(peerA)}, ${uname(peerB)}…`,
-			memberIds: [peerA, peerB],
-		});
-		messages.push(
-			{
-				id: "0192c000-0000-7000-8000-000000000010",
-				chatId: CHAT_IDS.party,
-				senderId: peerA,
-				body: "",
-				replyToId: null,
-				createdAt: "2026-03-21T14:00:00",
-				editedAt: null,
-				deletedAt: "2026-03-21T14:01:00",
-			},
-			{
-				id: "0192c000-0000-7000-8000-000000000011",
-				chatId: CHAT_IDS.party,
-				senderId: peerB,
-				body: "Этот тролль перекрывает мост.",
-				replyToId: null,
-				createdAt: "2026-03-21T14:05:00",
-				editedAt: null,
-				deletedAt: null,
-			},
-			{
-				id: "0192c000-0000-7000-8000-000000000012",
-				chatId: CHAT_IDS.party,
-				senderId: peerA,
-				body: "Он совсем не готов к бою.",
-				replyToId: null,
-				createdAt: "2026-03-21T14:08:00",
-				editedAt: "2026-03-21T14:09:00",
-				deletedAt: null,
-			},
-		);
-		if (selfId) {
-			messages.push({
-				id: "0192c000-0000-7000-8000-000000000013",
-				chatId: CHAT_IDS.party,
-				senderId: selfId,
-				body: "Давайте его опрокинем",
-				replyToId: "0192c000-0000-7000-8000-000000000011",
-				createdAt: "2026-03-21T14:12:00",
-				editedAt: null,
-				deletedAt: null,
-			});
-		}
-	}
+// 	if (peerA && peerB) {
+// 		chats.push({
+// 			id: CHAT_IDS.party,
+// 			title: `${uname(peerA)}, ${uname(peerB)}…`,
+// 		});
+// 		messages.push(
+// 			{
+// 				id: "0192c000-0000-7000-8000-000000000010",
+// 				chatId: CHAT_IDS.party,
+// 				senderId: peerA,
+// 				body: "",
+// 				replyToId: null,
+// 				createdAt: "2026-03-21T14:00:00",
+// 				editedAt: null,
+// 				deletedAt: "2026-03-21T14:01:00",
+// 			},
+// 			{
+// 				id: "0192c000-0000-7000-8000-000000000011",
+// 				chatId: CHAT_IDS.party,
+// 				senderId: peerB,
+// 				body: "Этот тролль перекрывает мост.",
+// 				replyToId: null,
+// 				createdAt: "2026-03-21T14:05:00",
+// 				editedAt: null,
+// 				deletedAt: null,
+// 			},
+// 			{
+// 				id: "0192c000-0000-7000-8000-000000000012",
+// 				chatId: CHAT_IDS.party,
+// 				senderId: peerA,
+// 				body: "Он совсем не готов к бою.",
+// 				replyToId: null,
+// 				createdAt: "2026-03-21T14:08:00",
+// 				editedAt: "2026-03-21T14:09:00",
+// 				deletedAt: null,
+// 			},
+// 		);
+// 		if (selfId) {
+// 			messages.push({
+// 				id: "0192c000-0000-7000-8000-000000000013",
+// 				chatId: CHAT_IDS.party,
+// 				senderId: selfId,
+// 				body: "Давайте его опрокинем",
+// 				replyToId: "0192c000-0000-7000-8000-000000000011",
+// 				createdAt: "2026-03-21T14:12:00",
+// 				editedAt: null,
+// 				deletedAt: null,
+// 			});
+// 		}
+// 	}
 
-	return { chats, messages };
-}
+// 	return { chats, messages };
+// }
 
 type ChatData = {
 	users: Record<string, IUserBrief>;
@@ -260,8 +261,13 @@ export function ChatTab() {
 		[sessionData.session.masterId, sessionData.players],
 	);
 
-	const { chats, messages } = useMemo(
-		() => buildMock(currentUserId, memberIds, users),
+	const fetchedChats = useMemo(
+		() => useFetchChatsListQuery(sessionData.session.id).data ?? [],
+		[sessionData.session.id],
+	);
+
+	const messages = useMemo(
+		() => [] as ChatMessage[],
 		[currentUserId, memberIds, users],
 	);
 
@@ -286,7 +292,8 @@ export function ChatTab() {
 
 	const [searchParams, setSearchParams] = useSearchParams();
 	const paramChatId = searchParams.get("c");
-	const active = chats.find((c) => c.id === paramChatId) ?? chats[0];
+	const active =
+		fetchedChats.find((c) => c.id === paramChatId) ?? fetchedChats[0];
 
 	const selectChat = (id: string) => {
 		setSearchParams(
@@ -308,7 +315,7 @@ export function ChatTab() {
 		<ChatDataContext.Provider value={data}>
 			<div className="flex gap-4 h-full min-h-0">
 				<ChatList
-					chats={chats}
+					chats={fetchedChats}
 					activeId={active?.id}
 					onSelect={selectChat}
 				/>
@@ -364,7 +371,9 @@ function ChatListItem({
 		>
 			<ChatAvatar chat={chat} />
 			<div className="min-w-0 flex-1">
-				<p className="truncate text-(--text-primary)">{chat.title}</p>
+				<p className="truncate text-(--text-primary)">
+					{getChatTitle(chat)}
+				</p>
 				<ChatPreview chat={chat} />
 			</div>
 		</button>
@@ -381,7 +390,7 @@ function ChatPreview({ chat }: { chat: ChatSummary }) {
 			</p>
 		);
 	}
-	const isGroup = Boolean(chat.groupIcon) || chat.memberIds.length > 1;
+	const isGroup = chat.kind === ChatKind.Group;
 	const sender =
 		last.senderId === currentUserId
 			? "Вы"
@@ -402,45 +411,67 @@ function ChatPreview({ chat }: { chat: ChatSummary }) {
 
 function ChatAvatar({ chat }: { chat: ChatSummary }) {
 	const { users } = useChatData();
-	if (chat.groupIcon) {
+	if (chat.pictureUrl) {
+		return (
+			<div className="shrink-0">
+				<AvatarImage
+					src={chat.pictureUrl}
+					alt={getChatTitle(chat)}
+					size="md"
+				/>
+			</div>
+		);
+	}
+	if (chat.kind === ChatKind.General) {
 		return (
 			<div className="w-10 h-10 shrink-0 rounded-full bg-(--bg-elevated) border border-(--border) flex items-center justify-center text-(--accent)">
-				<Icon name={chat.groupIcon} className="text-xl!" />
+				<Icon name={"groups"} className="text-xl!" />
 			</div>
 		);
 	}
-	const members = chat.memberIds
-		.map((id) => users[id])
-		.filter((u): u is IUserBrief => Boolean(u));
-	if (members.length > 1) {
+	if (chat.otherUserId) {
 		return (
-			<div className="w-10 h-10 shrink-0 relative">
-				<div className="absolute top-0 left-0">
-					<AvatarImage
-						src={members[0].avatarUrl}
-						alt={members[0].username}
-						size="sm"
-					/>
-				</div>
-				<div className="absolute bottom-0 right-0 ring-2 ring-(--bg-card) rounded-full">
-					<AvatarImage
-						src={members[1].avatarUrl}
-						alt={members[1].username}
-						size="sm"
-					/>
-				</div>
+			<div className="shrink-0">
+				<AvatarImage
+					src={users[chat.otherUserId]?.avatarUrl}
+					alt={chat.title}
+					size="md"
+				/>
 			</div>
 		);
 	}
-	return (
-		<div className="shrink-0">
-			<AvatarImage
-				src={members[0]?.avatarUrl}
-				alt={members[0]?.username ?? "?"}
-				size="md"
-			/>
-		</div>
-	);
+	// const members = chat.memberIds
+	// 	.map((id) => users[id])
+	// 	.filter((u): u is IUserBrief => Boolean(u));
+	// if (members.length > 1) {
+	// 	return (
+	// 		<div className="w-10 h-10 shrink-0 relative">
+	// 			<div className="absolute top-0 left-0">
+	// 				<AvatarImage
+	// 					src={members[0].avatarUrl}
+	// 					alt={members[0].username}
+	// 					size="sm"
+	// 				/>
+	// 			</div>
+	// 			<div className="absolute bottom-0 right-0 ring-2 ring-(--bg-card) rounded-full">
+	// 				<AvatarImage
+	// 					src={members[1].avatarUrl}
+	// 					alt={members[1].username}
+	// 					size="sm"
+	// 				/>
+	// 			</div>
+	// 		</div>
+	// 	);
+	// }
+	// return (
+	// 	<div className="shrink-0">
+	// 		<AvatarImage
+	// 			src={members[0]?.avatarUrl}
+	// 			alt={members[0]?.username ?? "?"}
+	// 			size="md"
+	// 		/>
+	// 	</div>
+	// );
 }
 
 function Conversation({ chat }: { chat: ChatSummary }) {
@@ -470,9 +501,9 @@ function Conversation({ chat }: { chat: ChatSummary }) {
 	return (
 		<div className="flex-1 min-w-0 flex flex-col bg-(--bg-card) border border-(--border) rounded-xl">
 			<header className="flex items-center gap-3 px-4 outline outline-(--border) rounded-xl h-14 z-2">
-				<ChatAvatar chat={chat} />
+				{<ChatAvatar chat={chat} />}
 				<span className="text-(--text-primary) truncate">
-					{chat.title}
+					{getChatTitle(chat)}
 				</span>
 			</header>
 

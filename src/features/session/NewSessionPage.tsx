@@ -3,11 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { useForm, useWatch, type SubmitHandler } from "react-hook-form";
 import Button from "../../components/ui/Button";
 import TextField from "../../components/ui/TextField";
+import { SessionFormat, type ILocation } from "../../types/session";
 import {
-	SessionFormat,
-	type ILocation,
-} from "../../types/session";
-import { useCampaignsQuery, useCreateCampaignMutation, useCreateSessionMutation } from "./queries";
+	useCampaignsQuery,
+	useCreateCampaignMutation,
+	useCreateSessionMutation,
+} from "./queries";
 import type { CreateSessionPayload } from "./api";
 import type { CreateCampaignInput } from "./NewCampaignPopover";
 import SessionFactsList from "./SessionFactsList";
@@ -15,9 +16,9 @@ import SessionFormFields from "./SessionFormFields";
 import CampaignTieField from "./CampaignTieField";
 import { sessionFormDefaults, type SessionFormValues } from "./sessionForm";
 import { formatDate, timeAddTz } from "../../utils/dateFormats";
-import useAuth from "../../hooks/useAuth";
 import { AVAILABILITY_OPTIONS, FORMAT_OPTIONS } from "../../utils/words";
 import { CampaignStatus, type ICampaign } from "../../types/campaign";
+import useAuth from "../auth/AuthProvider";
 
 function SessionPreview({
 	values,

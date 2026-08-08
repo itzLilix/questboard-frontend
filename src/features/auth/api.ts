@@ -1,8 +1,11 @@
-import { profileApi, refreshTokens } from "../../api/axios";
+import { profileApi } from "../../api/axios";
 import type { IUser } from "../../types/user";
 
 export async function fetchMe(): Promise<IUser> {
-	const res = await refreshTokens();
+	console.trace("fetchMe called");
+	// Plain read — if the access token is expired, the 401 interceptor
+	// refreshes once and retries, so tokens only rotate when needed.
+	const res = await profileApi.get<IUser>("/users/me");
 	return res.data;
 }
 export async function login(email: string, password: string) {

@@ -1,6 +1,6 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
-import useAuth from "../../hooks/useAuth";
 import Loading from "../../components/ui/Loading";
+import useAuth from "./AuthProvider";
 
 export default function RequireAuth() {
 	const { user, isLoading } = useAuth();

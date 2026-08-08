@@ -17,9 +17,9 @@ import { useUsersCatalogQuery } from "./queries";
 import ToggleSortOrder from "../../components/ui/filters/ToggleSortOrder";
 import ToggleView from "../../components/ui/ToggleView";
 import { FORMAT_OPTIONS, TYPE_OPTIONS } from "../../utils/words";
-import useAuth from "../../hooks/useAuth";
 import { parseEnum, useUrlSearch, useUrlState } from "../../hooks/useUrlState";
 import { useInView } from "react-intersection-observer";
+import useAuth from "../auth/AuthProvider";
 
 const SORT_OPTIONS = options([
 	{ value: UserSortBy.Rating, label: "Рейтинг" },
