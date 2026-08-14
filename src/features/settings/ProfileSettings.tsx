@@ -113,6 +113,8 @@ export default function ProfileSettings() {
 			avatar: avatarIntent,
 			banner: bannerIntent,
 		});
+
+		reset();
 	};
 
 	return (
@@ -217,7 +219,7 @@ export default function ProfileSettings() {
 					type="reset"
 					variant="secondary"
 					onClick={() => reset()}
-					disabled={updateProfile.isPending}
+					disabled={updateProfile.isPending || !isDirty}
 				>
 					Сбросить
 				</Button>

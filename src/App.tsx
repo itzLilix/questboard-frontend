@@ -8,8 +8,8 @@ import GeneralSettings from "./features/settings/GeneralSettings";
 import FollowingPage from "./features/following/FollowingPage";
 import GMsPage from "./features/usersCatalog/GMsPage";
 import HomePage from "./features/home/HomePage";
-import NewSessionPage from "./features/session/NewSessionPage";
-import SessionsPage from "./features/session/SessionsCatalog";
+import NewSessionPage from "./features/session/create/NewSessionPage";
+import SessionsPage from "./features/session/catalog/SessionsCatalog";
 import SessionLayout from "./features/session/SessionLayout";
 import {
 	ApplicationsTab,
@@ -29,7 +29,7 @@ import MySessionsLayout, {
 	DraftsTab,
 	MasteringTab,
 	PlayingTab,
-} from "./features/session/MySessions";
+} from "./features/session/ownLists/MySessions";
 import { SessionScope } from "./features/session/api";
 import { CampaignTab } from "./features/session/sessionTabs/CampaignTab";
 import { ChatTab } from "./features/session/sessionTabs/chatsTab/ChatsTab";

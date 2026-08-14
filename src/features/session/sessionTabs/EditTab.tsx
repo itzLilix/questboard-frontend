@@ -5,9 +5,9 @@ import TextField from "../../../components/ui/TextField";
 import Button from "../../../components/ui/Button";
 import Dropdown from "../../../components/ui/Dropdown";
 import Icon from "../../../components/ui/Icon";
-import SessionFormFields from "../SessionFormFields";
-import CampaignTieField from "../CampaignTieField";
-import { type SessionFormValues } from "../sessionForm";
+import SessionFormFields from "../create/SessionFormFields";
+import CampaignTieField from "../create/CampaignTieField";
+import { type SessionFormValues } from "../create/sessionForm";
 import {
 	useCampaignsQuery,
 	useCreateCampaignMutation,
@@ -15,7 +15,7 @@ import {
 	useSaveSessionMutation,
 } from "../queries";
 import type { UpdateSessionPayload } from "../api";
-import type { CreateCampaignInput } from "../NewCampaignPopover";
+import type { CreateCampaignInput } from "../create/NewCampaignPopover";
 import {
 	SessionFormat,
 	type SessionResponse,

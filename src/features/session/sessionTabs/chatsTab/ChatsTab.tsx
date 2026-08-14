@@ -1,12 +1,13 @@
 import {
 	createContext,
 	useContext,
+	useEffect,
 	useLayoutEffect,
 	useMemo,
 	useRef,
 	useState,
 } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import clsx from "clsx";
 import AddButton from "../../../../components/ui/AddButton";
 import AvatarImage from "../../../../components/ui/AvatarImage";
@@ -18,213 +19,25 @@ import {
 	getChatTitle,
 	type ChatSummary,
 	type ChatMessage,
+	type ReplySnippet,
+	type ChatPermissions,
 } from "../../../../types/chat";
-import { useFetchChatsListQuery } from "./queries";
+import {
+	useFetchChatsListQuery,
+	useMessagesQuery,
+	usePermissionsQuery,
+} from "./queries";
 import useAuth from "../../../auth/AuthProvider";
-
-// type ChatMessage = {
-// 	id: string;
-// 	chatId: string;
-// 	senderId: string;
-// 	body: string;
-// 	replyToId: string | null;
-// 	createdAt: string;
-// 	editedAt: string | null;
-// 	deletedAt: string | null;
-// };
-
-// type MockSummary = {
-// 	id: string;
-// 	title: string;
-// };
-
-// const CHAT_IDS = {
-// 	general: "0192b000-0000-7000-8000-000000000001",
-// 	dm: "0192b000-0000-7000-8000-000000000002",
-// 	party: "0192b000-0000-7000-8000-000000000003",
-// } as const;
-
-// const LOREM =
-// 	"Лорем Ипсум — это тип текста-заполнителя, обычно используемый в дизайне и издательском деле для заполнения пространства на странице и создания впечатления о том, как будет выглядеть конечный контент. Лорем Ипсум на русском языке происходит от латинского текста римского философа Цицерона и используется с 1960-х годов. Текст бессмысленный и не несёт никакого конкретного смысла, позволяя дизайнерам сосредоточиться на макете и визуальных элементах, не отвлекаясь на значимый контент.";
-
-// function buildMock(
-// 	selfId: string | undefined,
-// 	memberIds: string[],
-// 	users: Record<string, IUserBrief>,
-// ): { chats: MockSummary[]; messages: ChatMessage[] } {
-// 	const others = memberIds.filter((id) => id !== selfId);
-// 	const peerA = others[0];
-// 	const peerB = others[1];
-// 	const uname = (id: string) => users[id]?.displayName ?? "user";
-
-// 	const chats: MockSummary[] = [
-// 		{
-// 			id: CHAT_IDS.general,
-// 			title: "Общий чат",
-// 		},
-// 	];
-// 	const messages: ChatMessage[] = [];
-
-// 	const generalSpeaker = peerA ?? selfId;
-// 	if (generalSpeaker) {
-// 		messages.push({
-// 			id: "0192c000-0000-7000-8000-000000000001",
-// 			chatId: CHAT_IDS.general,
-// 			senderId: generalSpeaker,
-// 			body: LOREM,
-// 			replyToId: null,
-// 			createdAt: "2026-03-21T12:02:00",
-// 			editedAt: null,
-// 			deletedAt: null,
-// 		});
-// 		messages.push({
-// 			id: "0192c000-0000-7000-8000-000000000002",
-// 			chatId: CHAT_IDS.general,
-// 			senderId: generalSpeaker,
-// 			body: "Когда партия соберётся?",
-// 			replyToId: null,
-// 			createdAt: "2026-03-21T12:02:00",
-// 			editedAt: null,
-// 			deletedAt: null,
-// 		});
-// 		messages.push({
-// 			id: "0192c000-0000-7000-8000-000000000003",
-// 			chatId: CHAT_IDS.general,
-// 			senderId: generalSpeaker,
-// 			body: "Когда партия соберётся?",
-// 			replyToId: null,
-// 			createdAt: "2026-03-21T12:02:00",
-// 			editedAt: null,
-// 			deletedAt: null,
-// 		});
-// 		messages.push({
-// 			id: "0192c000-0000-7000-8000-000000000004",
-// 			chatId: CHAT_IDS.general,
-// 			senderId: generalSpeaker,
-// 			body: "Когда партия соберётся?",
-// 			replyToId: null,
-// 			createdAt: "2026-03-21T12:02:00",
-// 			editedAt: null,
-// 			deletedAt: null,
-// 		});
-// 		messages.push({
-// 			id: "0192c000-0000-7000-8000-000000000005",
-// 			chatId: CHAT_IDS.general,
-// 			senderId: generalSpeaker,
-// 			body: "Когда партия соберётся?",
-// 			replyToId: null,
-// 			createdAt: "2026-03-21T12:02:00",
-// 			editedAt: null,
-// 			deletedAt: null,
-// 		});
-// 		messages.push({
-// 			id: "0192c000-0000-7000-8000-000000000006",
-// 			chatId: CHAT_IDS.general,
-// 			senderId: generalSpeaker,
-// 			body: "Когда партия соберётся?",
-// 			replyToId: null,
-// 			createdAt: "2026-03-21T12:02:00",
-// 			editedAt: null,
-// 			deletedAt: null,
-// 		});
-// 		messages.push({
-// 			id: "0192c000-0000-7000-8000-000000000007",
-// 			chatId: CHAT_IDS.general,
-// 			senderId: generalSpeaker,
-// 			body: "Когда партия соберётся?",
-// 			replyToId: null,
-// 			createdAt: "2026-03-21T12:02:00",
-// 			editedAt: null,
-// 			deletedAt: null,
-// 		});
-// 		messages.push({
-// 			id: "0192c000-0000-7000-8000-000000000008",
-// 			chatId: CHAT_IDS.general,
-// 			senderId: generalSpeaker,
-// 			body: LOREM,
-// 			replyToId: "0192c000-0000-7000-8000-000000000001",
-// 			createdAt: "2026-03-21T12:02:00",
-// 			editedAt: null,
-// 			deletedAt: null,
-// 		});
-// 	}
-
-// 	if (peerA) {
-// 		chats.push({
-// 			id: CHAT_IDS.dm,
-// 			title: uname(peerA),
-// 		});
-// 		messages.push({
-// 			id: "0192c000-0000-7000-8000-000000000002",
-// 			chatId: CHAT_IDS.dm,
-// 			senderId: peerA,
-// 			body: LOREM,
-// 			replyToId: null,
-// 			createdAt: "2026-03-21T15:30:00",
-// 			editedAt: null,
-// 			deletedAt: null,
-// 		});
-// 	}
-
-// 	if (peerA && peerB) {
-// 		chats.push({
-// 			id: CHAT_IDS.party,
-// 			title: `${uname(peerA)}, ${uname(peerB)}…`,
-// 		});
-// 		messages.push(
-// 			{
-// 				id: "0192c000-0000-7000-8000-000000000010",
-// 				chatId: CHAT_IDS.party,
-// 				senderId: peerA,
-// 				body: "",
-// 				replyToId: null,
-// 				createdAt: "2026-03-21T14:00:00",
-// 				editedAt: null,
-// 				deletedAt: "2026-03-21T14:01:00",
-// 			},
-// 			{
-// 				id: "0192c000-0000-7000-8000-000000000011",
-// 				chatId: CHAT_IDS.party,
-// 				senderId: peerB,
-// 				body: "Этот тролль перекрывает мост.",
-// 				replyToId: null,
-// 				createdAt: "2026-03-21T14:05:00",
-// 				editedAt: null,
-// 				deletedAt: null,
-// 			},
-// 			{
-// 				id: "0192c000-0000-7000-8000-000000000012",
-// 				chatId: CHAT_IDS.party,
-// 				senderId: peerA,
-// 				body: "Он совсем не готов к бою.",
-// 				replyToId: null,
-// 				createdAt: "2026-03-21T14:08:00",
-// 				editedAt: "2026-03-21T14:09:00",
-// 				deletedAt: null,
-// 			},
-// 		);
-// 		if (selfId) {
-// 			messages.push({
-// 				id: "0192c000-0000-7000-8000-000000000013",
-// 				chatId: CHAT_IDS.party,
-// 				senderId: selfId,
-// 				body: "Давайте его опрокинем",
-// 				replyToId: "0192c000-0000-7000-8000-000000000011",
-// 				createdAt: "2026-03-21T14:12:00",
-// 				editedAt: null,
-// 				deletedAt: null,
-// 			});
-// 		}
-// 	}
-
-// 	return { chats, messages };
-// }
+import { useComposerSend } from "./socket";
+import EmptyState from "../../../../components/ui/EmptyState";
+import CreateGroupChatModal, {
+	type CreateGroupChatData,
+} from "./CreateChatModal";
+import CloseButton from "../../../../components/ui/CloseButton";
 
 type ChatData = {
 	users: Record<string, IUserBrief>;
 	currentUserId?: string;
-	messagesById: Map<string, ChatMessage>;
-	messagesByChat: Map<string, ChatMessage[]>;
 };
 
 const ChatDataContext = createContext<ChatData | null>(null);
@@ -236,7 +49,7 @@ function useChatData(): ChatData {
 	return ctx;
 }
 
-function usernameOf(users: Record<string, IUserBrief>, id: string): string {
+function displayNameOf(users: Record<string, IUserBrief>, id: string): string {
 	return users[id]?.displayName ?? "неизвестный";
 }
 
@@ -253,47 +66,12 @@ export function ChatTab() {
 	const users = sessionData.users;
 	const currentUserId = user?.id;
 
-	const memberIds = useMemo(
-		() => [
-			sessionData.session.masterId,
-			...sessionData.players.map((p) => p.playerId),
-		],
-		[sessionData.session.masterId, sessionData.players],
-	);
-
-	const fetchedChats = useMemo(
-		() => useFetchChatsListQuery(sessionData.session.id).data ?? [],
-		[sessionData.session.id],
-	);
-
-	const messages = useMemo(
-		() => [] as ChatMessage[],
-		[currentUserId, memberIds, users],
-	);
-
-	const messagesById = useMemo(
-		() => new Map(messages.map((m) => [m.id, m])),
-		[messages],
-	);
-
-	const messagesByChat = useMemo(() => {
-		const map = new Map<string, ChatMessage[]>();
-		for (const m of messages) {
-			if (m.deletedAt) continue;
-			const arr = map.get(m.chatId) ?? [];
-			arr.push(m);
-			map.set(m.chatId, arr);
-		}
-		for (const arr of map.values()) {
-			arr.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
-		}
-		return map;
-	}, [messages]);
+	const { data: chats } = useFetchChatsListQuery(sessionData.session.id);
+	const fetchedChats = chats ?? [];
 
 	const [searchParams, setSearchParams] = useSearchParams();
 	const paramChatId = searchParams.get("c");
-	const active =
-		fetchedChats.find((c) => c.id === paramChatId) ?? fetchedChats[0];
+	const active = fetchedChats.find((c) => c.id === paramChatId) ?? null;
 
 	const selectChat = (id: string) => {
 		setSearchParams(
@@ -307,8 +85,8 @@ export function ChatTab() {
 	};
 
 	const data = useMemo<ChatData>(
-		() => ({ users, currentUserId, messagesById, messagesByChat }),
-		[users, currentUserId, messagesById, messagesByChat],
+		() => ({ users, currentUserId }),
+		[users, currentUserId],
 	);
 
 	return (
@@ -319,7 +97,14 @@ export function ChatTab() {
 					activeId={active?.id}
 					onSelect={selectChat}
 				/>
-				{active && <Conversation chat={active} />}
+				{active ? (
+					<Conversation chat={active} />
+				) : (
+					<EmptyState
+						text="Выберите чат"
+						className="flex-1"
+					></EmptyState>
+				)}
 			</div>
 		</ChatDataContext.Provider>
 	);
@@ -334,6 +119,18 @@ function ChatList({
 	activeId?: string;
 	onSelect: (id: string) => void;
 }) {
+	const { users, currentUserId } = useChatData();
+	const [createOpen, setCreateOpen] = useState(false);
+
+	const handleCreate = (data: CreateGroupChatData) => {
+		console.log(data);
+
+		// TODO: call create-group-chat API
+		// await createGroupChat(data);
+
+		setCreateOpen(false);
+	};
+
 	return (
 		<div className="w-1/3 min-w-0 flex flex-col gap-3 overflow-y-auto pr-1">
 			{chats.map((chat) => (
@@ -344,7 +141,20 @@ function ChatList({
 					onClick={() => onSelect(chat.id)}
 				/>
 			))}
-			<AddButton className="self-center mt-1" onClick={() => {}} />
+
+			<AddButton
+				className="self-center mt-1"
+				onClick={() => setCreateOpen(true)}
+			/>
+
+			{createOpen && (
+				<CreateGroupChatModal
+					users={users}
+					currentUserId={currentUserId}
+					onClose={() => setCreateOpen(false)}
+					onCreate={handleCreate}
+				/>
+			)}
 		</div>
 	);
 }
@@ -381,8 +191,8 @@ function ChatListItem({
 }
 
 function ChatPreview({ chat }: { chat: ChatSummary }) {
-	const { users, currentUserId, messagesByChat } = useChatData();
-	const last = messagesByChat.get(chat.id)?.at(-1);
+	const { users, currentUserId } = useChatData();
+	const last = chat.lastMessage;
 	if (!last) {
 		return (
 			<p className="truncate text-sm text-(--text-secondary)">
@@ -390,13 +200,14 @@ function ChatPreview({ chat }: { chat: ChatSummary }) {
 			</p>
 		);
 	}
-	const isGroup = chat.kind === ChatKind.Group;
+	const isDirect = chat.kind === ChatKind.DM;
 	const sender =
 		last.senderId === currentUserId
 			? "Вы"
-			: isGroup
-				? usernameOf(users, last.senderId)
-				: null;
+			: isDirect
+				? null
+				: displayNameOf(users, last.senderId);
+
 	return (
 		<p className="truncate text-sm text-(--text-secondary)">
 			{sender && (
@@ -440,62 +251,72 @@ function ChatAvatar({ chat }: { chat: ChatSummary }) {
 			</div>
 		);
 	}
-	// const members = chat.memberIds
-	// 	.map((id) => users[id])
-	// 	.filter((u): u is IUserBrief => Boolean(u));
-	// if (members.length > 1) {
-	// 	return (
-	// 		<div className="w-10 h-10 shrink-0 relative">
-	// 			<div className="absolute top-0 left-0">
-	// 				<AvatarImage
-	// 					src={members[0].avatarUrl}
-	// 					alt={members[0].username}
-	// 					size="sm"
-	// 				/>
-	// 			</div>
-	// 			<div className="absolute bottom-0 right-0 ring-2 ring-(--bg-card) rounded-full">
-	// 				<AvatarImage
-	// 					src={members[1].avatarUrl}
-	// 					alt={members[1].username}
-	// 					size="sm"
-	// 				/>
-	// 			</div>
-	// 		</div>
-	// 	);
-	// }
-	// return (
-	// 	<div className="shrink-0">
-	// 		<AvatarImage
-	// 			src={members[0]?.avatarUrl}
-	// 			alt={members[0]?.username ?? "?"}
-	// 			size="md"
-	// 		/>
-	// 	</div>
-	// );
 }
 
 function Conversation({ chat }: { chat: ChatSummary }) {
-	const { messagesByChat } = useChatData();
-	const messages = messagesByChat.get(chat.id) ?? [];
+	const messagesQuery = useMessagesQuery(chat.id);
+	const messages = messagesQuery.data?.messages ?? [];
+	const sortedMessages = useMemo(() => {
+		const isPending = (m: ChatMessage) => m.id.startsWith("optimistic-");
+		const confirmed = messages
+			.sort(
+				(a, b) =>
+					new Date(a.createdAt).getTime() -
+					new Date(b.createdAt).getTime(),
+			)
+			.filter((m) => !isPending(m));
+		const pending = messages.filter(isPending);
+		pending.forEach((m) => (m.pending = true));
+		return [...confirmed, ...pending];
+	}, [messages]);
+
+	const { data: permissions } = usePermissionsQuery(chat.id);
+	const { send, retry, cancelFailed } = useComposerSend(chat.id);
+
 	const rowRefs = useRef(new Map<string, HTMLDivElement>());
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const [flashId, setFlashId] = useState<string | null>(null);
+	const [replyTarget, setReplyTarget] = useState<ReplySnippet | undefined>(
+		undefined,
+	);
 
-	// Open at the newest message; re-pin to bottom when switching chats.
+	const prevChatIdRef = useRef(chat.id);
+	const lastMessageIdRef = useRef<string | undefined>(undefined);
+
+	// Pin to bottom on chat switch or when a new message lands at the
+	// newest end. Loading older history bumps messages.length too, but
+	// shouldn't yank the scroll position back down — so this keys off the
+	// newest message's id rather than the array length.
 	useLayoutEffect(() => {
 		const el = scrollRef.current;
-		if (el) el.scrollTop = el.scrollHeight;
-	}, [chat.id, messages.length]);
+		if (!el) return;
+		const newestId = sortedMessages.at(-1)?.id;
+		const chatChanged = prevChatIdRef.current !== chat.id;
+		const newestChanged = newestId !== lastMessageIdRef.current;
+		if (chatChanged || newestChanged) {
+			el.scrollTop = el.scrollHeight;
+		}
+		prevChatIdRef.current = chat.id;
+		lastMessageIdRef.current = newestId;
+	}, [chat.id, sortedMessages]);
 
 	const jumpToMessage = (id: string) => {
 		const el = rowRefs.current.get(id);
-		if (!el) return;
+		if (!el) return; // reply target may be outside the currently loaded page
 		el.scrollIntoView({ behavior: "smooth", block: "center" });
 		setFlashId(id);
 		window.setTimeout(
 			() => setFlashId((cur) => (cur === id ? null : cur)),
 			1200,
 		);
+	};
+
+	const handleReply = (message: ChatMessage) => {
+		setReplyTarget({
+			messageId: message.id,
+			senderId: message.senderId,
+			contentPreview: message.body.slice(0, 200),
+		});
 	};
 
 	return (
@@ -512,12 +333,28 @@ function Conversation({ chat }: { chat: ChatSummary }) {
 				className="flex-1 min-h-0 overflow-y-scroll p-2"
 			>
 				<div className="flex flex-col justify-end min-h-full gap-1">
-					{messages.map((m) => (
+					{messagesQuery.hasNextPage && (
+						<button
+							type="button"
+							onClick={() => messagesQuery.fetchNextPage()}
+							disabled={messagesQuery.isFetchingNextPage}
+							className="self-center text-sm text-(--text-secondary) hover:text-(--text-primary) py-2 disabled:opacity-50 cursor-pointer"
+						>
+							{messagesQuery.isFetchingNextPage
+								? "Загрузка..."
+								: "Загрузить более ранние"}
+						</button>
+					)}
+					{sortedMessages.map((m) => (
 						<MessageRow
 							key={m.id}
 							message={m}
 							flash={flashId === m.id}
+							permissions={permissions}
 							onJump={jumpToMessage}
+							onReply={handleReply}
+							onRetry={retry}
+							onCancel={cancelFailed}
 							registerRef={(el) => {
 								if (el) rowRefs.current.set(m.id, el);
 								else rowRefs.current.delete(m.id);
@@ -527,28 +364,48 @@ function Conversation({ chat }: { chat: ChatSummary }) {
 				</div>
 			</div>
 
-			<Composer />
+			<Composer
+				send={send}
+				replyTarget={replyTarget}
+				onCancelReply={() => setReplyTarget(undefined)}
+				onSent={() => setReplyTarget(undefined)}
+			/>
 		</div>
 	);
 }
 
 function MessageRow({
 	message,
+	permissions,
 	flash,
 	onJump,
+	onReply,
+	onRetry,
+	onCancel,
 	registerRef,
 }: {
 	message: ChatMessage;
+	permissions?: ChatPermissions;
 	flash?: boolean;
-	onJump?: (id: string) => void;
+	onJump: (id: string) => void;
+	onReply: (message: ChatMessage) => void;
+	onRetry?: (message: ChatMessage) => void;
+	onCancel?: (messageId: string) => void;
 	registerRef?: (el: HTMLDivElement | null) => void;
 }) {
-	const { users, messagesById } = useChatData();
+	const { users, currentUserId } = useChatData();
 	const sender = users[message.senderId];
-	const replyTarget = message.replyToId
-		? messagesById.get(message.replyToId)
-		: undefined;
-	const repliedTo = replyTarget?.deletedAt ? undefined : replyTarget;
+	const repliedTo = message.replyTo?.deleted ? undefined : message.replyTo;
+
+	const isOwn = message.senderId === currentUserId;
+	const failed = !!message.failed;
+	const pending = !!message.pending;
+
+	const canReply = permissions?.canSendMessages ?? true;
+	const canEdit = isOwn;
+	const canPin = permissions?.canPinMessages ?? false;
+	const canDelete = isOwn || (permissions?.canDeleteMessages ?? false);
+
 	return (
 		<div
 			ref={registerRef}
@@ -557,9 +414,20 @@ function MessageRow({
 				flash
 					? "bg-(--bg-elevated) ring-2 ring-(--accent)"
 					: "bg-(--bg-card) hover:bg-(--bg-elevated)",
+				pending && !message.failed && "opacity-30",
 			)}
 		>
-			<MessageActions />
+			<MessageActions
+				failed={failed}
+				pending={pending}
+				canReply={canReply}
+				canEdit={canEdit}
+				canPin={canPin}
+				canDelete={canDelete}
+				onReply={() => onReply(message)}
+				onRetry={() => onRetry?.(message)}
+				onCancel={() => onCancel?.(message.id)}
+			/>
 			<div className="shrink-0">
 				<AvatarImage
 					src={sender?.avatarUrl}
@@ -567,28 +435,38 @@ function MessageRow({
 					size="md"
 				/>
 			</div>
-			<div className="min-w-0 flex flex-col gap-1">
+			<div className="flex flex-col gap-1 w-full">
 				<p className="text-base flex items-baseline gap-2 flex-wrap">
-					<span className="text-(--text-primary) font-bold">
-						{usernameOf(users, message.senderId)}
-					</span>
+					<Link
+						className="text-(--text-primary) font-bold hover:underline"
+						to={"/users/" + users[message.senderId].username}
+					>
+						{displayNameOf(users, message.senderId)}
+					</Link>
 					<span className="text-(--text-muted) text-sm">
 						{formatMessageTime(message.createdAt)}
 					</span>
 					{message.editedAt && (
 						<span className="text-(--text-muted)">· изменено</span>
 					)}
+					{message.failed && (
+						<span className="text-(--error) text-sm">
+							· не доставлено
+						</span>
+					)}
 				</p>
 				{repliedTo && (
 					<button
 						type="button"
-						onClick={() => onJump?.(repliedTo.id)}
-						className="text-left text-base text-(--text-secondary) border-l-2 border-(--border) hover:border-(--accent) pl-3 truncate cursor-pointer transition-colors"
+						onClick={() => onJump?.(repliedTo.messageId)}
+						className="text-left text-base text-(--text-secondary) w-full border-l-2 border-(--border) hover:border-(--accent) pl-3 truncate cursor-pointer transition-colors hover:text-(--accent)"
 					>
-						<span className="text-(--text-secondary) font-bold flex flex-col gap-1">
-							{usernameOf(users, repliedTo.senderId)}
+						<span className="font-bold flex flex-col gap-1">
+							{displayNameOf(users, repliedTo.senderId)}
 						</span>
-						<span>{repliedTo.body}</span>
+						<span className="text-(--text-secondary)">
+							{repliedTo.contentPreview}
+						</span>
 					</button>
 				)}
 				<p className="text-(--text-primary) wrap-break-word text-base">
@@ -599,18 +477,66 @@ function MessageRow({
 	);
 }
 
-function MessageActions() {
+function MessageActions({
+	failed,
+	pending,
+	canReply,
+	canEdit,
+	canPin,
+	canDelete,
+	onReply,
+	onRetry,
+	onCancel,
+}: {
+	failed: boolean;
+	pending: boolean;
+	canReply?: boolean;
+	canEdit?: boolean;
+	canPin?: boolean;
+	canDelete?: boolean;
+	onReply: () => void;
+	onRetry: () => void;
+	onCancel: () => void;
+}) {
 	return (
 		<div className="absolute -top-3 right-3 flex items-center gap-0.5 rounded-lg border border-(--border) bg-(--bg-surface) px-1 py-0.5 opacity-0 pointer-events-none transition-opacity group-hover:opacity-100 group-hover:pointer-events-auto">
-			<MessageAction icon="reply" label="Ответить" />
-			<MessageAction icon="edit" label="Изменить" />
-			<MessageAction icon="push_pin" label="Закрепить" />
-			<MessageAction
-				icon="delete"
-				label="Удалить"
-				className="hover:text-(--error)!"
-			/>
-			{/*<MessageAction icon="check_circle" label="Выбрать" />*/}
+			{failed && (
+				<MessageAction
+					icon="refresh"
+					label="Повторить"
+					action={onRetry}
+				/>
+			)}
+			{(pending || failed) && (
+				<MessageAction
+					icon="delete"
+					label="Отменить"
+					action={onCancel}
+					className="hover:text-(--error)!"
+				/>
+			)}
+			{!failed && !pending && (
+				<>
+					{canReply && (
+						<MessageAction
+							icon="reply"
+							label="Ответить"
+							action={onReply}
+						/>
+					)}
+					{canEdit && <MessageAction icon="edit" label="Изменить" />}
+					{canPin && (
+						<MessageAction icon="push_pin" label="Закрепить" />
+					)}
+					{canDelete && (
+						<MessageAction
+							icon="delete"
+							label="Удалить"
+							className="hover:text-(--error)!"
+						/>
+					)}
+				</>
+			)}
 		</div>
 	);
 }
@@ -619,10 +545,12 @@ function MessageAction({
 	icon,
 	label,
 	className,
+	action,
 }: {
 	icon: string;
 	label: string;
 	className?: string;
+	action?: () => void;
 }) {
 	return (
 		<button
@@ -633,6 +561,7 @@ function MessageAction({
 				"text-(--text-muted) hover:text-(--text-primary) hover:bg-(--bg-elevated) transition-colors cursor-pointer flex items-center justify-center p-1 rounded-md",
 				className,
 			)}
+			onClick={action}
 		>
 			<Icon name={icon} className="text-lg!" />
 		</button>
@@ -670,32 +599,104 @@ function ComposerButton({
 	);
 }
 
-function Composer() {
+function Composer({
+	send,
+	permissions,
+	replyTarget,
+	onCancelReply,
+	onSent,
+}: {
+	send: (body: string, replyTo?: ReplySnippet | undefined) => void;
+	permissions?: ChatPermissions;
+	replyTarget?: ReplySnippet;
+	onCancelReply: () => void;
+	onSent?: () => void;
+}) {
 	const [text, setText] = useState("");
+	const { users } = useChatData();
+
+	const inputRef = useRef<HTMLInputElement>(null);
+
+	const canSend = permissions?.canSendMessages ?? true;
+	const canSendFiles = permissions?.canSendFiles ?? true;
+
+	useEffect(() => {
+		if (replyTarget) {
+			inputRef.current?.focus();
+		}
+	}, [replyTarget]);
+
+	const handleSend = () => {
+		const trimmed = text.trim();
+		if (!trimmed) return;
+		send(trimmed, replyTarget);
+		setText("");
+		onSent?.();
+	};
+
+	if (!canSend) {
+		return (
+			<div className="rounded-xl outline outline-(--border) flex items-center justify-center px-3 h-14 z-2 text-(--text-muted) text-sm">
+				У вас нет прав для отправки сообщений в этом чате
+			</div>
+		);
+	}
+
 	return (
-		<div className="rounded-xl outline outline-(--border) flex items-center gap-2 px-3 h-14 z-2">
-			<ComposerButton
-				icon="attach_file"
-				label="Прикрепить файлы"
-				onClick={() => {}}
-			/>
-			<input
-				value={text}
-				onChange={(e) => setText(e.target.value)}
-				placeholder="Сообщение"
-				className="flex-1 min-w-0 bg-transparent text-(--text-primary) placeholder:text-(--text-muted) focus:outline-none py-1"
-			/>
-			<ComposerButton
-				icon="casino"
-				label="Бросок кубика"
-				onClick={() => {}}
-			/>
-			<ComposerButton
-				icon="send"
-				label="Отправить"
-				onClick={() => {}}
-				disabled={!text.trim()}
-			/>
+		<div className="flex flex-col">
+			{replyTarget && (
+				<div className="flex items-center gap-2 px-3 py-2 mb-1 ml-4 mr-2 rounded-md bg-(--bg-elevated) relative before:absolute before:inset-y-0 before:-left-2 before:w-1  before:bg-(--accent) before:rounded-lg">
+					<div className="min-w-0 flex-1">
+						<p className="text-base text-(--accent) font-bold">
+							{displayNameOf(users, replyTarget.senderId)}
+						</p>
+						<p className="text-sm text-(--text-secondary) truncate">
+							{replyTarget.contentPreview}
+						</p>
+					</div>
+					<CloseButton onClose={onCancelReply} />
+				</div>
+			)}
+			<div className="rounded-xl outline outline-(--border) flex items-center gap-2 px-3 h-14 z-2">
+				{canSendFiles && (
+					<ComposerButton
+						icon="attach_file"
+						label="Прикрепить файлы"
+						onClick={() => {}}
+					/>
+				)}
+				<input
+					value={text}
+					onChange={(e) => setText(e.target.value)}
+					onKeyDown={(e) => {
+						if (e.key === "Enter") {
+							e.preventDefault();
+							handleSend();
+						}
+						if (e.key === "Escape" && replyTarget) {
+							e.preventDefault();
+							onCancelReply?.();
+							requestAnimationFrame(() => {
+								inputRef.current?.focus();
+							});
+						}
+					}}
+					placeholder="Сообщение"
+					className="flex-1 min-w-0 bg-transparent text-(--text-primary) placeholder:text-(--text-muted) focus:outline-none py-1"
+					ref={inputRef}
+				/>
+				<ComposerButton
+					icon="casino"
+					label="Бросок кубика"
+					onClick={() => {}}
+				/>
+				<ComposerButton
+					icon="send"
+					label="Отправить"
+					onClick={handleSend}
+					disabled={!text.trim()}
+				/>
+			</div>
 		</div>
 	);
 }

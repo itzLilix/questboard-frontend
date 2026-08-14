@@ -24,6 +24,7 @@ export default defineConfig({
 			},
 			"/api/sessions": {
 				target: "http://localhost:3001",
+				ws: true,
 				rewrite: (path) => path.replace(/^\/api\/sessions/, ""),
 			},
 		},

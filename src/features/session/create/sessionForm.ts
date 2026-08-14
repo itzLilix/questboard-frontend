@@ -1,5 +1,5 @@
-import { SessionAvailability, SessionFormat } from "../../types/session";
-import type { ISystem } from "../../types/userCard";
+import { SessionAvailability, SessionFormat } from "../../../types/session";
+import type { ISystem } from "../../../types/userCard";
 
 export interface SessionFormValues {
 	campaignId: string | null;

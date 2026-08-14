@@ -1,17 +1,17 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import Button from "../../components/ui/Button";
-import Field from "../../components/ui/inputs/Field";
-import Input from "../../components/ui/inputs/Input";
-import InputText from "../../components/ui/inputs/InputText";
-import { LabeledInput } from "../../components/ui/inputs/InputLabel";
+import Button from "../../../components/ui/Button";
+import Field from "../../../components/ui/inputs/Field";
+import Input from "../../../components/ui/inputs/Input";
+import InputText from "../../../components/ui/inputs/InputText";
+import { LabeledInput } from "../../../components/ui/inputs/InputLabel";
 import { Controller } from "react-hook-form";
-import type { ISystem } from "../../types/userCard";
-import SystemSearch from "./SystemSearch";
-import { CampaignAvailability } from "../../types/campaign";
-import { options } from "../../utils/options";
-import Dropdown from "../../components/ui/Dropdown";
-import ErrorMessage from "../../components/ui/inputs/ErrorMessage";
+import type { ISystem } from "../../../types/userCard";
+import SystemSearch from "../../../components/ui/SystemSearch";
+import { CampaignAvailability } from "../../../types/campaign";
+import { options } from "../../../utils/options";
+import Dropdown from "../../../components/ui/Dropdown";
+import ErrorMessage from "../../../components/ui/inputs/ErrorMessage";
 
 export interface CreateCampaignInput {
 	title: string;

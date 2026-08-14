@@ -4,7 +4,7 @@ import { normalizeUrl } from "./url";
 
 export const USER_REGEX = /^[A-Za-z0-9-_]{2,32}$/;
 export const PWD_REGEX =
-	/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%])[A-Za-z0-9!@#$%]{8,128}$/;
+	/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%.,/\\\*\+\-\(\)\[\]\{\}])[A-Za-z0-9!@#$%.,/\\\*\+\-\(\)\[\]\{\}]{8,128}$/;
 export const EMAIL_REGEX = /^\S+@\S+\.\S+$/;
 
 export const emailRules = {

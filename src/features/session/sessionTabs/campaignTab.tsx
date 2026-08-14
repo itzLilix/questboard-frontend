@@ -427,7 +427,7 @@ export function CampaignTab() {
 								key={s.sessionId}
 								tie={s}
 								index={index}
-								linkTo={`/sessions/${session.id}`}
+								linkTo={`/sessions/${s.sessionId}`}
 								isUntied={untied.has(s.sessionId)}
 								onToggleUntie={toggleUntie}
 								control={control}
@@ -439,7 +439,7 @@ export function CampaignTab() {
 						<SessionTieRow
 							key={s.sessionId}
 							tie={s}
-							linkTo={`/sessions/${session.id}`}
+							linkTo={`/sessions/${s.sessionId}`}
 							editMode={false}
 							isUntied={false}
 							onToggleUntie={toggleUntie}

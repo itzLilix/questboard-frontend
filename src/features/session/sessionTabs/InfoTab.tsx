@@ -1,7 +1,7 @@
 import { useOutletContext } from "react-router-dom";
 import TextField from "../../../components/ui/TextField";
 import { SessionFormat, type SessionResponse } from "../../../types/session";
-import SessionFactsList from "../SessionFactsList";
+import SessionFactsList from "../../../components/ui/SessionFactsList";
 import { splitDatetime } from "../../../utils/dateFormats";
 import { AVAILABILITY_LABEL, FORMAT_LABEL } from "../../../utils/words";
 

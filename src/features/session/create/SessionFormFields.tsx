@@ -5,18 +5,18 @@ import {
 	type UseFormRegister,
 	type UseFormSetValue,
 } from "react-hook-form";
-import TextField from "../../components/ui/TextField";
-import Input from "../../components/ui/inputs/Input";
-import InputText from "../../components/ui/inputs/InputText";
-import Field from "../../components/ui/inputs/Field";
-import { LabeledInput } from "../../components/ui/inputs/InputLabel";
-import Dropdown from "../../components/ui/Dropdown";
-import FilterToggle from "../../components/ui/filters/FilterToggle";
-import ImageUploader from "../settings/ImageUploader";
-import SystemSearch from "./SystemSearch";
-import { SessionFormat } from "../../types/session";
-import type { ISystem } from "../../types/userCard";
-import { AVAILABILITY_OPTIONS, FORMAT_OPTIONS } from "../../utils/words";
+import TextField from "../../../components/ui/TextField";
+import Input from "../../../components/ui/inputs/Input";
+import InputText from "../../../components/ui/inputs/InputText";
+import Field from "../../../components/ui/inputs/Field";
+import { LabeledInput } from "../../../components/ui/inputs/InputLabel";
+import Dropdown from "../../../components/ui/Dropdown";
+import FilterToggle from "../../../components/ui/filters/FilterToggle";
+import ImageUploader from "../../settings/ImageUploader";
+import SystemSearch from "../../../components/ui/SystemSearch";
+import { SessionFormat } from "../../../types/session";
+import type { ISystem } from "../../../types/userCard";
+import { AVAILABILITY_OPTIONS, FORMAT_OPTIONS } from "../../../utils/words";
 import {
 	descriptionRules,
 	seatsRules,

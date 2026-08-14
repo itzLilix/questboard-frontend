@@ -26,7 +26,7 @@ import { SessionType } from "../../types/session";
 import ListLoading from "../../components/ui/ListLoading";
 import EmptyState from "../../components/ui/EmptyState";
 import { useInfiniteScroll } from "../../hooks/useInfiniteScroll";
-import { SessionList } from "../session/sessionList";
+import { SessionList } from "../session/ownLists/sessionList";
 import useAuth from "../auth/AuthProvider";
 
 const TAB_OPTIONS = options([

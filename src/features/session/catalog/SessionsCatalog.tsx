@@ -7,37 +7,41 @@ import {
 } from "react";
 import ActiveFilterChips, {
 	type ChipItem,
-} from "../../components/ui/filters/ActiveFilterChips";
-import ClearFiltersButton from "../../components/ui/filters/ClearFiltersButton";
-import Dropdown from "../../components/ui/Dropdown";
-import FilterButton from "../../components/ui/filters/FilterButton";
+} from "../../../components/ui/filters/ActiveFilterChips";
+import ClearFiltersButton from "../../../components/ui/filters/ClearFiltersButton";
+import Dropdown from "../../../components/ui/Dropdown";
+import FilterButton from "../../../components/ui/filters/FilterButton";
 import FilterModal, {
 	FilterSection,
-} from "../../components/ui/filters/FilterModal";
-import RangeField from "../../components/ui/filters/FilterRange";
-import FilterToggle from "../../components/ui/filters/FilterToggle";
-import Input from "../../components/ui/inputs/Input";
-import ListLoading from "../../components/ui/ListLoading";
-import EmptyState from "../../components/ui/EmptyState";
-import SessionCard from "../../components/ui/cards/SessionCard";
-import { SystemBadge } from "../../components/ui/SystemBadge";
-import ToggleSortOrder from "../../components/ui/filters/ToggleSortOrder";
+} from "../../../components/ui/filters/FilterModal";
+import RangeField from "../../../components/ui/filters/FilterRange";
+import FilterToggle from "../../../components/ui/filters/FilterToggle";
+import Input from "../../../components/ui/inputs/Input";
+import ListLoading from "../../../components/ui/ListLoading";
+import EmptyState from "../../../components/ui/EmptyState";
+import SessionCard from "../../../components/ui/cards/SessionCard";
+import { SystemBadge } from "../../../components/ui/SystemBadge";
+import ToggleSortOrder from "../../../components/ui/filters/ToggleSortOrder";
 import {
 	SessionFormat,
 	SessionMembership,
 	SessionType,
 	type ISession,
-} from "../../types/session";
-import { SortOrder } from "../../types/query";
-import type { ISystem, IUserBrief } from "../../types/userCard";
-import { formatDateWeekday } from "../../utils/dateFormats";
-import { type Option, options } from "../../utils/options";
-import { FORMAT_OPTIONS, TYPE_OPTIONS } from "../../utils/words";
-import { SessionScope, SessionSortBy, StatusFilter } from "./api";
-import { useCuratedSystemsQuery, useSessionsQuery } from "./queries";
+} from "../../../types/session";
+import { SortOrder } from "../../../types/query";
+import type { ISystem, IUserBrief } from "../../../types/userCard";
+import { formatDateWeekday } from "../../../utils/dateFormats";
+import { type Option, options } from "../../../utils/options";
+import { FORMAT_OPTIONS, TYPE_OPTIONS } from "../../../utils/words";
+import { SessionScope, SessionSortBy, StatusFilter } from "../api";
+import { useCuratedSystemsQuery, useSessionsQuery } from "../queries";
 import SessionGroup from "./SessionGroup";
-import SystemSearch from "./SystemSearch";
-import { parseEnum, useUrlSearch, useUrlState } from "../../hooks/useUrlState";
+import SystemSearch from "../../../components/ui/SystemSearch";
+import {
+	parseEnum,
+	useUrlSearch,
+	useUrlState,
+} from "../../../hooks/useUrlState";
 import { useInView } from "react-intersection-observer";
 
 const SORT_OPTIONS = options([

@@ -1,23 +1,23 @@
 import { useMemo } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import Tab from "../../components/ui/Tab";
-import { options, type Option } from "../../utils/options";
+import Tab from "../../../components/ui/Tab";
+import { options, type Option } from "../../../utils/options";
 import {
 	collectCampaigns,
 	useCampaignsQuery,
 	useSessionsQuery,
-} from "./queries";
-import { SessionScope, SessionSortBy, StatusFilter } from "./api";
-import { SortOrder } from "../../types/query";
-import { SessionType } from "../../types/session";
-import SessionCardCompact from "../../components/ui/cards/SessionCompact";
-import CampaignAccordion from "../../components/ui/cards/CampaignAccordion";
-import CollapsibleSection from "../../components/ui/CollapsibleSection";
-import ListLoading from "../../components/ui/ListLoading";
-import EmptyState from "../../components/ui/EmptyState";
-import { useInfiniteScroll } from "../../hooks/useInfiniteScroll";
+} from "../queries";
+import { SessionScope, SessionSortBy, StatusFilter } from "../api";
+import { SortOrder } from "../../../types/query";
+import { SessionType } from "../../../types/session";
+import SessionCardCompact from "../../../components/ui/cards/SessionCompact";
+import CampaignAccordion from "../../../components/ui/cards/CampaignAccordion";
+import CollapsibleSection from "../../../components/ui/CollapsibleSection";
+import ListLoading from "../../../components/ui/ListLoading";
+import EmptyState from "../../../components/ui/EmptyState";
+import { useInfiniteScroll } from "../../../hooks/useInfiniteScroll";
 import { SessionList } from "./sessionList";
-import useAuth from "../auth/AuthProvider";
+import useAuth from "../../auth/AuthProvider";
 
 const TAB_OPTIONS = options([
 	{ value: "mastering", label: "Мастер" },

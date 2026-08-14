@@ -32,19 +32,6 @@ export type ChatLastMessage = {
 	hasAttachment: boolean;
 };
 
-export type ChatMessage = {
-	id: string;
-	chatId: string;
-	senderId: string;
-	body: string;
-	replyToId?: string;
-	createdAt: string;
-	editedAt?: string;
-	deletedAt?: string;
-	attachments?: ChatMessageAttachment[];
-	mentions?: ChatMessageMention[];
-};
-
 export type ChatMessageAttachment = {
 	id: string;
 	messageId: string;
@@ -54,23 +41,59 @@ export type ChatMessageAttachment = {
 	sizeBytes: number;
 };
 
-export type ChatMessageMention = {
-	messageId: string;
-	mentionedUserId: string;
-};
-
-export const ChatMemberRole = {
+export const ChatRole = {
 	Owner: "owner",
 	Admin: "admin",
 	Member: "member",
 } as const;
 
-export type ChatMemberRole =
-	(typeof ChatMemberRole)[keyof typeof ChatMemberRole];
+export type ChatRole = (typeof ChatRole)[keyof typeof ChatRole];
 
 export type ChatMember = {
 	UserId: string;
-	Role: ChatMemberRole;
+	Role: ChatRole;
 	JoinedAt: string;
 	LastReadId?: string;
+};
+
+export type ReplySnippet = {
+	messageId: string;
+	senderId: string;
+	contentPreview?: string;
+	deleted?: boolean;
+};
+
+export type MessageAttachment = {
+	id: string;
+	fileName: string;
+	url: string;
+	mimeType: string;
+	sizeBytes: number;
+};
+
+export type ChatMessage = {
+	id: string;
+	senderId: string;
+	body: string;
+	replyTo?: ReplySnippet;
+	attachments?: MessageAttachment[];
+	mentionedUserIds?: string[];
+	createdAt: string;
+	editedAt?: string;
+	failed?: boolean;
+	pending?: boolean;
+	clientNonce?: string;
+};
+
+export type ChatPermissions = {
+	role: ChatRole;
+	canSendMessages: boolean;
+	canSendFiles: boolean;
+	canPinMessages: boolean;
+	canChangeInfo: boolean;
+	canAddMembers: boolean;
+	canRemoveMembers: boolean;
+	canDeleteMessages: boolean;
+	canManageRoles: boolean;
+	canManagePermissions: boolean;
 };

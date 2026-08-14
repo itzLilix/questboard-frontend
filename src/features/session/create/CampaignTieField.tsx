@@ -1,13 +1,13 @@
 import { Controller, type Control } from "react-hook-form";
-import TextField from "../../components/ui/TextField";
-import { LabeledInput } from "../../components/ui/inputs/InputLabel";
-import Dropdown, { type DropdownOption } from "../../components/ui/Dropdown";
-import Button from "../../components/ui/Button";
-import { SystemBadge } from "../../components/ui/SystemBadge";
+import TextField from "../../../components/ui/TextField";
+import { LabeledInput } from "../../../components/ui/inputs/InputLabel";
+import Dropdown, { type DropdownOption } from "../../../components/ui/Dropdown";
+import Button from "../../../components/ui/Button";
+import { SystemBadge } from "../../../components/ui/SystemBadge";
 import NewCampaignPopover, {
 	type CreateCampaignInput,
 } from "./NewCampaignPopover";
-import type { ICampaign } from "../../types/campaign";
+import type { ICampaign } from "../../../types/campaign";
 import type { SessionFormValues } from "./sessionForm";
 
 type CampaignTieFieldProps = {

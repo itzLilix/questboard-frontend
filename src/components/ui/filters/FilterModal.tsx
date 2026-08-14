@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from "react";
 import clsx from "clsx";
-import Icon from "../Icon";
+import CloseButton from "../CloseButton";
 
 type Props = {
 	isOpen: boolean;
@@ -44,14 +44,7 @@ export default function FilterModal({
 					<h2 className="text-2xl font-display text-(--text-primary)">
 						{title}
 					</h2>
-					<button
-						type="button"
-						onClick={onClose}
-						className="p-1 inline-flex items-center justify-center rounded-full text-(--text-secondary) hover:text-(--text-primary) hover:bg-(--bg-elevated) transition-colors cursor-pointer"
-						aria-label="Закрыть"
-					>
-						<Icon name="close" />
-					</button>
+					<CloseButton onClose={onClose} />
 				</div>
 
 				<div className="flex flex-col gap-5 px-6 pb-6 overflow-y-auto">

@@ -19,7 +19,7 @@ import {
 import { ApplyButton, Price } from "../../components/ui/cards/SessionCard";
 import type { IUserBrief } from "../../types/userCard";
 import AvatarImage from "../../components/ui/AvatarImage";
-import GMBadge from "./GMBadge";
+import GMBadge from "../../components/ui/GMBadge";
 import { SessionProvider, useSessionRole } from "./SessionContext";
 import type { IUser } from "../../types/user";
 import Rating from "../../components/ui/UserRating";

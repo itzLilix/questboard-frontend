@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import clsx from "clsx";
-import Icon from "../../components/ui/Icon";
-import { pluralGames } from "../../utils/words";
+import Icon from "../../../components/ui/Icon";
+import { pluralGames } from "../../../utils/words";
 
 type SessionGroupProps = {
 	title: ReactNode;

@@ -1,8 +1,8 @@
 import clsx from "clsx";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import Icon from "../../components/ui/Icon";
-import Input from "../../components/ui/inputs/Input";
+import Icon from "./Icon";
+import Input from "./inputs/Input";
 import useAnchoredPosition from "../../hooks/useAnchoredPosition";
 import useClickOutside from "../../hooks/useClickOutside";
 import type { ISystem } from "../../types/userCard";
@@ -10,7 +10,7 @@ import {
 	useCreateSystemMutation,
 	useCuratedSystemsQuery,
 	useSystemSearchQuery,
-} from "./queries";
+} from "../../features/session/queries";
 
 type CommonProps = {
 	placeholder?: string;

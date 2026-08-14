@@ -1,8 +1,8 @@
-import SessionCardCompact from "../../components/ui/cards/SessionCompact";
-import CollapsibleSection from "../../components/ui/CollapsibleSection";
-import ListLoading from "../../components/ui/ListLoading";
-import type { useInfiniteScroll } from "../../hooks/useInfiniteScroll";
-import type { CampaignRef, ISession } from "../../types/session";
+import SessionCardCompact from "../../../components/ui/cards/SessionCompact";
+import CollapsibleSection from "../../../components/ui/CollapsibleSection";
+import ListLoading from "../../../components/ui/ListLoading";
+import type { useInfiniteScroll } from "../../../hooks/useInfiniteScroll";
+import type { CampaignRef, ISession } from "../../../types/session";
 
 export function SessionList({
 	title,
