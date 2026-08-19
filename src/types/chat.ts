@@ -97,3 +97,10 @@ export type ChatPermissions = {
 	canManageRoles: boolean;
 	canManagePermissions: boolean;
 };
+
+export type PinnedMessage = {
+	messageId: string;
+	pinned_by: string;
+	pinned_at: string;
+	order_index: number;
+};

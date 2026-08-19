@@ -4,15 +4,28 @@ import {
 	type InfiniteData,
 	type QueryClient,
 } from "@tanstack/react-query";
-import { sessionApi } from "../../../../api/axios";
-import { MessagesKey, useSendMessageMutation } from "./queries";
+import { refreshTokens, sessionApi } from "../../../../api/axios";
+import {
+	MessagesKey,
+	PinnedMessagesKey,
+	useDeleteMessageMutation,
+	useEditMessageMutation,
+	usePinMessageMutation,
+	useSendMessageRest,
+	useUnpinMessageMutation,
+} from "./queries";
 import type { MessagePage, SendMessageBody } from "./api";
 import useAuth from "../../../auth/AuthProvider";
-import type { ChatMessage, ReplySnippet } from "../../../../types/chat";
+import type {
+	ChatMessage,
+	PinnedMessage,
+	ReplySnippet,
+} from "../../../../types/chat";
 
 const RECONNECT_BASE_DELAY_MS = 1000;
 const RECONNECT_MAX_DELAY_MS = 15000;
-const SEND_TIMEOUT_MS = 8000;
+const SEND_TIMEOUT_MS = 5000;
+const REFRESH_RETRY_DELAY_MS = 300;
 
 const ConnectionStatus = {
 	Connecting: "connecting",
@@ -26,8 +39,7 @@ type ConnectionStatus =
 const ChatEventType = {
 	Message: "message",
 	Edit: "edit",
-	Delete: "delete", // not emitted by the backend yet (see events.go) — defined
-	// so a future server-side add "just works" here without another round trip
+	Delete: "delete",
 	Pin: "pin",
 	Unpin: "unpin",
 	Read: "read",
@@ -118,12 +130,28 @@ function handleEnvelope(
 			upsertMessage(queryClient, chatID, envelope.payload as ChatMessage);
 			return;
 		case ChatEventType.Pin:
+			// Assumes the server echoes the same shape h.pin returns over REST —
+			// a full PinnedMessage. If the WS payload is slimmer, join it against
+			// the messages cache here instead of casting directly.
+			upsertPinnedMessage(
+				queryClient,
+				chatID,
+				envelope.payload as PinnedMessage,
+			);
+			return;
 		case ChatEventType.Unpin:
+			removePinnedMessage(
+				queryClient,
+				chatID,
+				(envelope.payload as { messageId: string }).messageId,
+			);
+			return;
 		case ChatEventType.Read:
 		case ChatEventType.Delete:
-			// No pin state, read-receipt, or delete UI yet — nothing to
-			// reconcile. Add a case here the same way message/edit is
-			// handled above once there's a UI consumer.
+			const { messageId } = envelope.payload as { messageId: string };
+			removeMessage(queryClient, chatID, messageId);
+			removePinnedMessage(queryClient, chatID, messageId);
+			markRepliesDeleted(queryClient, chatID, messageId);
 			return;
 	}
 }
@@ -140,18 +168,23 @@ export function useChatSocket(chatID: string) {
 	const reconnectAttempt = useRef(0);
 	const reconnectTimer = useRef<number | undefined>(undefined);
 	const closedByUs = useRef(false);
+	const refreshedThisCycle = useRef(false);
 
 	useEffect(() => {
 		closedByUs.current = false;
 		reconnectAttempt.current = 0;
 
-		function connect() {
+		async function connect() {
 			setStatus(ConnectionStatus.Connecting);
+
+			let reachedOpen = false;
 			const ws = new WebSocket(`${wsBaseURL()}/ws/chats/${chatID}`);
 			wsRef.current = ws;
 
 			ws.onopen = () => {
+				reachedOpen = true;
 				reconnectAttempt.current = 0;
+				refreshedThisCycle.current = false;
 				setStatus(ConnectionStatus.Open);
 			};
 
@@ -168,12 +201,28 @@ export function useChatSocket(chatID: string) {
 			ws.onclose = () => {
 				setStatus(ConnectionStatus.Closed);
 				if (closedByUs.current) return;
-				// Note: a permanent 403 (not a member, e.g.) and a dropped
-				// connection look identical to the browser here — both just
-				// fire close. This will retry a rejected chat forever with
-				// capped backoff rather than surfacing "you don't have
-				// access." Fine for now; revisit if that's confusing in
-				// practice.
+
+				// Closed without ever opening — with both tokens HttpOnly, this is
+				// the only way we can detect "token was probably expired" at all.
+				// Try one refresh, retry; if the refresh token's dead too, this
+				// falls through to normal capped backoff below and the person
+				// eventually needs to re-auth via whatever your app's global
+				// 401-handling already does for REST calls.
+				if (!reachedOpen && !refreshedThisCycle.current) {
+					refreshedThisCycle.current = true;
+					refreshTokens()
+						.catch(() => {
+							// Refresh token's dead too — nothing more to do here.
+						})
+						.finally(() => {
+							reconnectTimer.current = window.setTimeout(
+								connect,
+								REFRESH_RETRY_DELAY_MS,
+							);
+						});
+					return;
+				}
+
 				const delay = Math.min(
 					RECONNECT_BASE_DELAY_MS * 2 ** reconnectAttempt.current,
 					RECONNECT_MAX_DELAY_MS,
@@ -238,10 +287,6 @@ export function useChatSocket(chatID: string) {
 			send({ type: ChatEventType.Read, messageId: lastReadMessageId }),
 		[send],
 	);
-	// Backend's readPump ignores unknown event types today (see client.go's
-	// `default:` case) rather than erroring — so this is safe to wire up
-	// now; it'll go from silently ignored to functional whenever the
-	// backend adds a case for it, no client change needed.
 	const sendDelete = useCallback(
 		(messageId: string) => send({ type: ChatEventType.Delete, messageId }),
 		[send],
@@ -265,8 +310,19 @@ export function useChatSocket(chatID: string) {
 export function useComposerSend(chatID: string) {
 	const queryClient = useQueryClient();
 	const { user } = useAuth();
-	const { status, sendMessage: sendViaSocket } = useChatSocket(chatID);
-	const restMutation = useSendMessageMutation(chatID);
+	const {
+		status,
+		sendMessage: sendViaSocket,
+		sendEdit: sendEditViaSocket,
+		sendPin: sendPinViaSocket,
+		sendUnpin: sendUnpinViaSocket,
+		sendDelete: sendDeleteViaSocket,
+	} = useChatSocket(chatID);
+	const restMutation = useSendMessageRest(chatID);
+	const editMutation = useEditMessageMutation(chatID);
+	const pinMutation = usePinMessageMutation(chatID);
+	const unpinMutation = useUnpinMessageMutation(chatID);
+	const deleteMutation = useDeleteMessageMutation(chatID);
 
 	const send = useCallback(
 		(body: string, replyTo?: ReplySnippet) => {
@@ -286,23 +342,7 @@ export function useComposerSend(chatID: string) {
 				replyTo: replyTo,
 			};
 
-			queryClient.setQueryData<InfiniteData<MessagePage>>(
-				MessagesKey.chat(chatID),
-				(old) => {
-					if (!old || old.pages.length === 0) return old;
-					const [latest, ...rest] = old.pages;
-					return {
-						...old,
-						pages: [
-							{
-								...latest,
-								messages: [optimistic, ...latest.messages],
-							},
-							...rest,
-						],
-					};
-				},
-			);
+			upsertMessage(queryClient, chatID, optimistic);
 
 			const sent = sendViaSocket(body, {
 				replyToId: replyTo?.messageId,
@@ -342,6 +382,110 @@ export function useComposerSend(chatID: string) {
 		[status, sendViaSocket, restMutation, queryClient, chatID, user?.id],
 	);
 
+	const edit = useCallback(
+		(messageId: string, body: string) => {
+			const previous = findMessage(queryClient, chatID, messageId);
+			if (previous)
+				upsertMessage(queryClient, chatID, {
+					...previous,
+					body,
+					editedAt: new Date().toISOString(),
+				});
+
+			if (
+				status === ConnectionStatus.Open &&
+				sendEditViaSocket(messageId, body)
+			)
+				return;
+
+			editMutation.mutate(
+				{ messageId, body },
+				{
+					onError: () => {
+						if (previous)
+							upsertMessage(queryClient, chatID, previous);
+					},
+				},
+			);
+		},
+		[status, sendEditViaSocket, editMutation, queryClient, chatID],
+	);
+
+	const pin = useCallback(
+		(message: ChatMessage) => {
+			const optimisticPin: PinnedMessage = {
+				messageId: message.id,
+				pinned_by: user?.id ?? "",
+				pinned_at: new Date().toISOString(),
+				order_index: nextPinOrderIndex(queryClient, chatID),
+			};
+			upsertPinnedMessage(queryClient, chatID, optimisticPin);
+
+			if (status === ConnectionStatus.Open) {
+				const delivered = sendPinViaSocket(message.id);
+				if (delivered) return; // server echoes a Pin envelope with the real pinned_by/pinned_at/order_index
+			}
+
+			pinMutation.mutate(message.id, {
+				onSuccess: (pinned) =>
+					upsertPinnedMessage(queryClient, chatID, pinned),
+				onError: () =>
+					removePinnedMessage(queryClient, chatID, message.id),
+			});
+		},
+		[status, sendPinViaSocket, pinMutation, queryClient, chatID, user?.id],
+	);
+
+	const unpin = useCallback(
+		(messageId: string) => {
+			const removed = removePinnedMessage(queryClient, chatID, messageId);
+
+			if (status === ConnectionStatus.Open) {
+				const delivered = sendUnpinViaSocket(messageId);
+				if (delivered) return;
+			}
+
+			unpinMutation.mutate(messageId, {
+				onError: () => {
+					if (removed)
+						upsertPinnedMessage(queryClient, chatID, removed);
+				},
+			});
+		},
+		[status, sendUnpinViaSocket, unpinMutation, queryClient, chatID],
+	);
+
+	const deleteMessage = useCallback(
+		(messageId: string) => {
+			const removed = removeMessage(queryClient, chatID, messageId);
+			const removedPin = removePinnedMessage(
+				queryClient,
+				chatID,
+				messageId,
+			);
+			const affectedReplyIds = markRepliesDeleted(
+				queryClient,
+				chatID,
+				messageId,
+			);
+
+			if (status === ConnectionStatus.Open) {
+				const delivered = sendDeleteViaSocket(messageId);
+				if (delivered) return;
+			}
+
+			deleteMutation.mutate(messageId, {
+				onError: () => {
+					if (removed) upsertMessage(queryClient, chatID, removed);
+					if (removedPin)
+						upsertPinnedMessage(queryClient, chatID, removedPin);
+					markRepliesUndeleted(queryClient, chatID, affectedReplyIds);
+				},
+			});
+		},
+		[deleteMutation, queryClient, chatID],
+	);
+
 	const cancelFailed = useCallback(
 		(messageId: string) => {
 			removeMessage(queryClient, chatID, messageId);
@@ -364,6 +508,10 @@ export function useComposerSend(chatID: string) {
 
 	return {
 		send,
+		edit,
+		pin,
+		unpin,
+		deleteMessage,
 		retry,
 		cancelFailed,
 		isSocketConnected: status === ConnectionStatus.Open,
@@ -375,6 +523,7 @@ function removeMessage(
 	chatID: string,
 	messageId: string,
 ) {
+	let removed: ChatMessage | undefined;
 	queryClient.setQueryData<InfiniteData<MessagePage>>(
 		MessagesKey.chat(chatID),
 		(old) => {
@@ -383,9 +532,135 @@ function removeMessage(
 				...old,
 				pages: old.pages.map((page) => ({
 					...page,
-					messages: page.messages.filter((m) => m.id !== messageId),
+					messages: page.messages.filter((m) => {
+						if (m.id === messageId) {
+							removed = m;
+							return false;
+						}
+						return true;
+					}),
 				})),
 			};
 		},
 	);
+	return removed;
+}
+
+function nextPinOrderIndex(queryClient: QueryClient, chatID: string): number {
+	const existing = queryClient.getQueryData<PinnedMessage[]>(
+		PinnedMessagesKey.chat(chatID),
+	);
+	if (!existing || existing.length === 0) return 0;
+	return Math.max(...existing.map((p) => p.order_index)) + 1;
+}
+
+function upsertPinnedMessage(
+	queryClient: QueryClient,
+	chatID: string,
+	pinned: PinnedMessage,
+) {
+	queryClient.setQueryData<PinnedMessage[]>(
+		PinnedMessagesKey.chat(chatID),
+		(old) => {
+			const existing = old ?? [];
+			const next = existing.some((p) => p.messageId === pinned.messageId)
+				? existing.map((p) =>
+						p.messageId === pinned.messageId ? pinned : p,
+					)
+				: [...existing, pinned];
+			return next.sort((a, b) => a.order_index - b.order_index);
+		},
+	);
+}
+
+function removePinnedMessage(
+	queryClient: QueryClient,
+	chatID: string,
+	messageId: string,
+): PinnedMessage | undefined {
+	let removed: PinnedMessage | undefined;
+	queryClient.setQueryData<PinnedMessage[]>(
+		PinnedMessagesKey.chat(chatID),
+		(old) => {
+			if (!old) return old;
+			removed = old.find((p) => p.messageId === messageId);
+			return old.filter((p) => p.messageId !== messageId);
+		},
+	);
+	return removed;
+}
+
+function markRepliesDeleted(
+	queryClient: QueryClient,
+	chatID: string,
+	deletedMessageId: string,
+): string[] {
+	const affected: string[] = [];
+	queryClient.setQueryData<InfiniteData<MessagePage>>(
+		MessagesKey.chat(chatID),
+		(old) => {
+			if (!old) return old;
+			return {
+				...old,
+				pages: old.pages.map((page) => ({
+					...page,
+					messages: page.messages.map((m) => {
+						if (
+							m.replyTo &&
+							m.replyTo.messageId === deletedMessageId &&
+							!m.replyTo.deleted
+						) {
+							affected.push(m.id);
+							return {
+								...m,
+								replyTo: { ...m.replyTo, deleted: true },
+							};
+						}
+						return m;
+					}),
+				})),
+			};
+		},
+	);
+	return affected;
+}
+
+function markRepliesUndeleted(
+	queryClient: QueryClient,
+	chatID: string,
+	messageIds: string[],
+) {
+	if (messageIds.length === 0) return;
+	const idSet = new Set(messageIds);
+	queryClient.setQueryData<InfiniteData<MessagePage>>(
+		MessagesKey.chat(chatID),
+		(old) => {
+			if (!old) return old;
+			return {
+				...old,
+				pages: old.pages.map((page) => ({
+					...page,
+					messages: page.messages.map((m) =>
+						idSet.has(m.id) && m.replyTo
+							? {
+									...m,
+									replyTo: { ...m.replyTo, deleted: false },
+								}
+							: m,
+					),
+				})),
+			};
+		},
+	);
+}
+
+function findMessage(
+	queryClient: QueryClient,
+	chatID: string,
+	messageId: string,
+) {
+	return queryClient
+		.getQueryData<InfiniteData<MessagePage>>(MessagesKey.chat(chatID))
+		?.pages.flatMap((p) => p.messages)
+		.find((m) => m.id === messageId);
 }

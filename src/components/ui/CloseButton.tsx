@@ -1,13 +1,19 @@
 import clsx from "clsx";
 import Icon from "./Icon";
+import type { ButtonHTMLAttributes } from "react";
+
+type CloseButtonProps = {
+	className?: string;
+	onClose: () => void;
+} & ButtonHTMLAttributes<HTMLButtonElement>;
 
 export default function CloseButton({
 	className,
+	disabled,
+	"aria-label": ariaLabel,
+	title,
 	onClose,
-}: {
-	className?: string;
-	onClose: () => void;
-}) {
+}: CloseButtonProps) {
 	return (
 		<button
 			type="button"
@@ -16,7 +22,9 @@ export default function CloseButton({
 				"flex items-center justify-center text-(--text-muted) hover:text-(--text-primary) cursor-pointer",
 				className,
 			)}
-			//aria-label="Закрыть"
+			aria-label={ariaLabel ?? "Закрыть"}
+			disabled={disabled}
+			title={title ?? "Закрыть"}
 		>
 			<Icon name="close" />
 		</button>

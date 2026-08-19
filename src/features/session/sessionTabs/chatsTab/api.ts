@@ -3,6 +3,7 @@ import type {
 	ChatMessage,
 	ChatPermissions,
 	ChatSummary,
+	PinnedMessage,
 } from "../../../../types/chat";
 
 export async function fetchChatsList(
@@ -15,22 +16,6 @@ export async function fetchChatsList(
 }
 
 // --- messages ---------------------------------------------------------------
-
-// Mirrors dtos.ReplySnippet exactly — resolved server-side.
-export interface ApiReplySnippet {
-	messageId: string;
-	senderId: string;
-	contentPreview?: string;
-	deleted?: boolean;
-}
-
-export interface ApiAttachment {
-	id: string;
-	fileName: string;
-	url: string;
-	mimeType: string;
-	sizeBytes: number;
-}
 
 export interface MessagePage {
 	messages: ChatMessage[];
@@ -78,4 +63,61 @@ export async function fetchChatPermissions(
 		`/chats/${chatID}/permissions`,
 	);
 	return data;
+}
+
+export async function editMessageRest(
+	chatID: string,
+	messageId: string,
+	body: string,
+): Promise<ChatMessage> {
+	const { data } = await sessionApi.patch<ChatMessage>(
+		`/chats/${chatID}/messages/${messageId}`,
+		{ body },
+	);
+	return data;
+}
+
+// Route exists but nothing in the UI calls it yet — the "Удалить"
+// MessageAction is still a no-op. Wire this in when that's ready.
+export async function deleteMessageRest(
+	chatID: string,
+	messageId: string,
+): Promise<void> {
+	await sessionApi.delete(`/chats/${chatID}/messages/${messageId}`);
+}
+
+export async function fetchPinnedMessages(
+	chatID: string,
+): Promise<PinnedMessage[]> {
+	const { data } = await sessionApi.get<PinnedMessage[]>(
+		`/chats/${chatID}/pins`,
+	);
+	return data;
+}
+
+export async function fetchMessageById(
+	chatID: string,
+	messageId: string,
+): Promise<ChatMessage> {
+	const { data } = await sessionApi.get<ChatMessage>(
+		`/chats/${chatID}/messages/${messageId}`,
+	);
+	return data;
+}
+
+export async function pinMessageRest(
+	chatID: string,
+	messageId: string,
+): Promise<PinnedMessage> {
+	const { data } = await sessionApi.post<PinnedMessage>(
+		`/chats/${chatID}/pins/${messageId}`,
+	);
+	return data;
+}
+
+export async function unpinMessageRest(
+	chatID: string,
+	messageId: string,
+): Promise<void> {
+	await sessionApi.delete(`/chats/${chatID}/pins/${messageId}`);
 }
